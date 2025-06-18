@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from src.crawler.strategies.national_crawler import NationalLawCrawler
 from src.storage.database import DatabaseManager
 from src.storage.models import CrawlTask, LawMetadata, LawDocument
+from src.report.ledger_generator import LedgerGenerator
 from config.config import CRAWLER_CONFIG
 
 
@@ -21,6 +22,7 @@ class CrawlerManager:
         self.db_manager = db_manager or DatabaseManager()
         self.crawlers = {}
         self.semaphore = asyncio.Semaphore(CRAWLER_CONFIG['max_concurrent'])
+        self.ledger_generator = LedgerGenerator(self.db_manager)
         
     def add_crawler(self, crawler):
         """添加爬虫"""
@@ -103,7 +105,7 @@ class CrawlerManager:
                 self.db_manager.update_task(task)
                 return False
                 
-    async def crawl_from_excel(self, excel_path: str, source: str = "national"):
+    async def crawl_from_excel(self, excel_path: str, source: str = "national", generate_ledger: bool = True):
         """从Excel文件批量爬取"""
         # 读取Excel文件
         df = pd.read_excel(excel_path)
@@ -129,6 +131,32 @@ class CrawlerManager:
         failed_count = total - success_count
         
         logger.info(f"爬取完成: 成功 {success_count} 条，失败 {failed_count} 条")
+        
+        # 生成台账
+        if generate_ledger and success_count > 0:
+            try:
+                logger.info("开始生成法律法规台账...")
+                
+                # 生成Excel格式台账
+                excel_path = self.ledger_generator.generate_ledger(
+                    output_format="excel",
+                    filename=f"law_ledger_crawl_{source}"
+                )
+                logger.info(f"Excel台账已生成: {excel_path}")
+                
+                # 同时生成HTML格式方便查看
+                html_path = self.ledger_generator.generate_ledger(
+                    output_format="html",
+                    filename=f"law_ledger_crawl_{source}"
+                )
+                logger.info(f"HTML台账已生成: {html_path}")
+                
+                # 生成汇总报告
+                summary = self.ledger_generator.generate_summary_report()
+                logger.info(f"汇总统计: {summary}")
+                
+            except Exception as e:
+                logger.error(f"生成台账时出错: {str(e)}")
         
         return {
             "total": total,
