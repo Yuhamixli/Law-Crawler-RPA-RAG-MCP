@@ -1,0 +1,313 @@
+2025-06-18 11:49:18.173 | INFO     | __main__:test_first_five_local:24 - === 准备爬取前5个法规 ===
+2025-06-18 11:49:18.174 | INFO     | __main__:test_first_five_local:26 - 1. 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 11:49:18.174 | INFO     | __main__:test_first_five_local:26 - 2. 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 11:49:18.174 | INFO     | __main__:test_first_five_local:26 - 3. 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 11:49:18.175 | INFO     | __main__:test_first_five_local:26 - 4. 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 11:49:18.175 | INFO     | __main__:test_first_five_local:26 - 5. 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 11:49:18.186 | INFO     | src.storage.database:_create_tables:51 - 数据库表创建成功
+2025-06-18 11:49:18.187 | INFO     | __main__:test_first_five_local:47 - 
+=== 开始爬取 ===
+2025-06-18 11:49:18.194 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国反洗钱法
+2025-06-18 11:49:18.195 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国反洗钱法
+2025-06-18 11:49:18.195 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国反洗钱法 (来源: local_mock)
+2025-06-18 11:49:18.195 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: name 'LawDocument' is not defined
+2025-06-18 11:49:18.196 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国关税法
+2025-06-18 11:49:18.196 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国关税法
+2025-06-18 11:49:18.197 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国关税法 (来源: local_mock)
+2025-06-18 11:49:18.197 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: name 'LawDocument' is not defined
+2025-06-18 11:49:18.197 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国统计法
+2025-06-18 11:49:18.198 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国统计法
+2025-06-18 11:49:18.198 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国统计法 (来源: local_mock)
+2025-06-18 11:49:18.198 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: name 'LawDocument' is not defined
+2025-06-18 11:49:18.198 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国会计法
+2025-06-18 11:49:18.199 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国会计法
+2025-06-18 11:49:18.199 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国会计法 (来源: local_mock)
+2025-06-18 11:49:18.199 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: name 'LawDocument' is not defined
+2025-06-18 11:49:18.200 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:49:18.200 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:49:18.200 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 国家科学技术奖励条例（2024修订） (来源: local_mock)
+2025-06-18 11:49:18.201 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: name 'LawDocument' is not defined
+2025-06-18 11:49:18.201 | INFO     | __main__:test_first_five_local:60 - 
+=== 爬取完成 ===
+2025-06-18 11:49:18.201 | INFO     | __main__:test_first_five_local:61 - 总耗时: 0.01 秒
+2025-06-18 11:49:18.201 | INFO     | __main__:test_first_five_local:62 - 成功: 0 个
+2025-06-18 11:49:18.201 | INFO     | __main__:test_first_five_local:63 - 失败: 5 个
+2025-06-18 11:49:18.201 | INFO     | __main__:test_first_five_local:66 - 
+=== 详细结果 ===
+2025-06-18 11:49:18.201 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国反洗钱法 - 错误: name 'LawDocument' is not defined
+2025-06-18 11:49:18.202 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国关税法 - 错误: name 'LawDocument' is not defined
+2025-06-18 11:49:18.202 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国统计法 - 错误: name 'LawDocument' is not defined
+2025-06-18 11:49:18.202 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国会计法 - 错误: name 'LawDocument' is not defined
+2025-06-18 11:49:18.202 | ERROR    | __main__:test_first_five_local:85 - ✗ 国家科学技术奖励条例（2024修订） - 错误: name 'LawDocument' is not defined
+2025-06-18 11:49:18.202 | INFO     | __main__:test_first_five_local:88 - 
+=== 数据文件检查 ===
+2025-06-18 11:49:18.202 | INFO     | __main__:test_first_five_local:92 - JSON文件数: 5
+2025-06-18 11:49:18.202 | INFO     | __main__:test_first_five_local:94 -   - 1f3d276ced265e69_国家科学技术奖励条例（2024修订）.json
+2025-06-18 11:49:18.202 | INFO     | __main__:test_first_five_local:94 -   - 2f61ed3b3e8fee48_中华人民共和国会计法.json
+2025-06-18 11:49:18.202 | INFO     | __main__:test_first_five_local:94 -   - ad0a5219631d6aaf_中华人民共和国统计法.json
+2025-06-18 11:49:18.203 | INFO     | __main__:test_first_five_local:94 -   - d80f112d6798372d_中华人民共和国关税法.json
+2025-06-18 11:49:18.203 | INFO     | __main__:test_first_five_local:94 -   - dbe7302bcff66779_中华人民共和国反洗钱法.json
+2025-06-18 11:49:18.203 | INFO     | __main__:test_first_five_local:97 - 
+=== 数据库统计 ===
+2025-06-18 11:49:18.205 | INFO     | __main__:test_first_five_local:99 - 数据库中总法规数: 0
+2025-06-18 11:49:18.208 | INFO     | __main__:test_first_five_local:103 - 
+法规类型统计:
+2025-06-18 11:49:41.603 | INFO     | __main__:test_first_five_local:24 - === 准备爬取前5个法规 ===
+2025-06-18 11:49:41.603 | INFO     | __main__:test_first_five_local:26 - 1. 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 11:49:41.603 | INFO     | __main__:test_first_five_local:26 - 2. 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 11:49:41.603 | INFO     | __main__:test_first_five_local:26 - 3. 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 11:49:41.604 | INFO     | __main__:test_first_five_local:26 - 4. 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 11:49:41.604 | INFO     | __main__:test_first_five_local:26 - 5. 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 11:49:41.615 | INFO     | src.storage.database:_create_tables:51 - 数据库表创建成功
+2025-06-18 11:49:41.616 | INFO     | __main__:test_first_five_local:47 - 
+=== 开始爬取 ===
+2025-06-18 11:49:41.624 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国反洗钱法
+2025-06-18 11:49:41.624 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国反洗钱法
+2025-06-18 11:49:41.624 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国反洗钱法 (来源: local_mock)
+2025-06-18 11:49:41.625 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.625 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国关税法
+2025-06-18 11:49:41.626 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国关税法
+2025-06-18 11:49:41.626 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国关税法 (来源: local_mock)
+2025-06-18 11:49:41.626 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.627 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国统计法
+2025-06-18 11:49:41.627 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国统计法
+2025-06-18 11:49:41.627 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国统计法 (来源: local_mock)
+2025-06-18 11:49:41.627 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.628 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国会计法
+2025-06-18 11:49:41.628 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国会计法
+2025-06-18 11:49:41.628 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国会计法 (来源: local_mock)
+2025-06-18 11:49:41.628 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.629 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:49:41.629 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:49:41.629 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 国家科学技术奖励条例（2024修订） (来源: local_mock)
+2025-06-18 11:49:41.630 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.630 | INFO     | __main__:test_first_five_local:60 - 
+=== 爬取完成 ===
+2025-06-18 11:49:41.630 | INFO     | __main__:test_first_five_local:61 - 总耗时: 0.01 秒
+2025-06-18 11:49:41.630 | INFO     | __main__:test_first_five_local:62 - 成功: 0 个
+2025-06-18 11:49:41.630 | INFO     | __main__:test_first_five_local:63 - 失败: 5 个
+2025-06-18 11:49:41.630 | INFO     | __main__:test_first_five_local:66 - 
+=== 详细结果 ===
+2025-06-18 11:49:41.630 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国反洗钱法 - 错误: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.631 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国关税法 - 错误: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.631 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国统计法 - 错误: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.631 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国会计法 - 错误: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.631 | ERROR    | __main__:test_first_five_local:85 - ✗ 国家科学技术奖励条例（2024修订） - 错误: 'law_metadata_id' is an invalid keyword argument for LawDocument
+2025-06-18 11:49:41.631 | INFO     | __main__:test_first_five_local:88 - 
+=== 数据文件检查 ===
+2025-06-18 11:49:41.631 | INFO     | __main__:test_first_five_local:92 - JSON文件数: 5
+2025-06-18 11:49:41.631 | INFO     | __main__:test_first_five_local:94 -   - 1f3d276ced265e69_国家科学技术奖励条例（2024修订）.json
+2025-06-18 11:49:41.631 | INFO     | __main__:test_first_five_local:94 -   - 2f61ed3b3e8fee48_中华人民共和国会计法.json
+2025-06-18 11:49:41.631 | INFO     | __main__:test_first_five_local:94 -   - ad0a5219631d6aaf_中华人民共和国统计法.json
+2025-06-18 11:49:41.632 | INFO     | __main__:test_first_five_local:94 -   - d80f112d6798372d_中华人民共和国关税法.json
+2025-06-18 11:49:41.632 | INFO     | __main__:test_first_five_local:94 -   - dbe7302bcff66779_中华人民共和国反洗钱法.json
+2025-06-18 11:49:41.632 | INFO     | __main__:test_first_five_local:97 - 
+=== 数据库统计 ===
+2025-06-18 11:49:41.634 | INFO     | __main__:test_first_five_local:99 - 数据库中总法规数: 0
+2025-06-18 11:49:41.637 | INFO     | __main__:test_first_five_local:103 - 
+法规类型统计:
+2025-06-18 11:50:28.567 | INFO     | __main__:test_first_five_local:24 - === 准备爬取前5个法规 ===
+2025-06-18 11:50:28.568 | INFO     | __main__:test_first_five_local:26 - 1. 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 11:50:28.568 | INFO     | __main__:test_first_five_local:26 - 2. 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 11:50:28.568 | INFO     | __main__:test_first_five_local:26 - 3. 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 11:50:28.568 | INFO     | __main__:test_first_five_local:26 - 4. 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 11:50:28.569 | INFO     | __main__:test_first_five_local:26 - 5. 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 11:50:28.578 | INFO     | src.storage.database:_create_tables:51 - 数据库表创建成功
+2025-06-18 11:50:28.579 | INFO     | __main__:test_first_five_local:47 - 
+=== 开始爬取 ===
+2025-06-18 11:50:28.588 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国反洗钱法
+2025-06-18 11:50:28.588 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国反洗钱法
+2025-06-18 11:50:28.589 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国反洗钱法 (来源: local_mock)
+2025-06-18 11:50:28.591 | ERROR    | src.storage.database:create_law:72 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2025-01-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国反洗钱法', 'valid_from': '2025-01-01', 'law_t ... (73 characters truncated) ... 66779', 'number': '中华人民共和国主席令第38号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.591 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2025-01-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国反洗钱法', 'valid_from': '2025-01-01', 'law_t ... (73 characters truncated) ... 66779', 'number': '中华人民共和国主席令第38号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.592 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国关税法
+2025-06-18 11:50:28.593 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国关税法
+2025-06-18 11:50:28.594 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国关税法 (来源: local_mock)
+2025-06-18 11:50:28.595 | ERROR    | src.storage.database:create_law:72 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-12-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国关税法', 'valid_from': '2024-12-01', 'law_ty ... (72 characters truncated) ... 8372d', 'number': '中华人民共和国主席令第23号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.596 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-12-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国关税法', 'valid_from': '2024-12-01', 'law_ty ... (72 characters truncated) ... 8372d', 'number': '中华人民共和国主席令第23号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.597 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国统计法
+2025-06-18 11:50:28.597 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国统计法
+2025-06-18 11:50:28.598 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国统计法 (来源: local_mock)
+2025-06-18 11:50:28.598 | ERROR    | src.storage.database:create_law:72 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-09-13', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国统计法', 'valid_from': '2024-09-13', 'law_ty ... (72 characters truncated) ... d6aaf', 'number': '中华人民共和国主席令第31号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.598 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-09-13', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国统计法', 'valid_from': '2024-09-13', 'law_ty ... (72 characters truncated) ... d6aaf', 'number': '中华人民共和国主席令第31号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.599 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国会计法
+2025-06-18 11:50:28.599 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国会计法
+2025-06-18 11:50:28.600 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 中华人民共和国会计法 (来源: local_mock)
+2025-06-18 11:50:28.600 | ERROR    | src.storage.database:create_law:72 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-07-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国会计法', 'valid_from': '2024-07-01', 'law_ty ... (72 characters truncated) ... fee48', 'number': '中华人民共和国主席令第28号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.601 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-07-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国会计法', 'valid_from': '2024-07-01', 'law_ty ... (72 characters truncated) ... fee48', 'number': '中华人民共和国主席令第28号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.602 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:50:28.602 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:50:28.602 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:191 - 法规爬取成功: 国家科学技术奖励条例（2024修订） (来源: local_mock)
+2025-06-18 11:50:28.603 | ERROR    | src.storage.database:create_law:72 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-05-26', 'source': 'local_mock', 'issuing_authority': '国务院', 'name': '国家科学技术奖励条例（2024修订）', 'valid_from': '2024-05-26', 'law_type ... (73 characters truncated) ... 5e69', 'number': '中华人民共和国主席令第265号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.603 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - local_file 爬取失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-05-26', 'source': 'local_mock', 'issuing_authority': '国务院', 'name': '国家科学技术奖励条例（2024修订）', 'valid_from': '2024-05-26', 'law_type ... (73 characters truncated) ... 5e69', 'number': '中华人民共和国主席令第265号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.604 | INFO     | __main__:test_first_five_local:60 - 
+=== 爬取完成 ===
+2025-06-18 11:50:28.604 | INFO     | __main__:test_first_five_local:61 - 总耗时: 0.02 秒
+2025-06-18 11:50:28.604 | INFO     | __main__:test_first_five_local:62 - 成功: 0 个
+2025-06-18 11:50:28.604 | INFO     | __main__:test_first_five_local:63 - 失败: 5 个
+2025-06-18 11:50:28.604 | INFO     | __main__:test_first_five_local:66 - 
+=== 详细结果 ===
+2025-06-18 11:50:28.604 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国反洗钱法 - 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2025-01-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国反洗钱法', 'valid_from': '2025-01-01', 'law_t ... (73 characters truncated) ... 66779', 'number': '中华人民共和国主席令第38号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.605 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国关税法 - 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-12-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国关税法', 'valid_from': '2024-12-01', 'law_ty ... (72 characters truncated) ... 8372d', 'number': '中华人民共和国主席令第23号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.605 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国统计法 - 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-09-13', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国统计法', 'valid_from': '2024-09-13', 'law_ty ... (72 characters truncated) ... d6aaf', 'number': '中华人民共和国主席令第31号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.605 | ERROR    | __main__:test_first_five_local:85 - ✗ 中华人民共和国会计法 - 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-07-01', 'source': 'local_mock', 'issuing_authority': '全国人民代表大会常务委员会', 'name': '中华人民共和国会计法', 'valid_from': '2024-07-01', 'law_ty ... (72 characters truncated) ... fee48', 'number': '中华人民共和国主席令第28号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.606 | ERROR    | __main__:test_first_five_local:85 - ✗ 国家科学技术奖励条例（2024修订） - 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'publish_date': '2024-05-26', 'source': 'local_mock', 'issuing_authority': '国务院', 'name': '国家科学技术奖励条例（2024修订）', 'valid_from': '2024-05-26', 'law_type ... (73 characters truncated) ... 5e69', 'number': '中华人民共和国主席令第265号', 'valid_to': None, 'keywords': None, 'category': None, 'parent_law_id': None, 'amend_id': None, 'version_id': None}]]
+2025-06-18 11:50:28.606 | INFO     | __main__:test_first_five_local:88 - 
+=== 数据文件检查 ===
+2025-06-18 11:50:28.606 | INFO     | __main__:test_first_five_local:92 - JSON文件数: 5
+2025-06-18 11:50:28.606 | INFO     | __main__:test_first_five_local:94 -   - 1f3d276ced265e69_国家科学技术奖励条例（2024修订）.json
+2025-06-18 11:50:28.606 | INFO     | __main__:test_first_five_local:94 -   - 2f61ed3b3e8fee48_中华人民共和国会计法.json
+2025-06-18 11:50:28.606 | INFO     | __main__:test_first_five_local:94 -   - ad0a5219631d6aaf_中华人民共和国统计法.json
+2025-06-18 11:50:28.607 | INFO     | __main__:test_first_five_local:94 -   - d80f112d6798372d_中华人民共和国关税法.json
+2025-06-18 11:50:28.607 | INFO     | __main__:test_first_five_local:94 -   - dbe7302bcff66779_中华人民共和国反洗钱法.json
+2025-06-18 11:50:28.607 | INFO     | __main__:test_first_five_local:97 - 
+=== 数据库统计 ===
+2025-06-18 11:50:28.610 | INFO     | __main__:test_first_five_local:99 - 数据库中总法规数: 0
+2025-06-18 11:50:28.613 | INFO     | __main__:test_first_five_local:103 - 
+法规类型统计:
+2025-06-18 11:51:27.153 | INFO     | __main__:test_first_five_local:24 - === 准备爬取前5个法规 ===
+2025-06-18 11:51:27.154 | INFO     | __main__:test_first_five_local:26 - 1. 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 11:51:27.154 | INFO     | __main__:test_first_five_local:26 - 2. 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 11:51:27.155 | INFO     | __main__:test_first_five_local:26 - 3. 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 11:51:27.155 | INFO     | __main__:test_first_five_local:26 - 4. 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 11:51:27.155 | INFO     | __main__:test_first_five_local:26 - 5. 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 11:51:27.165 | INFO     | src.storage.database:_create_tables:51 - 数据库表创建成功
+2025-06-18 11:51:27.166 | INFO     | __main__:test_first_five_local:47 - 
+=== 开始爬取 ===
+2025-06-18 11:51:27.174 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国反洗钱法
+2025-06-18 11:51:27.174 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国反洗钱法
+2025-06-18 11:51:27.175 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:197 - 法规爬取成功: 中华人民共和国反洗钱法 (来源: local_mock)
+2025-06-18 11:51:27.188 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国关税法
+2025-06-18 11:51:27.189 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国关税法
+2025-06-18 11:51:27.189 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:197 - 法规爬取成功: 中华人民共和国关税法 (来源: local_mock)
+2025-06-18 11:51:27.197 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国统计法
+2025-06-18 11:51:27.198 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国统计法
+2025-06-18 11:51:27.198 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:197 - 法规爬取成功: 中华人民共和国统计法 (来源: local_mock)
+2025-06-18 11:51:27.206 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 中华人民共和国会计法
+2025-06-18 11:51:27.207 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 中华人民共和国会计法
+2025-06-18 11:51:27.207 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:197 - 法规爬取成功: 中华人民共和国会计法 (来源: local_mock)
+2025-06-18 11:51:27.216 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 local_file 爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:51:27.216 | INFO     | src.crawler.strategies.local_file_crawler:search:83 - 未找到本地文件，生成模拟数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:51:27.217 | INFO     | src.crawler.strategies.local_file_crawler:crawl_law:197 - 法规爬取成功: 国家科学技术奖励条例（2024修订） (来源: local_mock)
+2025-06-18 11:51:27.226 | INFO     | __main__:test_first_five_local:60 - 
+=== 爬取完成 ===
+2025-06-18 11:51:27.226 | INFO     | __main__:test_first_five_local:61 - 总耗时: 0.06 秒
+2025-06-18 11:51:27.226 | INFO     | __main__:test_first_five_local:62 - 成功: 5 个
+2025-06-18 11:51:27.226 | INFO     | __main__:test_first_five_local:63 - 失败: 0 个
+2025-06-18 11:51:27.226 | INFO     | __main__:test_first_five_local:66 - 
+=== 详细结果 ===
+2025-06-18 11:51:27.227 | SUCCESS  | __main__:test_first_five_local:70 - ✓ 中华人民共和国反洗钱法 - 数据源: local_mock
+2025-06-18 11:51:27.228 | INFO     | __main__:test_first_five_local:75 -   - 类型: 法律
+2025-06-18 11:51:27.228 | INFO     | __main__:test_first_five_local:76 -   - 发布机关: 全国人民代表大会常务委员会
+2025-06-18 11:51:27.228 | INFO     | __main__:test_first_five_local:77 -   - 生效日期: 2025-01-01
+2025-06-18 11:51:27.229 | INFO     | __main__:test_first_five_local:83 -   - 内容预览: 
+中华人民共和国反洗钱法
+
+（中华人民共和国主席令第38号）
+
+第一章 总则
+
+第一条 为了规范相关活动，维护社会秩序，保障公民、法人和其他组织的合法权益，根据宪法，制定本法。
+
+第二条 在中华人民共...
+2025-06-18 11:51:27.230 | SUCCESS  | __main__:test_first_five_local:70 - ✓ 中华人民共和国关税法 - 数据源: local_mock
+2025-06-18 11:51:27.231 | INFO     | __main__:test_first_five_local:75 -   - 类型: 法律
+2025-06-18 11:51:27.231 | INFO     | __main__:test_first_five_local:76 -   - 发布机关: 全国人民代表大会常务委员会
+2025-06-18 11:51:27.231 | INFO     | __main__:test_first_five_local:77 -   - 生效日期: 2024-12-01
+2025-06-18 11:51:27.232 | INFO     | __main__:test_first_five_local:83 -   - 内容预览: 
+中华人民共和国关税法
+
+（中华人民共和国主席令第23号）
+
+第一章 总则
+
+第一条 为了规范相关活动，维护社会秩序，保障公民、法人和其他组织的合法权益，根据宪法，制定本法。
+
+第二条 在中华人民共和...
+2025-06-18 11:51:27.232 | SUCCESS  | __main__:test_first_five_local:70 - ✓ 中华人民共和国统计法 - 数据源: local_mock
+2025-06-18 11:51:27.232 | INFO     | __main__:test_first_five_local:75 -   - 类型: 法律
+2025-06-18 11:51:27.232 | INFO     | __main__:test_first_five_local:76 -   - 发布机关: 全国人民代表大会常务委员会
+2025-06-18 11:51:27.233 | INFO     | __main__:test_first_five_local:77 -   - 生效日期: 2024-09-13
+2025-06-18 11:51:27.233 | INFO     | __main__:test_first_five_local:83 -   - 内容预览: 
+中华人民共和国统计法
+
+（中华人民共和国主席令第31号）
+
+第一章 总则
+
+第一条 为了规范相关活动，维护社会秩序，保障公民、法人和其他组织的合法权益，根据宪法，制定本法。
+
+第二条 在中华人民共和...
+2025-06-18 11:51:27.233 | SUCCESS  | __main__:test_first_five_local:70 - ✓ 中华人民共和国会计法 - 数据源: local_mock
+2025-06-18 11:51:27.234 | INFO     | __main__:test_first_five_local:75 -   - 类型: 法律
+2025-06-18 11:51:27.234 | INFO     | __main__:test_first_five_local:76 -   - 发布机关: 全国人民代表大会常务委员会
+2025-06-18 11:51:27.234 | INFO     | __main__:test_first_five_local:77 -   - 生效日期: 2024-07-01
+2025-06-18 11:51:27.234 | INFO     | __main__:test_first_five_local:83 -   - 内容预览: 
+中华人民共和国会计法
+
+（中华人民共和国主席令第28号）
+
+第一章 总则
+
+第一条 为了规范相关活动，维护社会秩序，保障公民、法人和其他组织的合法权益，根据宪法，制定本法。
+
+第二条 在中华人民共和...
+2025-06-18 11:51:27.235 | SUCCESS  | __main__:test_first_five_local:70 - ✓ 国家科学技术奖励条例（2024修订） - 数据源: local_mock
+2025-06-18 11:51:27.235 | INFO     | __main__:test_first_five_local:75 -   - 类型: 行政法规
+2025-06-18 11:51:27.235 | INFO     | __main__:test_first_five_local:76 -   - 发布机关: 国务院
+2025-06-18 11:51:27.235 | INFO     | __main__:test_first_five_local:77 -   - 生效日期: 2024-05-26
+2025-06-18 11:51:27.235 | INFO     | __main__:test_first_five_local:83 -   - 内容预览: 
+国家科学技术奖励条例（2024修订）
+
+（中华人民共和国主席令第265号）
+
+第一章 总则
+
+第一条 为了规范相关活动，维护社会秩序，保障公民、法人和其他组织的合法权益，根据宪法，制定本法。
+
+第二...
+2025-06-18 11:51:27.236 | INFO     | __main__:test_first_five_local:88 - 
+=== 数据文件检查 ===
+2025-06-18 11:51:27.236 | INFO     | __main__:test_first_five_local:92 - JSON文件数: 5
+2025-06-18 11:51:27.236 | INFO     | __main__:test_first_five_local:94 -   - 1f3d276ced265e69_国家科学技术奖励条例（2024修订）.json
+2025-06-18 11:51:27.236 | INFO     | __main__:test_first_five_local:94 -   - 2f61ed3b3e8fee48_中华人民共和国会计法.json
+2025-06-18 11:51:27.236 | INFO     | __main__:test_first_five_local:94 -   - ad0a5219631d6aaf_中华人民共和国统计法.json
+2025-06-18 11:51:27.236 | INFO     | __main__:test_first_five_local:94 -   - d80f112d6798372d_中华人民共和国关税法.json
+2025-06-18 11:51:27.237 | INFO     | __main__:test_first_five_local:94 -   - dbe7302bcff66779_中华人民共和国反洗钱法.json
+2025-06-18 11:51:27.237 | INFO     | __main__:test_first_five_local:97 - 
+=== 数据库统计 ===
+2025-06-18 11:51:27.239 | INFO     | __main__:test_first_five_local:99 - 数据库中总法规数: 5
+2025-06-18 11:51:27.241 | INFO     | __main__:test_first_five_local:103 - 
+法规类型统计:
+2025-06-18 11:51:27.242 | INFO     | __main__:test_first_five_local:105 -   - 法律: 4
+2025-06-18 11:51:27.242 | INFO     | __main__:test_first_five_local:105 -   - 行政法规: 1

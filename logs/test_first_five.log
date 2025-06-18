@@ -1,0 +1,146 @@
+2025-06-18 11:36:46.297 | INFO     | __main__:test_first_five:24 - === 准备爬取前5个法规 ===
+2025-06-18 11:36:46.298 | INFO     | __main__:test_first_five:26 - 1. 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 11:36:46.298 | INFO     | __main__:test_first_five:26 - 2. 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 11:36:46.298 | INFO     | __main__:test_first_five:26 - 3. 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 11:36:46.299 | INFO     | __main__:test_first_five:26 - 4. 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 11:36:46.299 | INFO     | __main__:test_first_five:26 - 5. 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 11:36:46.310 | INFO     | src.storage.database:_create_tables:51 - 数据库表创建成功
+2025-06-18 11:38:35.348 | INFO     | __main__:test_first_five:24 - === 准备爬取前5个法规 ===
+2025-06-18 11:38:35.348 | INFO     | __main__:test_first_five:26 - 1. 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 11:38:35.348 | INFO     | __main__:test_first_five:26 - 2. 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 11:38:35.349 | INFO     | __main__:test_first_five:26 - 3. 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 11:38:35.349 | INFO     | __main__:test_first_five:26 - 4. 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 11:38:35.349 | INFO     | __main__:test_first_five:26 - 5. 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 11:38:35.362 | INFO     | src.storage.database:_create_tables:51 - 数据库表创建成功
+2025-06-18 11:39:01.798 | INFO     | __main__:test_first_five:24 - === 准备爬取前5个法规 ===
+2025-06-18 11:39:01.798 | INFO     | __main__:test_first_five:26 - 1. 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 11:39:01.799 | INFO     | __main__:test_first_five:26 - 2. 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 11:39:01.799 | INFO     | __main__:test_first_five:26 - 3. 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 11:39:01.799 | INFO     | __main__:test_first_five:26 - 4. 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 11:39:01.799 | INFO     | __main__:test_first_five:26 - 5. 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 11:39:01.809 | INFO     | src.storage.database:_create_tables:51 - 数据库表创建成功
+2025-06-18 11:39:01.812 | INFO     | __main__:test_first_five:47 - 
+=== 开始爬取 ===
+2025-06-18 11:39:01.820 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 multi_source 爬取: 中华人民共和国反洗钱法
+2025-06-18 11:39:01.820 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 百度搜索 搜索: 中华人民共和国反洗钱法
+2025-06-18 11:39:01.820 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:39:01.821 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:39:15.296 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:39:15.296 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:39:28.343 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:39:28.343 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:39:28.343 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_baidu:94 - 百度搜索失败: RetryError[<Future at 0x19b3bf6eb70 state=finished raised AttributeError>]
+2025-06-18 11:39:28.344 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 必应搜索 搜索: 中华人民共和国反洗钱法
+2025-06-18 11:39:41.031 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:39:41.031 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:39:53.912 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:39:53.912 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:40:06.460 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:40:06.461 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:40:06.461 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_bing:131 - 必应搜索失败: RetryError[<Future at 0x19b3edb6180 state=finished raised AttributeError>]
+2025-06-18 11:40:06.461 | WARNING  | src.crawler.strategies.multi_source_crawler:search:56 - 所有数据源都未找到: 中华人民共和国反洗钱法
+2025-06-18 11:40:06.462 | INFO     | src.crawler.strategies.multi_source_crawler:crawl_law:281 - 法规爬取成功: 中华人民共和国反洗钱法 (来源: enhanced_mock)
+2025-06-18 11:40:06.464 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - multi_source 爬取失败: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:40:06.472 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 multi_source 爬取: 中华人民共和国关税法
+2025-06-18 11:40:06.472 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 百度搜索 搜索: 中华人民共和国关税法
+2025-06-18 11:40:19.154 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:40:19.154 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:40:32.163 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:40:32.163 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:40:45.218 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:40:45.221 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:40:45.222 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_baidu:94 - 百度搜索失败: RetryError[<Future at 0x19b3edb6900 state=finished raised AttributeError>]
+2025-06-18 11:40:45.223 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 必应搜索 搜索: 中华人民共和国关税法
+2025-06-18 11:40:58.245 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:40:58.245 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:41:11.408 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:41:11.408 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:41:24.741 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:41:24.741 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:41:24.741 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_bing:131 - 必应搜索失败: RetryError[<Future at 0x19b3edb66f0 state=finished raised AttributeError>]
+2025-06-18 11:41:24.741 | WARNING  | src.crawler.strategies.multi_source_crawler:search:56 - 所有数据源都未找到: 中华人民共和国关税法
+2025-06-18 11:41:24.742 | INFO     | src.crawler.strategies.multi_source_crawler:crawl_law:281 - 法规爬取成功: 中华人民共和国关税法 (来源: enhanced_mock)
+2025-06-18 11:41:24.742 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - multi_source 爬取失败: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:41:24.743 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 multi_source 爬取: 中华人民共和国统计法
+2025-06-18 11:41:24.743 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 百度搜索 搜索: 中华人民共和国统计法
+2025-06-18 11:41:37.737 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:41:37.737 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:41:50.422 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:41:50.422 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:42:03.861 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:42:03.861 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:42:03.862 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_baidu:94 - 百度搜索失败: RetryError[<Future at 0x19b3edb70e0 state=finished raised AttributeError>]
+2025-06-18 11:42:03.862 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 必应搜索 搜索: 中华人民共和国统计法
+2025-06-18 11:42:17.133 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:42:17.133 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:42:29.749 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:42:29.749 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:42:43.120 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:42:43.120 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:42:43.120 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_bing:131 - 必应搜索失败: RetryError[<Future at 0x19b3edb7110 state=finished raised AttributeError>]
+2025-06-18 11:42:43.121 | WARNING  | src.crawler.strategies.multi_source_crawler:search:56 - 所有数据源都未找到: 中华人民共和国统计法
+2025-06-18 11:42:43.122 | INFO     | src.crawler.strategies.multi_source_crawler:crawl_law:281 - 法规爬取成功: 中华人民共和国统计法 (来源: enhanced_mock)
+2025-06-18 11:42:43.122 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - multi_source 爬取失败: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:42:43.124 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 multi_source 爬取: 中华人民共和国会计法
+2025-06-18 11:42:43.125 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 百度搜索 搜索: 中华人民共和国会计法
+2025-06-18 11:42:56.134 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:42:56.134 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:43:08.960 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:43:08.961 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:43:22.442 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:43:22.443 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:43:22.444 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_baidu:94 - 百度搜索失败: RetryError[<Future at 0x19b3edb77d0 state=finished raised AttributeError>]
+2025-06-18 11:43:22.445 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 必应搜索 搜索: 中华人民共和国会计法
+2025-06-18 11:43:35.098 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:43:35.099 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:43:48.315 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:43:48.315 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:44:01.494 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:44:01.495 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:44:01.495 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_bing:131 - 必应搜索失败: RetryError[<Future at 0x19b3edb77a0 state=finished raised AttributeError>]
+2025-06-18 11:44:01.496 | WARNING  | src.crawler.strategies.multi_source_crawler:search:56 - 所有数据源都未找到: 中华人民共和国会计法
+2025-06-18 11:44:01.499 | INFO     | src.crawler.strategies.multi_source_crawler:crawl_law:281 - 法规爬取成功: 中华人民共和国会计法 (来源: enhanced_mock)
+2025-06-18 11:44:01.502 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - multi_source 爬取失败: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:44:01.503 | INFO     | src.crawler.crawler_manager:crawl_laws:192 - 使用 multi_source 爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:44:01.503 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 百度搜索 搜索: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:44:14.814 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:44:14.815 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:44:27.729 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:44:27.729 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:44:40.378 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://www.baidu.com/s?wd=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn
+2025-06-18 11:44:40.378 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://www.baidu.com/s?wd=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20site%3Awww.gov.cn%20OR%20site%3Anpc.gov.cn: 'NoneType' object has no attribute 'get'
+2025-06-18 11:44:40.379 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_baidu:94 - 百度搜索失败: RetryError[<Future at 0x19b3edb7050 state=finished raised AttributeError>]
+2025-06-18 11:44:40.379 | INFO     | src.crawler.strategies.multi_source_crawler:search:44 - 尝试从 必应搜索 搜索: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:44:53.491 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:44:53.491 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:45:06.790 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:45:06.790 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:45:19.392 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://cn.bing.com/search?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29
+2025-06-18 11:45:19.392 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://cn.bing.com/search?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89%20%28site%3Agov.cn%20OR%20site%3Anpc.gov.cn%29: 'NoneType' object has no attribute 'get'
+2025-06-18 11:45:19.392 | ERROR    | src.crawler.strategies.multi_source_crawler:_search_bing:131 - 必应搜索失败: RetryError[<Future at 0x19b3edb6810 state=finished raised AttributeError>]
+2025-06-18 11:45:19.393 | WARNING  | src.crawler.strategies.multi_source_crawler:search:56 - 所有数据源都未找到: 国家科学技术奖励条例（2024修订）
+2025-06-18 11:45:19.393 | INFO     | src.crawler.strategies.multi_source_crawler:crawl_law:281 - 法规爬取成功: 国家科学技术奖励条例（2024修订） (来源: enhanced_mock)
+2025-06-18 11:45:19.394 | ERROR    | src.crawler.crawler_manager:crawl_laws:233 - multi_source 爬取失败: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:45:19.394 | INFO     | __main__:test_first_five:60 - 
+=== 爬取完成 ===
+2025-06-18 11:45:19.394 | INFO     | __main__:test_first_five:61 - 总耗时: 377.58 秒
+2025-06-18 11:45:19.394 | INFO     | __main__:test_first_five:62 - 成功: 0 个
+2025-06-18 11:45:19.394 | INFO     | __main__:test_first_five:63 - 失败: 5 个
+2025-06-18 11:45:19.394 | INFO     | __main__:test_first_five:66 - 
+=== 详细结果 ===
+2025-06-18 11:45:19.394 | ERROR    | __main__:test_first_five:81 - ✗ 中华人民共和国反洗钱法 - 错误: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:45:19.395 | ERROR    | __main__:test_first_five:81 - ✗ 中华人民共和国关税法 - 错误: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:45:19.395 | ERROR    | __main__:test_first_five:81 - ✗ 中华人民共和国统计法 - 错误: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:45:19.395 | ERROR    | __main__:test_first_five:81 - ✗ 中华人民共和国会计法 - 错误: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:45:19.395 | ERROR    | __main__:test_first_five:81 - ✗ 国家科学技术奖励条例（2024修订） - 错误: 'law_number' is an invalid keyword argument for LawMetadata
+2025-06-18 11:45:19.395 | INFO     | __main__:test_first_five:84 - 
+=== 数据文件检查 ===
+2025-06-18 11:45:19.395 | INFO     | __main__:test_first_five:88 - JSON文件数: 5
+2025-06-18 11:45:19.395 | INFO     | __main__:test_first_five:90 -   - 1f3d276ced265e69_国家科学技术奖励条例（2024修订）.json
+2025-06-18 11:45:19.395 | INFO     | __main__:test_first_five:90 -   - 2f61ed3b3e8fee48_中华人民共和国会计法.json
+2025-06-18 11:45:19.395 | INFO     | __main__:test_first_five:90 -   - ad0a5219631d6aaf_中华人民共和国统计法.json
+2025-06-18 11:45:19.396 | INFO     | __main__:test_first_five:90 -   - d80f112d6798372d_中华人民共和国关税法.json
+2025-06-18 11:45:19.396 | INFO     | __main__:test_first_five:90 -   - dbe7302bcff66779_中华人民共和国反洗钱法.json
+2025-06-18 11:45:19.396 | INFO     | __main__:test_first_five:93 - 
+=== 数据库统计 ===
+2025-06-18 11:45:19.399 | INFO     | __main__:test_first_five:95 - 数据库中总法规数: 0
