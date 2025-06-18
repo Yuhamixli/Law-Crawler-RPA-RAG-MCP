@@ -73,6 +73,13 @@ class BaseCrawler(ABC):
         
         logger.info(f"Fetching: {url}")
         
+        # 确保session存在
+        if not self.session:
+            self.session = httpx.AsyncClient(
+                timeout=CRAWLER_CONFIG['timeout'],
+                follow_redirects=True
+            )
+        
         try:
             response = await self.session.get(url, headers=headers, **kwargs)
             response.raise_for_status()
