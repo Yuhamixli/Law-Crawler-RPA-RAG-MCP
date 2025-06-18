@@ -1,0 +1,33 @@
+# 开发环境配置文件
+
+[default]
+project_name = "法律法规爬虫系统"
+version = "1.0.0"
+debug = true
+
+[crawler]
+max_retries = 3
+retry_delay = 2.0
+timeout = 30
+max_concurrent = 5
+rate_limit = 10  # 开发环境可以快一些
+
+[database]
+url = "sqlite:///data/law_crawler_dev.db"
+echo = true  # 开发环境打印SQL
+
+[log]
+level = "DEBUG"
+serialize = true  # 输出JSON格式日志
+
+[data_sources.national]
+name = "国家法律法规数据库"
+base_url = "https://flk.npc.gov.cn"
+priority = 1
+enabled = true
+
+[data_sources.gov_legal]
+name = "中国政府法制信息网"
+base_url = "http://www.gov.cn/zhengce/"
+priority = 2
+enabled = false 

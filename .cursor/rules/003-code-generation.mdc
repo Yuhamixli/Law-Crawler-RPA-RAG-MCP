@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Code Generation Quality Rules
+
+## Code Completeness
+- Generate complete, runnable code without placeholders
+- Include all necessary imports and dependencies
+- Provide full implementation, not just function signatures
+- Include proper initialization and cleanup code
+
+## Error Handling
+- Implement comprehensive error handling for all functions
+- Use appropriate exception types and error messages
+- Include input validation for all public functions
+- Log errors appropriately for debugging
+
+## Code Style
+- Follow consistent indentation and formatting
+- Use meaningful variable and function names
+- Add helpful comments for complex logic
+- Organize code into logical sections with clear separation
+
+## Performance Considerations
+- Write efficient algorithms when possible
+- Avoid unnecessary resource usage
+- Include performance comments for complex operations
+- Consider memory management best practices
+
+## Testing and Debugging
+- Include basic test cases or usage examples
+- Add debug logging where appropriate
+- Ensure code is easily testable and modular
+- Provide clear documentation for function parameters and return values

@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Development Workflow Rules
+
+## Code Quality Standards
+- Always include error handling and input validation
+- Write clear, self-documenting code with meaningful variable names
+- Include appropriate comments for complex logic
+- Follow language-specific best practices and conventions
+
+## File Organization
+- Use consistent naming conventions across the project
+- Organize files in logical directory structures
+- Keep related files grouped together
+- Maintain a clean project root directory
+
+## Git Workflow
+- Make small, focused commits with descriptive messages
+- Include issue numbers in commit messages when applicable
+- Use semantic commit messages (feat:, fix:, docs:, etc.)
+- Always test code before committing
+
+## Documentation
+- Keep README.md updated with current setup instructions
+- Document API endpoints and their usage
+- Include examples for complex functionality
+- Maintain changelog for significant updates
+
+## Development Environment
+- Use consistent development tools across team members
+- Include necessary configuration files in version control
+- Document environment setup requirements
+- Use package managers for dependency management

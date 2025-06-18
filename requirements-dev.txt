@@ -1,0 +1,29 @@
+# 开发工具
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# 代码质量
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.7.0
+pylint>=3.0.0
+
+# 类型检查
+types-requests>=2.31.0
+types-pyyaml>=6.0
+types-toml>=0.10.8
+
+# 文档
+mkdocs>=1.5.0
+mkdocs-material>=9.4.0
+mkdocstrings[python]>=0.24.0
+
+# 调试
+ipython>=8.17.0
+ipdb>=0.13.0
+
+# 性能分析
+py-spy>=0.3.0
+memory-profiler>=0.61.0 

@@ -1,0 +1,56 @@
+# 爬虫相关
+requests>=2.31.0
+selenium>=4.15.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+playwright>=1.40.0
+firecrawl-py>=0.0.16
+
+# PDF处理
+PyPDF2>=3.0.0
+pdfplumber>=0.10.0
+pymupdf>=1.23.0
+
+# 数据处理
+pandas>=2.1.0
+numpy>=1.24.0
+openpyxl>=3.1.0
+xlrd>=2.0.1
+
+# 数据库
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+redis>=5.0.0
+pymongo>=4.6.0
+
+# RAG相关
+langchain>=0.1.0
+langchain-community>=0.0.10
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
+openai>=1.0.0
+tiktoken>=0.5.0
+
+# Web框架
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+
+# 工具库
+python-dotenv>=1.0.0
+loguru>=0.7.0
+tenacity>=8.2.0
+fake-useragent>=1.4.0
+httpx>=0.25.0
+
+# 配置管理
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+pyyaml>=6.0
+toml>=0.10.2
+python-json-logger>=2.0.7
+
+# 开发工具
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.1.0 

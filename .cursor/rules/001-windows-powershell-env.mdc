@@ -1,0 +1,46 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# This project is developed in Windows 11 PowerShell Environment, hereby Rules
+
+## Terminal Command Guidelines
+
+### PowerShell 7.5+ Commands
+- Use native PowerShell cmdlets instead of Unix-style commands
+- Use `Get-ChildItem` instead of `ls`
+- Use `Remove-Item` instead of `rm` 
+- Use `Copy-Item` instead of `cp`
+- Use `Move-Item` instead of `mv`
+- Use `New-Item -ItemType Directory` instead of `mkdir`
+- Use `Set-Location` instead of `cd` (when needed for script context)
+
+### Command Chaining
+- Use semicolon (`;`) for command chaining, NOT `&&`
+- Example: `Get-Process; Get-Service` instead of `Get-Process && Get-Service`
+
+### File Paths
+- Use Windows-style paths with backslashes: `C:\Users\Username\`
+- Use forward slashes only for URLs or when explicitly required
+- Use `$env:USERPROFILE` instead of `~` for home directory
+
+### Environment Variables
+- Use `$env:` prefix for all environment variables
+- Example: `$env:PATH`, `$env:USERPROFILE`, `$env:TEMP`
+
+### Error Handling
+- Use PowerShell try/catch blocks for error handling
+- Include `-ErrorAction` parameters when appropriate
+- Use `Write-Warning` and `Write-Error` for proper logging
+
+### Package Management
+- Prefer `winget` for Windows application installation
+- Use `choco` if Chocolatey is installed
+- Use `npm`, `yarn`, or `pnpm` with their native commands
+- Use `pip` for Python packages
+
+### File Operations
+- Use `Test-Path` to check file/directory existence
+- Use `Join-Path` for constructing file paths
+- Use `Get-Content` and `Set-Content` for file reading/writing
