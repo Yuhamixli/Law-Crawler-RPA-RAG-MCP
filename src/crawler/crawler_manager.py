@@ -10,19 +10,21 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from src.crawler.strategies.national_crawler import NationalLawCrawler
 from src.storage.database import DatabaseManager
-from src.storage.models import CrawlTask, LawMetadata
+from src.storage.models import CrawlTask, LawMetadata, LawDocument
 from config.config import CRAWLER_CONFIG
 
 
 class CrawlerManager:
     """爬虫管理器"""
     
-    def __init__(self):
-        self.db_manager = DatabaseManager()
-        self.crawlers = {
-            "national": NationalLawCrawler
-        }
+    def __init__(self, db_manager: Optional[DatabaseManager] = None):
+        self.db_manager = db_manager or DatabaseManager()
+        self.crawlers = {}
         self.semaphore = asyncio.Semaphore(CRAWLER_CONFIG['max_concurrent'])
+        
+    def add_crawler(self, crawler):
+        """添加爬虫"""
+        self.crawlers[crawler.name] = crawler
         
     async def crawl_single_law(self, law_info: Dict[str, Any], source: str = "national") -> bool:
         """爬取单个法律法规"""
@@ -47,30 +49,39 @@ class CrawlerManager:
             
             try:
                 # 选择爬虫
-                crawler_class = self.crawlers.get(source)
-                if not crawler_class:
+                crawler = self.crawlers.get(source)
+                if not crawler:
                     raise ValueError(f"不支持的数据源: {source}")
                     
                 # 执行爬取
-                async with crawler_class() as crawler:
-                    result = await crawler.crawl_law(law_name, law_number)
+                result = await crawler.crawl_law(law_name, law_number)
                     
                 if result:
                     # 保存到数据库
-                    law_regulation = LawRegulation(
+                    law_metadata = LawMetadata(
+                        law_id=result.get("law_id"),
                         name=result.get("name"),
                         number=result.get("number"),
                         law_type=result.get("law_type"),
                         issuing_authority=result.get("issuing_authority"),
                         publish_date=result.get("publish_date"),
-                        effective_date=result.get("effective_date"),
-                        content=result.get("content"),
+                        valid_from=result.get("effective_date"),
                         source_url=result.get("source_url"),
-                        file_path=result.get("file_path"),
                         keywords=result.get("keywords"),
                         source=result.get("source")
                     )
-                    self.db_manager.create_law(law_regulation)
+                    
+                    # 创建文档记录
+                    law_document = None
+                    if result.get("content"):
+                        law_document = LawDocument(
+                            law_id=result.get("law_id"),
+                            content=result.get("content"),
+                            file_path=result.get("file_path"),
+                            file_type="json"
+                        )
+                    
+                    self.db_manager.create_law(law_metadata, law_document)
                     
                     # 更新任务状态
                     task.status = "success"
@@ -149,4 +160,83 @@ class CrawlerManager:
             
     def get_crawl_statistics(self) -> Dict[str, Any]:
         """获取爬取统计信息"""
-        return self.db_manager.get_statistics() 
+        return self.db_manager.get_statistics()
+        
+    async def crawl_laws(self, laws_to_crawl: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """批量爬取法规"""
+        results = []
+        
+        for law_info in laws_to_crawl:
+            result = {
+                'name': law_info['name'],
+                'success': False,
+                'error': None,
+                'source': None,
+                'law_id': None
+            }
+            
+            try:
+                # 检查是否已存在
+                existing = self.db_manager.get_law_by_name_and_number(
+                    law_info['name'], 
+                    law_info.get('number')
+                )
+                if existing:
+                    logger.info(f"法规已存在，跳过: {law_info['name']}")
+                    result['success'] = True
+                    result['law_id'] = existing.law_id
+                    result['source'] = 'existing'
+                else:
+                    # 尝试每个爬虫
+                    for crawler_name, crawler in self.crawlers.items():
+                        logger.info(f"使用 {crawler_name} 爬取: {law_info['name']}")
+                        
+                        try:
+                            crawl_result = await crawler.crawl_law(
+                                law_info['name'], 
+                                law_info.get('number')
+                            )
+                            
+                            if crawl_result:
+                                # 保存到数据库
+                                law_metadata = LawMetadata(
+                                    law_id=crawl_result.get("law_id"),
+                                    name=crawl_result.get("name"),
+                                    number=crawl_result.get("number"),
+                                    law_type=crawl_result.get("law_type"),
+                                    issuing_authority=crawl_result.get("issuing_authority"),
+                                    publish_date=crawl_result.get("publish_date"),
+                                    valid_from=crawl_result.get("effective_date"),
+                                    source_url=crawl_result.get("source_url"),
+                                    keywords=crawl_result.get("keywords"),
+                                    source=crawl_result.get("source")
+                                )
+                                
+                                # 创建文档记录
+                                law_document = None
+                                if crawl_result.get("content"):
+                                    law_document = LawDocument(
+                                        law_id=crawl_result.get("law_id"),
+                                        content=crawl_result.get("content"),
+                                        file_path=crawl_result.get("file_path"),
+                                        file_type="json"
+                                    )
+                                
+                                self.db_manager.create_law(law_metadata, law_document)
+                                
+                                result['success'] = True
+                                result['source'] = crawl_result.get('source', crawler_name)
+                                result['law_id'] = crawl_result.get('law_id')
+                                break
+                                
+                        except Exception as e:
+                            logger.error(f"{crawler_name} 爬取失败: {str(e)}")
+                            result['error'] = str(e)
+                            
+            except Exception as e:
+                logger.error(f"处理法规 {law_info['name']} 时出错: {str(e)}")
+                result['error'] = str(e)
+                
+            results.append(result)
+            
+        return results 
