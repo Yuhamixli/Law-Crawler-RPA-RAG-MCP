@@ -56,7 +56,7 @@ class LawMetadata(Base):
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     
     # 关系
-    documents = relationship("LawDocument", back_populates="metadata")
+    documents = relationship("LawDocument", back_populates="law_metadata")
     change_logs = relationship("LawChangeLog", back_populates="law")
     
     # 索引
@@ -99,7 +99,7 @@ class LawDocument(Base):
     parse_time = Column(DateTime, comment="解析时间")
     
     # 关系
-    metadata = relationship("LawMetadata", back_populates="documents")
+    law_metadata = relationship("LawMetadata", back_populates="documents")
     
     # 索引
     __table_args__ = (

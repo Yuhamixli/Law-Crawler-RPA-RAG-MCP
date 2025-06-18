@@ -1,0 +1,364 @@
+2025-06-18 09:57:26.147 | INFO     | __main__:test_single_law:26 - 开始测试爬取单个法律...
+2025-06-18 09:57:26.504 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 09:57:26.723 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=10&showDetailLink=1&checkFlag=1&keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 09:57:39.425 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 09:57:39.633 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=10&showDetailLink=1&checkFlag=1&keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 09:57:52.434 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 09:57:52.639 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=10&showDetailLink=1&checkFlag=1&keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 09:57:52.639 | ERROR    | src.crawler.strategies.national_crawler:search:68 - 搜索失败: 中华人民共和国反洗钱法, 错误: RetryError[<Future at 0x1fd11a14110 state=finished raised HTTPStatusError>]
+2025-06-18 09:57:52.639 | WARNING  | __main__:test_single_law:51 - 未搜索到结果
+2025-06-18 10:01:24.148 | INFO     | __main__:test_batch_crawl:58 - 开始测试批量爬取...
+2025-06-18 10:01:24.161 | INFO     | __main__:test_batch_crawl:64 - 准备爬取 5 条法规:
+2025-06-18 10:01:24.162 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 10:01:24.162 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 10:01:24.162 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 10:01:24.162 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 10:01:24.162 | INFO     | __main__:test_batch_crawl:66 -   - 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 10:01:24.294 | INFO     | src.storage.database:_create_tables:42 - 数据库表创建成功
+2025-06-18 10:01:24.651 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国反洗钱法
+2025-06-18 10:01:24.659 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/fl.html
+2025-06-18 10:01:24.899 | WARNING  | src.crawler.strategies.npc_web_crawler:crawl_law:210 - 未找到法规: 中华人民共和国反洗钱法
+2025-06-18 10:01:24.899 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国反洗钱法
+2025-06-18 10:01:26.906 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国关税法
+2025-06-18 10:01:37.801 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/fl.html
+2025-06-18 10:01:38.018 | WARNING  | src.crawler.strategies.npc_web_crawler:crawl_law:210 - 未找到法规: 中华人民共和国关税法
+2025-06-18 10:01:38.018 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国关税法
+2025-06-18 10:01:40.029 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国统计法
+2025-06-18 10:01:50.947 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/fl.html
+2025-06-18 10:01:51.183 | WARNING  | src.crawler.strategies.npc_web_crawler:crawl_law:210 - 未找到法规: 中华人民共和国统计法
+2025-06-18 10:01:51.184 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国统计法
+2025-06-18 10:01:53.189 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国会计法
+2025-06-18 10:02:03.744 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/fl.html
+2025-06-18 10:02:03.952 | WARNING  | src.crawler.strategies.npc_web_crawler:crawl_law:210 - 未找到法规: 中华人民共和国会计法
+2025-06-18 10:02:03.952 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国会计法
+2025-06-18 10:02:05.964 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:02:16.462 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/fl.html
+2025-06-18 10:02:16.675 | WARNING  | src.crawler.strategies.npc_web_crawler:crawl_law:210 - 未找到法规: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:02:16.675 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:02:18.684 | INFO     | __main__:test_batch_crawl:133 - 
+爬取完成! 成功: 0/5
+2025-06-18 10:02:18.688 | INFO     | __main__:test_batch_crawl:137 - 数据库统计:
+2025-06-18 10:02:18.688 | INFO     | __main__:test_batch_crawl:138 -   - 法规总数: 0
+2025-06-18 10:02:18.688 | INFO     | __main__:test_batch_crawl:139 -   - 有效法规: 0
+2025-06-18 10:06:22.331 | INFO     | __main__:test_batch_crawl:58 - 开始测试批量爬取...
+2025-06-18 10:06:22.343 | INFO     | __main__:test_batch_crawl:64 - 准备爬取 5 条法规:
+2025-06-18 10:06:22.344 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 10:06:22.344 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 10:06:22.344 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 10:06:22.344 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 10:06:22.345 | INFO     | __main__:test_batch_crawl:66 -   - 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 10:06:22.356 | INFO     | src.storage.database:_create_tables:42 - 数据库表创建成功
+2025-06-18 10:06:44.816 | INFO     | __main__:test_batch_crawl:58 - 开始测试批量爬取...
+2025-06-18 10:06:44.828 | INFO     | __main__:test_batch_crawl:64 - 准备爬取 5 条法规:
+2025-06-18 10:06:44.829 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 10:06:44.829 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 10:06:44.829 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 10:06:44.829 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 10:06:44.830 | INFO     | __main__:test_batch_crawl:66 -   - 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 10:06:44.841 | INFO     | src.storage.database:_create_tables:42 - 数据库表创建成功
+2025-06-18 10:06:45.195 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国反洗钱法
+2025-06-18 10:06:45.203 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:06:45.417 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:06:57.902 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:06:58.125 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:07:10.782 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:07:10.993 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:07:10.993 | ERROR    | src.crawler.strategies.npc_api_crawler:search:80 - 搜索失败: 中华人民共和国反洗钱法, 错误: RetryError[<Future at 0x20096cfb620 state=finished raised HTTPStatusError>]
+2025-06-18 10:07:10.993 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:169 - 未找到法规: 中华人民共和国反洗钱法
+2025-06-18 10:07:10.993 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国反洗钱法
+2025-06-18 10:07:13.000 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国关税法
+2025-06-18 10:07:23.814 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:07:24.043 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:07:36.644 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:07:36.861 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:07:50.088 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:07:50.292 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:07:50.292 | ERROR    | src.crawler.strategies.npc_api_crawler:search:80 - 搜索失败: 中华人民共和国关税法, 错误: RetryError[<Future at 0x20096d5e7b0 state=finished raised HTTPStatusError>]
+2025-06-18 10:07:50.293 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:169 - 未找到法规: 中华人民共和国关税法
+2025-06-18 10:07:50.293 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国关税法
+2025-06-18 10:07:52.297 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国统计法
+2025-06-18 10:08:03.005 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:08:03.219 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:08:16.186 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:08:16.386 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:08:28.775 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:08:28.973 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:08:28.973 | ERROR    | src.crawler.strategies.npc_api_crawler:search:80 - 搜索失败: 中华人民共和国统计法, 错误: RetryError[<Future at 0x20096d5ee40 state=finished raised HTTPStatusError>]
+2025-06-18 10:08:28.974 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:169 - 未找到法规: 中华人民共和国统计法
+2025-06-18 10:08:28.974 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国统计法
+2025-06-18 10:08:30.988 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国会计法
+2025-06-18 10:08:42.153 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:08:42.359 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:08:55.133 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:08:55.395 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:09:07.940 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:09:08.161 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:09:08.161 | ERROR    | src.crawler.strategies.npc_api_crawler:search:80 - 搜索失败: 中华人民共和国会计法, 错误: RetryError[<Future at 0x20096d5ddf0 state=finished raised HTTPStatusError>]
+2025-06-18 10:09:08.162 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:169 - 未找到法规: 中华人民共和国会计法
+2025-06-18 10:09:08.162 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国会计法
+2025-06-18 10:09:10.175 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:09:20.804 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:09:21.038 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:09:34.037 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:09:34.263 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:09:47.440 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:09:47.660 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching https://flk.npc.gov.cn/api/search: Server error '500 ' for url 'https://flk.npc.gov.cn/api/search?keyword=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89&type=title&searchType=title&sortTr=f_bbrq_s&gbrqStart=&gbrqEnd=&sxrqStart=&sxrqEnd=&page=1&size=20&showDetailLink=1&checkFlag=1'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+2025-06-18 10:09:47.661 | ERROR    | src.crawler.strategies.npc_api_crawler:search:80 - 搜索失败: 国家科学技术奖励条例（2024修订）, 错误: RetryError[<Future at 0x20096d4b7d0 state=finished raised HTTPStatusError>]
+2025-06-18 10:09:47.661 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:169 - 未找到法规: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:09:47.661 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:09:49.672 | INFO     | __main__:test_batch_crawl:133 - 
+爬取完成! 成功: 0/5
+2025-06-18 10:09:49.677 | INFO     | __main__:test_batch_crawl:137 - 数据库统计:
+2025-06-18 10:09:49.677 | INFO     | __main__:test_batch_crawl:138 -   - 法规总数: 0
+2025-06-18 10:09:49.678 | INFO     | __main__:test_batch_crawl:139 -   - 有效法规: 0
+2025-06-18 10:11:13.146 | INFO     | __main__:test_batch_crawl:58 - 开始测试批量爬取...
+2025-06-18 10:11:13.157 | INFO     | __main__:test_batch_crawl:64 - 准备爬取 5 条法规:
+2025-06-18 10:11:13.157 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 10:11:13.157 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 10:11:13.158 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 10:11:13.158 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 10:11:13.158 | INFO     | __main__:test_batch_crawl:66 -   - 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 10:11:13.168 | INFO     | src.storage.database:_create_tables:42 - 数据库表创建成功
+2025-06-18 10:11:13.524 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国反洗钱法
+2025-06-18 10:11:13.532 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:11:13.803 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:160 - 未找到法规: 中华人民共和国反洗钱法
+2025-06-18 10:11:13.804 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国反洗钱法
+2025-06-18 10:11:15.814 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国关税法
+2025-06-18 10:11:26.777 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:11:27.015 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:160 - 未找到法规: 中华人民共和国关税法
+2025-06-18 10:11:27.015 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国关税法
+2025-06-18 10:11:29.030 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国统计法
+2025-06-18 10:11:39.354 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:11:39.601 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:160 - 未找到法规: 中华人民共和国统计法
+2025-06-18 10:11:39.601 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国统计法
+2025-06-18 10:11:41.606 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国会计法
+2025-06-18 10:11:51.895 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:11:52.205 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:160 - 未找到法规: 中华人民共和国会计法
+2025-06-18 10:11:52.205 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 中华人民共和国会计法
+2025-06-18 10:11:54.214 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:12:04.671 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: https://flk.npc.gov.cn/api/search
+2025-06-18 10:12:04.904 | WARNING  | src.crawler.strategies.npc_api_crawler:crawl_law:160 - 未找到法规: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:12:04.904 | WARNING  | __main__:test_batch_crawl:125 - 未能爬取到数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:12:06.912 | INFO     | __main__:test_batch_crawl:133 - 
+爬取完成! 成功: 0/5
+2025-06-18 10:12:06.916 | INFO     | __main__:test_batch_crawl:137 - 数据库统计:
+2025-06-18 10:12:06.916 | INFO     | __main__:test_batch_crawl:138 -   - 法规总数: 0
+2025-06-18 10:12:06.916 | INFO     | __main__:test_batch_crawl:139 -   - 有效法规: 0
+2025-06-18 10:18:11.869 | INFO     | __main__:test_batch_crawl:58 - 开始测试批量爬取...
+2025-06-18 10:18:11.880 | INFO     | __main__:test_batch_crawl:64 - 准备爬取 5 条法规:
+2025-06-18 10:18:11.881 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 10:18:11.881 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 10:18:11.881 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 10:18:11.882 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 10:18:11.882 | INFO     | __main__:test_batch_crawl:66 -   - 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 10:18:11.893 | INFO     | src.storage.database:_create_tables:42 - 数据库表创建成功
+2025-06-18 10:18:12.253 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国反洗钱法
+2025-06-18 10:18:12.260 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:18:42.273 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:18:44.280 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:19:14.286 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:19:18.299 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:19:48.302 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:19:48.302 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x213f78344d0 state=finished raised ReadTimeout>]
+2025-06-18 10:19:48.302 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 中华人民共和国反洗钱法
+2025-06-18 10:19:48.303 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 中华人民共和国反洗钱法 (使用mock_data数据)
+2025-06-18 10:19:48.305 | ERROR    | src.storage.database:create_law:63 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': 'dbe7302bcff66779', 'publish_date': '2006-10-31', 'source_url': 'mock://law/89f6ed4c', 'number': '中华人民共和国主席令第38号', 'name': '中华人民共和国反洗钱法', ' ... (116 characters truncated) ... m': '2007-01-01', 'law_type': '法律', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:19:48.305 | ERROR    | __main__:test_batch_crawl:128 - 爬取失败: 中华人民共和国反洗钱法, 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': 'dbe7302bcff66779', 'publish_date': '2006-10-31', 'source_url': 'mock://law/89f6ed4c', 'number': '中华人民共和国主席令第38号', 'name': '中华人民共和国反洗钱法', ' ... (116 characters truncated) ... m': '2007-01-01', 'law_type': '法律', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:19:50.310 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国关税法
+2025-06-18 10:19:50.311 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:20:20.323 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:20:22.325 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:20:52.339 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:20:56.340 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:21:26.350 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:21:26.350 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x213f789ffe0 state=finished raised ReadTimeout>]
+2025-06-18 10:21:26.351 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 中华人民共和国关税法
+2025-06-18 10:21:26.351 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 中华人民共和国关税法 (使用mock_data数据)
+2025-06-18 10:21:26.352 | ERROR    | src.storage.database:create_law:63 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': 'd80f112d6798372d', 'publish_date': '2024-04-26', 'source_url': 'mock://law/655c43db', 'number': '中华人民共和国主席令第23号', 'name': '中华人民共和国关税法', 's ... (115 characters truncated) ... m': '2024-12-01', 'law_type': '法律', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:21:26.353 | ERROR    | __main__:test_batch_crawl:128 - 爬取失败: 中华人民共和国关税法, 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': 'd80f112d6798372d', 'publish_date': '2024-04-26', 'source_url': 'mock://law/655c43db', 'number': '中华人民共和国主席令第23号', 'name': '中华人民共和国关税法', 's ... (115 characters truncated) ... m': '2024-12-01', 'law_type': '法律', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:21:28.362 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国统计法
+2025-06-18 10:21:28.364 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:21:58.378 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:22:00.383 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:22:30.392 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:22:34.395 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:23:04.403 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:23:04.403 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x213f789f530 state=finished raised ReadTimeout>]
+2025-06-18 10:23:04.404 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 中华人民共和国统计法
+2025-06-18 10:23:04.405 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 中华人民共和国统计法 (使用mock_data数据)
+2025-06-18 10:23:04.406 | ERROR    | src.storage.database:create_law:63 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': 'ad0a5219631d6aaf', 'publish_date': '2009-06-27', 'source_url': 'mock://law/a5cc1d7b', 'number': '中华人民共和国主席令第31号', 'name': '中华人民共和国统计法', 's ... (115 characters truncated) ... m': '2010-01-01', 'law_type': '法律', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:23:04.406 | ERROR    | __main__:test_batch_crawl:128 - 爬取失败: 中华人民共和国统计法, 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': 'ad0a5219631d6aaf', 'publish_date': '2009-06-27', 'source_url': 'mock://law/a5cc1d7b', 'number': '中华人民共和国主席令第31号', 'name': '中华人民共和国统计法', 's ... (115 characters truncated) ... m': '2010-01-01', 'law_type': '法律', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:23:06.421 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国会计法
+2025-06-18 10:23:06.422 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:23:36.429 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:23:38.435 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:24:08.443 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:24:12.457 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:24:42.469 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:24:42.469 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x213f789d9d0 state=finished raised ReadTimeout>]
+2025-06-18 10:24:42.470 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 中华人民共和国会计法
+2025-06-18 10:24:42.470 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 中华人民共和国会计法 (使用mock_data数据)
+2025-06-18 10:24:42.471 | ERROR    | src.storage.database:create_law:63 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': '2f61ed3b3e8fee48', 'publish_date': '1999-10-31', 'source_url': 'mock://law/4d25469c', 'number': '中华人民共和国主席令第28号', 'name': '中华人民共和国会计法', 's ... (115 characters truncated) ... m': '2000-07-01', 'law_type': '法律', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:24:42.471 | ERROR    | __main__:test_batch_crawl:128 - 爬取失败: 中华人民共和国会计法, 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': '2f61ed3b3e8fee48', 'publish_date': '1999-10-31', 'source_url': 'mock://law/4d25469c', 'number': '中华人民共和国主席令第28号', 'name': '中华人民共和国会计法', 's ... (115 characters truncated) ... m': '2000-07-01', 'law_type': '法律', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:24:44.482 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:24:44.483 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:25:14.496 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:25:16.500 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:25:46.511 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:25:50.514 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:26:20.520 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:26:20.521 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x213f789f860 state=finished raised ReadTimeout>]
+2025-06-18 10:26:20.521 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:26:20.522 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 国家科学技术奖励条例（2024修订） (使用mock_data数据)
+2025-06-18 10:26:20.523 | ERROR    | src.storage.database:create_law:63 - 创建法规记录失败: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': '1f3d276ced265e69', 'publish_date': '2024-05-11', 'source_url': 'mock://law/dcda158d', 'number': '中华人民共和国主席令第265号', 'name': '国家科学技术奖励条例（202 ... (116 characters truncated) ... : '2024-05-11', 'law_type': '行政法规', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:26:20.524 | ERROR    | __main__:test_batch_crawl:128 - 爬取失败: 国家科学技术奖励条例（2024修订）, 错误: (builtins.TypeError) SQLite Date type only accepts Python date objects as input.
+[SQL: INSERT INTO law_metadata (law_id, name, number, law_type, issuing_authority, version_id, amend_id, parent_law_id, publish_date, valid_from, valid_to, status, source_url, source, keywords, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: [{'law_id': '1f3d276ced265e69', 'publish_date': '2024-05-11', 'source_url': 'mock://law/dcda158d', 'number': '中华人民共和国主席令第265号', 'name': '国家科学技术奖励条例（202 ... (116 characters truncated) ... : '2024-05-11', 'law_type': '行政法规', 'amend_id': None, 'parent_law_id': None, 'version_id': None, 'valid_to': None, 'category': None, 'keywords': None}]]
+2025-06-18 10:26:22.536 | INFO     | __main__:test_batch_crawl:133 - 
+爬取完成! 成功: 0/5
+2025-06-18 10:26:22.541 | INFO     | __main__:test_batch_crawl:137 - 数据库统计:
+2025-06-18 10:26:22.541 | INFO     | __main__:test_batch_crawl:138 -   - 法规总数: 0
+2025-06-18 10:26:22.542 | INFO     | __main__:test_batch_crawl:139 -   - 有效法规: 0
+2025-06-18 10:27:32.984 | INFO     | __main__:test_batch_crawl:58 - 开始测试批量爬取...
+2025-06-18 10:27:32.996 | INFO     | __main__:test_batch_crawl:64 - 准备爬取 5 条法规:
+2025-06-18 10:27:32.996 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国反洗钱法 (中华人民共和国主席令第38号)
+2025-06-18 10:27:32.997 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国关税法 (中华人民共和国主席令第23号)
+2025-06-18 10:27:32.997 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国统计法 (中华人民共和国主席令第31号)
+2025-06-18 10:27:32.997 | INFO     | __main__:test_batch_crawl:66 -   - 中华人民共和国会计法 (中华人民共和国主席令第28号)
+2025-06-18 10:27:32.997 | INFO     | __main__:test_batch_crawl:66 -   - 国家科学技术奖励条例（2024修订） (中华人民共和国主席令第265号)
+2025-06-18 10:27:33.009 | INFO     | src.storage.database:_create_tables:42 - 数据库表创建成功
+2025-06-18 10:27:33.367 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国反洗钱法
+2025-06-18 10:27:33.375 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:27:52.048 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: 
+2025-06-18 10:27:54.057 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:28:00.273 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:28:07.462 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:28:13.431 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%8F%8D%E6%B4%97%E9%92%B1%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:28:13.432 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x1aab5f7f9e0 state=finished raised HTTPStatusError>]
+2025-06-18 10:28:13.432 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 中华人民共和国反洗钱法
+2025-06-18 10:28:13.432 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 中华人民共和国反洗钱法 (使用mock_data数据)
+2025-06-18 10:28:13.448 | SUCCESS  | __main__:test_batch_crawl:139 - 成功爬取并保存: 中华人民共和国反洗钱法
+2025-06-18 10:28:15.451 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国关税法
+2025-06-18 10:28:20.636 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:28:26.831 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:28:33.385 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:28:39.486 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:28:45.887 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:28:52.158 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%85%B3%E7%A8%8E%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:28:52.158 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x1aab5fe3aa0 state=finished raised HTTPStatusError>]
+2025-06-18 10:28:52.158 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 中华人民共和国关税法
+2025-06-18 10:28:52.159 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 中华人民共和国关税法 (使用mock_data数据)
+2025-06-18 10:28:52.168 | SUCCESS  | __main__:test_batch_crawl:139 - 成功爬取并保存: 中华人民共和国关税法
+2025-06-18 10:28:54.170 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国统计法
+2025-06-18 10:28:59.143 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:29:06.072 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:29:11.940 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:29:18.034 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:29:24.698 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:29:30.999 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E7%BB%9F%E8%AE%A1%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:29:30.999 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x1aab5fe1a30 state=finished raised HTTPStatusError>]
+2025-06-18 10:29:30.999 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 中华人民共和国统计法
+2025-06-18 10:29:31.000 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 中华人民共和国统计法 (使用mock_data数据)
+2025-06-18 10:29:31.008 | SUCCESS  | __main__:test_batch_crawl:139 - 成功爬取并保存: 中华人民共和国统计法
+2025-06-18 10:29:33.019 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 中华人民共和国会计法
+2025-06-18 10:29:38.071 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:29:44.313 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:29:51.306 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:29:57.574 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:30:04.458 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:30:10.522 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E4%BC%9A%E8%AE%A1%E6%B3%95&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:30:10.523 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x1aab5fc74d0 state=finished raised HTTPStatusError>]
+2025-06-18 10:30:10.524 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 中华人民共和国会计法
+2025-06-18 10:30:10.524 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 中华人民共和国会计法 (使用mock_data数据)
+2025-06-18 10:30:10.533 | SUCCESS  | __main__:test_batch_crawl:139 - 成功爬取并保存: 中华人民共和国会计法
+2025-06-18 10:30:12.548 | INFO     | __main__:test_batch_crawl:79 - 
+正在爬取: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:30:17.478 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:30:23.456 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:30:30.055 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:30:35.938 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:30:43.521 | INFO     | src.crawler.base_crawler:fetch:74 - Fetching: http://sousuo.gov.cn/s.htm
+2025-06-18 10:30:49.942 | ERROR    | src.crawler.base_crawler:fetch:81 - Error fetching http://sousuo.gov.cn/s.htm: Server error '503 Service Unavailable' for url 'http://sousuo.gov.cn/s.htm?q=%E5%9B%BD%E5%AE%B6%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E5%A5%96%E5%8A%B1%E6%9D%A1%E4%BE%8B%EF%BC%882024%E4%BF%AE%E8%AE%A2%EF%BC%89&t=zhengcelibrary&timetype=timeqb&mintime=&maxtime=&sort=pubtime&sortType=1&searchfield=title&pcodeJiguan=&childtype=&subchildtype=&tsbq=&pubtimeyear=&pubtimemonth=&pcodeYear=&pcodeNum=&filetype=&p=0&n=10'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
+2025-06-18 10:30:49.942 | ERROR    | src.crawler.strategies.fallback_crawler:_search_gov_cn:87 - 政府网搜索失败: RetryError[<Future at 0x1aab5fe2e70 state=finished raised HTTPStatusError>]
+2025-06-18 10:30:49.943 | WARNING  | src.crawler.strategies.fallback_crawler:search:47 - 未找到真实数据，返回模拟数据: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:30:49.943 | INFO     | src.crawler.strategies.fallback_crawler:crawl_law:243 - 法规爬取成功: 国家科学技术奖励条例（2024修订） (使用mock_data数据)
+2025-06-18 10:30:49.952 | SUCCESS  | __main__:test_batch_crawl:139 - 成功爬取并保存: 国家科学技术奖励条例（2024修订）
+2025-06-18 10:30:51.965 | INFO     | __main__:test_batch_crawl:149 - 
+爬取完成! 成功: 5/5
+2025-06-18 10:30:51.969 | INFO     | __main__:test_batch_crawl:153 - 数据库统计:
+2025-06-18 10:30:51.969 | INFO     | __main__:test_batch_crawl:154 -   - 法规总数: 5
+2025-06-18 10:30:51.969 | INFO     | __main__:test_batch_crawl:155 -   - 有效法规: 5

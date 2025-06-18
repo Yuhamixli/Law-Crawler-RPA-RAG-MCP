@@ -1,0 +1,754 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <title>国家法律法规数据库</title> 
+  <link rel="stylesheet" href="./css/style.css"> 
+  <link rel="stylesheet" href="./css/fonticon/iconfont.css"> 
+  <link rel="stylesheet" href="./js/layui/css/layui.css"> 
+ </head> 
+ <body> 
+  <div class="logo"> 
+   <ul> 
+    <a href="./index.html"><li style="float: left;"><img src="./images/logo1.png"></li></a> 
+    <li><p>欢迎您访问国家法律法规数据库</p></li> 
+    <li><i class="iconfont" style="color:#DEDEDE; font-size:28px; line-height: 62px;"></i></li> 
+   </ul> 
+  </div> 
+  <div class="banner"> 
+   <div class="nav-b"> 
+    <ul class="nav" style="display: flex;"> 
+     <li><p class="line"></p></li> 
+     <li class="text nav-click" id="sy" onclick="changeDiv(this)">首页</li> 
+     <li><p class="line"></p></li> 
+     <li class="text" id="xffl" onclick="changeDiv(this)">宪法</li> 
+     <li><p class="line"></p></li> 
+     <li class="text" id="flfg" onclick="changeDiv(this)">法律</li> 
+     <li><p class="line"></p></li> 
+     <li class="text" id="xzfg" onclick="changeDiv(this)">行政法规</li> 
+     <li><p class="line"></p></li> 
+     <li class="text" id="jcfg" onclick="changeDiv(this)">监察法规</li> 
+     <li><p class="line"></p></li> 
+     <li class="text" id="sfjs" onclick="changeDiv(this)">司法解释</li> 
+     <li><p class="line"></p></li> 
+     <li class="text" id="dfxfg" onclick="changeDiv(this)">地方性法规</li> 
+     <li><p class="line"></p></li> 
+    </ul> 
+   </div> 
+   <div class="find1"> 
+    <ul class="find"> 
+     <li style="width:790px;"><input type="text" id="flfgTitle" class="f-font"></li> 
+     <li style="width:210px;"> 
+      <ul class="f-but"> 
+       <li onclick="confirmFilter()"><i class="iconfont home-search"></i></li> 
+       <li class="line"></li> 
+       <li class="advanced-search" onclick="showSX()">高级检索</li> 
+       <li onclick="showSX()"><i class="iconfont advanced-search-icon"></i></li> 
+      </ul></li> 
+     <li class="search-description" onclick="window.open(&quot;./help.html&quot;,&quot;_blank&quot;)">检索说明</li> 
+    </ul> 
+   </div> 
+  </div> 
+  <div class="content"> 
+   <div class="sx-box" id="sx-box" style="display: none;"> 
+    <div id="mask"> 
+     <ul class="sx-but"> 
+      <li><input type="button" value="重置" onclick="clickReset()" class="sx-butq"></li> 
+      <li><input type="button" value="取消" onclick="cancelFilter()" class="sx-butq"></li> 
+      <li><input type="button" value="确定" onclick="confirmFilter()" class="sx-butd"></li> 
+     </ul> 
+     <div id="triangle"></div> 
+     <form id="form"> 
+      <input type="hidden" name="type" id="type"> 
+      <input type="hidden" name="sortTr" id="sortTr" value="f_bbrq_s"> 
+      <input type="hidden" id="sortType" value="desc"> 
+      <input type="hidden" id="sort" value="true"> 
+      <input type="hidden" id="last"> 
+      <div class="left"> 
+       <div class="formItem"> 
+        <div class="label">
+          检索范围 
+        </div> 
+        <div style="display: inline-block;"> 
+         <label><input type="radio" checked class="ipt radioIpt" name="biaoti" value="title" id="biaoti_1">标题&nbsp;</label> 
+         <label><input type="radio" class="ipt radioIpt" name="biaoti" value="content" id="biaoti_2">正文&nbsp;</label> 
+         <label><input type="radio" class="ipt radioIpt" name="biaoti" value="all" id="biaoti">标题+正文&nbsp;</label> 
+        </div> 
+       </div> 
+       <div class="formItem"> 
+        <div class="label">
+          施行日期 
+        </div> 
+        <input class="layui-input ipt" style="width: 148px; height: 27px;display: inline;" type="text" id="sxrqStart"> 
+        <span style="display: inline-block; width: 25px;text-align: center;">至</span> 
+        <input class="layui-input ipt" style="width: 148px; height: 27px;display: inline;" type="text" id="sxrqEnd"> 
+       </div> 
+       <div class="formItem"> 
+        <div class="label">
+          时效性 
+        </div> 
+        <label><input class="ipt checkboxIpt" type="checkbox" name="sxxSearch" value="3">尚未生效&nbsp;</label> 
+        <label><input class="ipt checkboxIpt" type="checkbox" name="sxxSearch" value="1">有效&nbsp;</label> 
+        <label><input class="ipt checkboxIpt" type="checkbox" name="sxxSearch" value="5">已修改&nbsp;</label> 
+        <label><input class="ipt checkboxIpt" type="checkbox" name="sxxSearch" value="9">已废止</label> 
+       </div> 
+       <div class="formItem"> 
+        <div class="label">
+          法律效力位阶 
+        </div> 
+        <div class="iconInIpt"> 
+         <input id="flSelect" readonly class="ipt" style="width: 336px; height: 27px;display: inline-block;"> 
+         <i id="flSelectIcon" class="iconfont icon-arrow_down"></i> 
+        </div> 
+        <div id="flSelectList"> 
+         <ul> 
+          <li> 
+           <div class="checkGroup"> 
+            <label><input class="ipt checkboxIpt" name="xlwj" value="01" type="checkbox"> 宪法</label> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup">
+             法律 
+           </div> 
+           <div class="groupContent"> 
+            <p>法律</p> 
+            <div class="checkItem"> 
+             <label><input class="ipt checkboxIpt" name="xlwjall" id="xlwjAll" type="checkbox">全选</label> 
+             <label><input class="ipt checkboxIpt" name="xlwj" value="02" type="checkbox">宪法相关法</label> 
+             <label><input class="ipt checkboxIpt" name="xlwj" value="03" type="checkbox">民法商法</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="xlwj" value="04" type="checkbox">行政法</label> 
+             <label><input class="ipt checkboxIpt" name="xlwj" value="05" type="checkbox">经济法</label> 
+             <label><input class="ipt checkboxIpt" name="xlwj" value="06" type="checkbox">社会法</label> 
+             <label><input class="ipt checkboxIpt" name="xlwj" value="07" type="checkbox">刑法</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="xlwj" value="08" type="checkbox">诉讼与非诉讼程序法</label> 
+            </div> 
+            <label><input class="ipt checkboxIpt" name="xlwj" value="fljs" type="checkbox">法律解释</label> 
+            <br> 
+            <label><input class="ipt checkboxIpt" name="xlwj" value="flwj" type="checkbox"> 有关法律问题和重大问题的决定（部分）</label> 
+            <br> 
+            <label><input class="ipt checkboxIpt" name="xlwj" value="flxz" type="checkbox">修改、废止的决定</label> 
+            <br> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup"> 
+            <label><input class="ipt checkboxIpt" name="fgxlwj" value="xzfg" type="checkbox"> 行政法规</label> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup"> 
+            <label><input class="ipt checkboxIpt" name="fgxlwj" value="jcfg" type="checkbox"> 监察法规</label> 
+           </div></li> 
+          <!-- <li>
+                    <div class="checkGroup">
+                      <label><input class="ipt checkboxIpt" name="fgxlwj" value="jcfg" type="checkbox"> 监察法规</label>
+                    </div>
+                  </li> --> 
+          <li> 
+           <div class="checkGroup">
+             地方性法规 
+           </div> 
+           <div class="groupContent"> 
+            <p>地方性法规</p> 
+            <div class="checkItem"> 
+             <label><input class="ipt checkboxIpt" name="fgxlwjall" id="fgxlwjall" type="checkbox">全选</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="2" type="checkbox">省级地方性法规</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="3" type="checkbox">设区的市地方性法规</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="6" type="checkbox">自治州单行条例</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="4" type="checkbox">自治州自治条例</label> 
+             <bar></bar> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="7" type="checkbox">自治县单行条例</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="5" type="checkbox">自治县自治条例</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="8" type="checkbox">经济特区法规</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="10" type="checkbox">浦东新区法规</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="9" type="checkbox">海南自由贸易港法规</label> 
+            </div> 
+            <label><input class="ipt checkboxIpt" name="fgxlwj" value="0902" type="checkbox">修改、废止的决定</label> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup">
+             司法解释 
+           </div> 
+           <div class="groupContent"> 
+            <div class="checkItem"> 
+             <label><input class="ipt checkboxIpt" name="explainAll" id="explainAll" type="checkbox">全选</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="0602" type="checkbox">高法司法解释</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="0601" type="checkbox">高检司法解释</label> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="0603" type="checkbox">联合发布司法解释</label> 
+            </div> 
+            <div> 
+             <label><input class="ipt checkboxIpt" name="fgxlwj" value="0903" type="checkbox">修改、废止的决定</label> 
+            </div> 
+           </div></li> 
+         </ul> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="right"> 
+       <div class="formItem"> 
+        <div class="label">
+          检索方式 
+        </div> 
+        <div style="display: inline-block;"> 
+         <label><input type="radio" checked class="ipt radioIpt" name="searchCla" value="accurate" id="searchCla">精确查询&nbsp;</label> 
+         <label><input type="radio" class="ipt radioIpt" name="searchCla" value="vague" id="searchCla_1">模糊查询&nbsp;</label> 
+        </div> 
+       </div> 
+       <div class="formItem"> 
+        <div class="label">
+          公布日期 
+        </div> 
+        <input class="layui-input ipt" style="width: 148px; height: 27px;display: inline;" type="text" id="gbrqStart"> 
+        <span style="display: inline-block; width: 25px;text-align: center;">至</span> 
+        <input class="layui-input ipt" style="width: 148px; height: 27px;display: inline;" type="text" id="gbrqEnd"> 
+       </div> 
+       <div class="formItem"> 
+        <div class="label">
+          制定机关 
+        </div> 
+        <div class="iconInIpt"> 
+         <input id="jgSelect" readonly class="ipt" style="width: 336px; height: 27px;display: inline-block;"> 
+         <i id="jgSelectIcon" class="iconfont icon-arrow_down"></i> 
+        </div> 
+        <div id="jgSelectList"> 
+         <ul> 
+          <li> 
+           <div class="checkGroup">
+             全国人大及其常委会 
+           </div> 
+           <div class="groupContent"> 
+            <div class="checkItem"> 
+             <label><input class="ipt checkboxIpt" name="zdjgAll" id="zdjgAll" type="checkbox">全选</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" value="qgrmdbdh" type="checkbox">全国人大</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" value="qgrmdbdhcwwyh" type="checkbox">全国人大常委会</label> 
+            </div> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup"> 
+            <label><input class="ipt checkboxIpt" name="zdjg" value="gwy" type="checkbox"> 国务院</label> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup"> 
+            <label><input class="ipt checkboxIpt" name="zdjg" value="gjjcwyh" type="checkbox"> 国家监察委员会</label> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup"> 
+            <label><input class="ipt checkboxIpt" name="zdjg" value="0601" type="checkbox"> 最高人民检察院</label> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup"> 
+            <label><input class="ipt checkboxIpt" name="zdjg" value="0602" type="checkbox"> 最高人民法院</label> 
+           </div></li> 
+          <li> 
+           <div class="checkGroup">
+             地方人大及其常委会 
+           </div> 
+           <div class="groupContent"> 
+            <div class="checkItem"> 
+             <label><input class="ipt checkboxIpt" name="rdzdjgAll" id="rdzdjgAll" type="checkbox">全选</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858a4d78b0158a50f344e0048&amp;4028814858a4d78b0158a50fa2ba004c">北京</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158be80b1fb0004&amp;4028814858b9b8e50158be81c2bd0008">天津</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858a4d78b0158a51071cb0050&amp;4028814858a4d78b0158a513cbac0054">河北</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158beb88965000d&amp;4028814858b9b8e50158beb9cebd0011">山西</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bebb20750015&amp;4028814858b9b8e50158bebbf2630019">内蒙古</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bebd69e2001d&amp;4028814858b9b8e50158bec078c00021">辽宁</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bec1c1820025&amp;4028814858b9b8e50158bec2dcbf0029">吉林</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858a542db0158a9c8786e004d&amp;4028814858a542db0158a9c9c7c50051">黑龙江</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bec45e9a002d&amp;4028814858b9b8e50158bec500350031">上海</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bec5c28a0035&amp;4028814858b9b8e50158bec6abbf0039">江苏</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bec7c42f003d&amp;4028814858b9b8e50158beca3c590041">浙江</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="40284b82588a199001588a461c70003b&amp;40284b82588a199001588a473c37003f">安徽</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bed0ae4c0049&amp;4028814858b9b8e50158bed16673004d">福建</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bed279b40051&amp;4028814858b9b8e50158bed3084c0055">江西</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bed40f6d0059&amp;4028814858b9b8e50158bed4987a005d">山东</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bed591680061&amp;4028814858b9b8e50158bed64efb0065">河南</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bed7338f0069&amp;4028814858b9b8e50158bed7c16c006d">湖北</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bed8a0d20071&amp;4028814858b9b8e50158bed91af00075">湖南</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158beda43a50079&amp;4028814858b9b8e50158bedab7ea007d">广东</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bee02fd50081&amp;4028814858b9b8e50158bee198d40085">广西</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bee2d3a10089&amp;4028814858b9b8e50158bee3c9e1008d">海南</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bee5863c0091&amp;4028814858b9b8e50158bee9a3aa0095">重庆</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158beeaa1b70099&amp;4028814858b9b8e50158beeb4757009d">四川</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158beec5ac800a1&amp;4028814858b9b8e50158beecfed300a5">贵州</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158beee174200a9&amp;4028814858b9b8e50158beeeaf7b00ad">云南</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158beefec0d00b1&amp;4028814858b9b8e50158bef0947c00b5">西藏</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bef1d72600b9&amp;4028814858b9b8e50158bef2706800bd">陕西</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bef3797c00c1&amp;4028814858b9b8e50158bef4210100c5">甘肃</label> 
+             <br> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bef53e9e00c9&amp;4028814858b9b8e50158bef5d32f00cd">青海</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bef6eec900d1&amp;4028814858b9b8e50158bef7e82500d5">宁夏</label> 
+             <label><input class="ipt checkboxIpt" name="zdjg" type="checkbox" value="4028814858b9b8e50158bef9249700d9&amp;4028814858b9b8e50158bef9d8b900dd">新疆</label> 
+            </div> 
+           </div></li> 
+         </ul> 
+        </div> 
+       </div> 
+      </div> 
+     </form> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="content" id="content"> 
+   <div class="c1"> 
+    <div class="c-left"> 
+     <ul class="c-top1"> 
+      <li class="c-title1">新法速递</li> 
+      <li style="cursor:pointer" class="c-more" onclick="changeLast()">更多</li> 
+      <li style="cursor:pointer"><i onclick="changeLast()" class="iconfont c-more-icon"></i></li> 
+     </ul> 
+     <div id="xfsd">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODk3MzAxOTc1MjI3NWMzNTJhNmY%3D', '_blank')" title="滁州市养老服务促进条例" style="cursor:pointer;" class="list-wen"> 滁州市养老服务促进条例 </p> </li> 
+       <li class="list-time"> <p> [2025-06-03] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODZiZjAxOTc1ZGQ5OGUzNjZjYzM%3D', '_blank')" title="河南省母婴保健条例" style="cursor:pointer;" class="list-wen"> 河南省母婴保健条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODk3MzAxOTc1ZGRiZTI1YTcxNTQ%3D', '_blank')" title="河南省人工影响天气管理条例" style="cursor:pointer;" class="list-wen"> 河南省人工影响天气管理条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODNhYjAxOTc1ZGRkYzlhZTAyZGE%3D', '_blank')" title="河南省统计管理条例" style="cursor:pointer;" class="list-wen"> 河南省统计管理条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODNhYjAxOTc1ZGM1YTRlOTAxNmM%3D', '_blank')" title="河南省职业教育条例" style="cursor:pointer;" class="list-wen"> 河南省职业教育条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul>
+     </div> 
+    </div> 
+    <div class="c-left c-right"> 
+     <ul class="c-top1 c-top2"> 
+      <li class="c-title2">宪法</li> 
+      <li style="cursor:pointer" class="c-more" onclick="changeMore(&quot;xffl&quot;)">更多</li> 
+      <li style="cursor:pointer"><i class="iconfont c-more-icon" onclick="changeMore(&quot;xffl&quot;)"></i></li> 
+     </ul> 
+     <div id="xffl2"> 
+      <ul class="list"> 
+       <li><img src="./images/home-point.png"></li> 
+       <li><p onclick="showDetail(&quot;./xf/html/xf1.html&quot;)" title="中华人民共和国宪法（1982年）" style="cursor:pointer;" class="list-wen">中华人民共和国宪法（1982年）</p></li> 
+       <li class="list-time"><p>[1982-12-04]</p></li> 
+      </ul> 
+      <ul class="list"> 
+       <li><img src="./images/home-point.png"></li> 
+       <li><p onclick="showDetail(&quot;./xf/html/xf2.html&quot;)" title="中华人民共和国宪法（2018年修正文本）" style="cursor:pointer;" class="list-wen">中华人民共和国宪法（2018年修正文本）</p></li> 
+       <li class="list-time"><p>[2018-03-11]</p></li> 
+      </ul> 
+      <ul class="list"> 
+       <li><img src="./images/home-point.png"></li> 
+       <li><p onclick="showDetail(&quot;./xf/html/xf3.html&quot;)" title="中华人民共和国宪法修正案（2018年）" style="cursor:pointer;" class="list-wen">中华人民共和国宪法修正案（2018年）</p></li> 
+       <li class="list-time"><p>[2018-03-11]</p></li> 
+      </ul> 
+      <ul class="list"> 
+       <li><img src="./images/home-point.png"></li> 
+       <li><p onclick="showDetail(&quot;./xf/html/xf4.html&quot;)" title="中华人民共和国宪法修正案（2004年）" style="cursor:pointer;" class="list-wen">中华人民共和国宪法修正案（2004年）</p></li> 
+       <li class="list-time"><p>[2004-03-14]</p></li> 
+      </ul> 
+      <ul class="list"> 
+       <li><img src="./images/home-point.png"></li> 
+       <li><p onclick="showDetail(&quot;./xf/html/xf5.html&quot;)" title="中华人民共和国宪法修正案（1999年）" style="cursor:pointer;" class="list-wen">中华人民共和国宪法修正案（1999年）</p></li> 
+       <li class="list-time"><p>[1999-03-15]</p></li> 
+      </ul> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="c2 c3"> 
+    <ul class="c-top1 c-top2"> 
+     <li class="c-title2">法律</li> 
+     <li class="c-tab1"> 
+      <ul id="fltab1"> 
+       <li value="flfg" onclick="changeLi(this,1,&quot;flfg&quot;)" class="c-tab1-select text">法律</li> 
+       <li value="fljs" onclick="changeLi(this,1,&quot;fljs&quot;)">法律解释</li> 
+       <li value="flwj" onclick="changeLi(this,1,&quot;flwj&quot;)">有关法律问题和重大问题的决定（部分）</li> 
+       <li value="flxz" onclick="changeLi(this,1,&quot;flxz&quot;)">修改、废止的决定</li> 
+      </ul></li> 
+     <li class="c-more" onclick="changeMoreFl()" style="cursor:pointer">更多</li> 
+     <li style="cursor:pointer"><i class="iconfont c-more-icon" onclick="changeMoreFl()"></i></li> 
+    </ul> 
+    <ul class="c-tab2" id="fltab2"> 
+     <li value="" onclick="changeLi(this,2,&quot;flfg&quot;)" class="c-tab2-select text">全部</li> 
+     <li value="02" onclick="changeLi(this,2,&quot;flfg&quot;)">宪法相关法</li> 
+     <li value="03" onclick="changeLi(this,2,&quot;flfg&quot;)">民法商法</li> 
+     <li value="04" onclick="changeLi(this,2,&quot;flfg&quot;)">行政法</li> 
+     <li value="05" onclick="changeLi(this,2,&quot;flfg&quot;)">经济法</li> 
+     <li value="06" onclick="changeLi(this,2,&quot;flfg&quot;)">社会法</li> 
+     <li value="07" onclick="changeLi(this,2,&quot;flfg&quot;)">刑法</li> 
+     <li value="08" onclick="changeLi(this,2,&quot;flfg&quot;)">诉讼与非诉讼程序法</li> 
+    </ul> 
+    <div class="double-list" style="margin-top: 10px"> 
+     <div class="double-list-left" id="fldiv1">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NjY3NDQxYjAxOTY4Njk0NmE3NTJiYmQ%3D', '_blank')" title="中华人民共和国传染病防治法" style="cursor:pointer;" class="list-wen"> 中华人民共和国传染病防治法 </p> </li> 
+       <li class="list-time"> <p> [2025-04-30] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NjY3NDQxYjAxOTY4NjdlYzQyYjJiN2E%3D', '_blank')" title="中华人民共和国民营经济促进法" style="cursor:pointer;" class="list-wen"> 中华人民共和国民营经济促进法 </p> </li> 
+       <li class="list-time"> <p> [2025-04-30] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdiMDgzYjAxOTU4ODFjZmIxNDU4YWE%3D', '_blank')" title="中华人民共和国全国人民代表大会和地方各级人民代表大会代表法" style="cursor:pointer;" class="list-wen"> 中华人民共和国全国人民代表大会和地方各级人民代表大会代表法 </p> </li> 
+       <li class="list-time"> <p> [2025-03-11] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NDQwNjk3MjAxOTQ5NjBkY2VhMzQ1YTI%3D', '_blank')" title="中华人民共和国监察法" style="cursor:pointer;" class="list-wen"> 中华人民共和国监察法 </p> </li> 
+       <li class="list-time"> <p> [2024-12-25] </p> </li> 
+      </ul>
+     </div> 
+     <div class="double-list-left double-list-right" id="fldiv2">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdiMDgzYjAxOTNmZDY1YTBlYjAyY2I%3D', '_blank')" title="中华人民共和国增值税法" style="cursor:pointer;" class="list-wen"> 中华人民共和国增值税法 </p> </li> 
+       <li class="list-time"> <p> [2024-12-25] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdiMDgzYjAxOTNmZGE0YmVhZDAyZWU%3D', '_blank')" title="中华人民共和国科学技术普及法" style="cursor:pointer;" class="list-wen"> 中华人民共和国科学技术普及法 </p> </li> 
+       <li class="list-time"> <p> [2024-12-25] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdiMDgzYjAxOTM5MGJlNzQwNTQ4MzI%3D', '_blank')" title="中华人民共和国各级人民代表大会常务委员会监督法" style="cursor:pointer;" class="list-wen"> 中华人民共和国各级人民代表大会常务委员会监督法 </p> </li> 
+       <li class="list-time"> <p> [2024-11-08] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdiMDgzYjAxOTMwYzczNGM3NzZiZWI%3D', '_blank')" title="中华人民共和国学前教育法" style="cursor:pointer;" class="list-wen"> 中华人民共和国学前教育法 </p> </li> 
+       <li class="list-time"> <p> [2024-11-08] </p> </li> 
+      </ul>
+     </div> 
+    </div> 
+   </div> 
+   <div class="c1"> 
+    <div class="c-left-2"> 
+     <ul class="c-top1 c-top2"> 
+      <li class="c-title2">行政法规</li> 
+      <li style="cursor:pointer" class="c-more" onclick="changeMore(&quot;xzfg&quot;)">更多</li> 
+      <li style="cursor:pointer"><i class="iconfont c-more-icon" onclick="changeMore(&quot;xzfg&quot;)"></i></li> 
+     </ul> 
+     <div id="xzfg2">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODZiZjAxOTc2MmY4ZmZkNTAwNWU%3D', '_blank')" title="政务数据共享条例" style="cursor:pointer;" class="list-wen"> 政务数据共享条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-28] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODZiZjAxOTczNTM0NzZkNTRhODQ%3D', '_blank')" title="重要军工设施保护条例" style="cursor:pointer;" class="list-wen"> 重要军工设施保护条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-19] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdmMGU3YjAxOTY2MWVjODgwNjI3ODQ%3D', '_blank')" title="快递暂行条例" style="cursor:pointer;" class="list-wen"> 快递暂行条例 </p> </li> 
+       <li class="list-time"> <p> [2025-04-13] </p> </li> 
+      </ul>
+     </div> 
+    </div> 
+    <div class="c-left-2 c-right"> 
+     <div style="position: absolute;top: 14px;right:6px;"> 
+      <span style="cursor:pointer"><i id="sfjs-c-more" onclick="changeMoreJcfg(&quot;jcfg&quot;)" class="iconfont c-more-icon"></i></span> 
+      <span style="cursor:pointer" class="c-more" onclick="changeMoreJcfg(&quot;jcfg&quot;)">更多</span> 
+     </div> 
+     <ul class="c-top1 c-top2"> 
+      <li class="c-title2">监察法规</li> 
+     </ul> 
+     <div id="jcfg2">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE3YzkyZGRhYzAxN2M5NzVhZmViZDI2ZDA%3D', '_blank')" title="中华人民共和国监察法实施条例" style="cursor:pointer;" class="list-wen"> 中华人民共和国监察法实施条例 </p> </li> 
+       <li class="list-time"> <p> [2021-09-20] </p> </li> 
+      </ul>
+     </div> 
+    </div> 
+    <!-- <div class="c-left c-right">
+        <div style="position: absolute;top: 14px;right:6px;"><span style="cursor:pointer"><i id="sfjs-c-more"
+              onclick="changeMoreJs()" class="iconfont c-more-icon"></i></span> <span style="cursor:pointer"
+            class="c-more" onclick="changeMoreJs()">更多</span></div>
+        <ul class="c-top1 c-top2">
+          <li class="c-title2">司法解释</li>
+        </ul>
+        <ul class="c-top1 c-top3">
+            <li class="c-tab3">
+                <ul id="sfjstab1">
+                  <li value="0602" onclick="changeJsLi(this,&quot;0602&quot;)" class="c4-tab1-select text">高法司法解释</li>
+                  <li value="0601" onclick="changeJsLi(this,&quot;0601&quot;)">高检司法解释</li>
+                  <li value="0603" onclick="changeJsLi(this,&quot;0603&quot;)">联合发布司法解释</li>
+                  <li value="0903" onclick="changeJsLi(this,&quot;0903&quot;)">修改、废止的决定</li>
+                </ul>
+              </li>
+        </ul>
+        <div id="sfjs2">
+          <ul class="list">
+            <li><img src="./images/home-point.png"></li>
+            <li>
+              <p onclick="window.open('https://flk.npc.gov.cn/detail2.html?ZmY4MDgwODE3N2U3NTdhYzAxNzgwMDc3ZDIyOTFiNzc%3D', '_blank')"
+                title="最高人民法院关于适用《中华人民共和国民法典》有关担保制度的解释" style="cursor:pointer;" class="list-wen">最高人民法院关于适用《中华人民共和国民法典》有关担保制度的解释
+              </p>
+            </li>
+            <li class="list-time">
+              <p>[2020-12-31]</p>
+            </li>
+          </ul>
+          <ul class="list">
+            <li><img src="./images/home-point.png"></li>
+            <li>
+              <p onclick="window.open('https://flk.npc.gov.cn/detail2.html?ZmY4MDgxODE3OTlkZjYxNDAxNzliMWFlZjMyMDJmNmI%3D', '_blank')"
+                title="最高人民法院关于诉讼代理人查阅民事案件材料的规定" style="cursor:pointer;" class="list-wen">最高人民法院关于诉讼代理人查阅民事案件材料的规定</p>
+            </li>
+            <li class="list-time">
+              <p>[2020-12-29]</p>
+            </li>
+          </ul>
+          <ul class="list">
+            <li><img src="./images/home-point.png"></li>
+            <li>
+              <p onclick="window.open('https://flk.npc.gov.cn/detail2.html?ZmY4MDgxODE3OTlkZjYxNDAxNzlhYzI3NTA1MzFhY2M%3D', '_blank')"
+                title="最高人民法院关于北京、上海、广州知识产权法院案件管辖的规定" style="cursor:pointer;" class="list-wen">最高人民法院关于北京、上海、广州知识产权法院案件管辖的规定</p>
+            </li>
+            <li class="list-time">
+              <p>[2020-12-29]</p>
+            </li>
+          </ul>
+          <ul class="list">
+            <li><img src="./images/home-point.png"></li>
+            <li>
+              <p onclick="window.open('https://flk.npc.gov.cn/detail2.html?ZmY4MDgxODE3OTlkZjYxNDAxNzlhYmVkOWNlYjE5Nzc%3D', '_blank')"
+                title="最高人民法院关于审理期货纠纷案件若干问题的规定" style="cursor:pointer;" class="list-wen">最高人民法院关于审理期货纠纷案件若干问题的规定</p>
+            </li>
+            <li class="list-time">
+              <p>[2020-12-29]</p>
+            </li>
+          </ul>
+        </div>
+      </div> --> 
+   </div> 
+   <div class="c2"> 
+    <ul class="c-top1 c-top2"> 
+     <li class="c-title2">司法解释</li> 
+     <li class="c-tab1"> 
+      <ul id="fltab1"> 
+       <li value="0602" onclick="changeSfJsLi(this,&quot;0602&quot;)" class="c4-tab1-select text">高法司法解释</li> 
+       <li value="0601" onclick="changeSfJsLi(this,&quot;0601&quot;)">高检司法解释</li> 
+       <li value="0603" onclick="changeSfJsLi(this,&quot;0603&quot;)">联合发布司法解释</li> 
+       <li value="0903" onclick="changeSfJsLi(this,&quot;0903&quot;)">修改、废止的决定</li> 
+      </ul></li> 
+     <li class="c-more" onclick="changeMoreJs()" style="cursor:pointer">更多</li> 
+     <li style="cursor:pointer"><i class="iconfont c-more-icon" onclick="changeMoreJs()"></i></li> 
+    </ul> 
+    <div class="double-list" style="margin-top: 10px;"> 
+     <div class="double-list-left" id="sfjsdiv1">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdmMGU3YjAxOTVkMWExYzUyZDAyODc%3D', '_blank')" title="最高人民法院关于审理预付式消费民事纠纷案件适用法律若干问题的解释" style="cursor:pointer;" class="list-wen"> 最高人民法院关于审理预付式消费民事纠纷案件适用法律若干问题的解释 </p> </li> 
+       <li class="list-time"> <p> [2025-03-13] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdmMTI3NjAxOTVkMTlkZDQ2ODJlMWU%3D', '_blank')" title="最高人民法院关于在粤港澳大湾区内地登记设立的香港、澳门投资企业协议选择港澳法律为合同适用法律或者协议约定港澳为仲裁地效力问题的批复" style="cursor:pointer;" class="list-wen"> 最高人民法院关于在粤港澳大湾区内地登记设立的香港、澳门投资企业协议选择港澳法律为合同适用法律或者协议约定港澳为仲裁地效力问题的批复 </p> </li> 
+       <li class="list-time"> <p> [2025-02-13] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdmMTI3NjAxOTVkMTlhYjI3NjJkOTk%3D', '_blank')" title="最高人民法院关于外币及港澳台货币逾期付款利息计算标准的批复" style="cursor:pointer;" class="list-wen"> 最高人民法院关于外币及港澳台货币逾期付款利息计算标准的批复 </p> </li> 
+       <li class="list-time"> <p> [2025-02-12] </p> </li> 
+      </ul>
+     </div> 
+     <div class="double-list-left double-list-right" id="sfjsdiv2">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdmMGU3YjAxOTVkMTkyMGY5MzAxNjA%3D', '_blank')" title="最高人民法院关于适用《中华人民共和国民法典》婚姻家庭编的解释（二）" style="cursor:pointer;" class="list-wen"> 最高人民法院关于适用《中华人民共和国民法典》婚姻家庭编的解释（二） </p> </li> 
+       <li class="list-time"> <p> [2025-01-15] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdmMTI3NjAxOTQ0OGEyOWRjYTdkMzQ%3D', '_blank')" title="最高人民法院关于《中华人民共和国公司法》第八十八条第一款不溯及适用的批复" style="cursor:pointer;" class="list-wen"> 最高人民法院关于《中华人民共和国公司法》第八十八条第一款不溯及适用的批复 </p> </li> 
+       <li class="list-time"> <p> [2024-12-24] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5MjdmMGU3YjAxOTQ0ODllODRkNzY4ZmU%3D', '_blank')" title="最高人民法院关于认可和执行台湾地区法院民事判决的规定" style="cursor:pointer;" class="list-wen"> 最高人民法院关于认可和执行台湾地区法院民事判决的规定 </p> </li> 
+       <li class="list-time"> <p> [2024-12-17] </p> </li> 
+      </ul>
+     </div> 
+    </div> 
+   </div> 
+   <div class="c2 c3"> 
+    <ul class="c-top1 c-top2"> 
+     <li class="c-title2">地方性法规</li> 
+     <li class="c-tab1"> 
+      <ul id="fgtab1"> 
+       <li value="dfxfg" onclick="changefgTab(this, &quot;dfxfg&quot;, 'flfg')" class="c-tab1-select text">地方性法规</li> 
+       <li value="0902" onclick="changefgTab(this, &quot;0902&quot;, 'flxz')">修改、废止的决定</li> 
+      </ul></li> 
+     <li style="cursor:pointer" class="c-more" onclick="changeMoreFg()">更多</li> 
+     <li style="cursor:pointer"><i class="iconfont c-more-icon" onclick="changeMoreFg()"></i></li> 
+    </ul> 
+    <ul class="c-tab2" id="fgtab2"> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="" class="c2-tab2-select text">全部</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858a4d78b0158a50f344e0048&amp;4028814858a4d78b0158a50fa2ba004c">北京</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158be80b1fb0004&amp;4028814858b9b8e50158be81c2bd0008">天津</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858a4d78b0158a51071cb0050&amp;4028814858a4d78b0158a513cbac0054">河北</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158beb88965000d&amp;4028814858b9b8e50158beb9cebd0011">山西</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bebb20750015&amp;4028814858b9b8e50158bebbf2630019">内蒙古</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bebd69e2001d&amp;4028814858b9b8e50158bec078c00021">辽宁</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bec1c1820025&amp;4028814858b9b8e50158bec2dcbf0029">吉林</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858a542db0158a9c8786e004d&amp;4028814858a542db0158a9c9c7c50051">黑龙江</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bec45e9a002d&amp;4028814858b9b8e50158bec500350031">上海</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bec5c28a0035&amp;4028814858b9b8e50158bec6abbf0039">江苏</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bec7c42f003d&amp;4028814858b9b8e50158beca3c590041">浙江</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="40284b82588a199001588a461c70003b&amp;40284b82588a199001588a473c37003f">安徽</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bed0ae4c0049&amp;4028814858b9b8e50158bed16673004d">福建</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bed279b40051&amp;4028814858b9b8e50158bed3084c0055">江西</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bed40f6d0059&amp;4028814858b9b8e50158bed4987a005d">山东</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bed591680061&amp;4028814858b9b8e50158bed64efb0065">河南</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bed7338f0069&amp;4028814858b9b8e50158bed7c16c006d">湖北</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bed8a0d20071&amp;4028814858b9b8e50158bed91af00075">湖南</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158beda43a50079&amp;4028814858b9b8e50158bedab7ea007d">广东</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bee02fd50081&amp;4028814858b9b8e50158bee198d40085">广西</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bee2d3a10089&amp;4028814858b9b8e50158bee3c9e1008d">海南</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bee5863c0091&amp;4028814858b9b8e50158bee9a3aa0095">重庆</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158beeaa1b70099&amp;4028814858b9b8e50158beeb4757009d">四川</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158beec5ac800a1&amp;4028814858b9b8e50158beecfed300a5">贵州</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158beee174200a9&amp;4028814858b9b8e50158beeeaf7b00ad">云南</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158beefec0d00b1&amp;4028814858b9b8e50158bef0947c00b5">西藏</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bef1d72600b9&amp;4028814858b9b8e50158bef2706800bd">陕西</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bef3797c00c1&amp;4028814858b9b8e50158bef4210100c5">甘肃</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bef53e9e00c9&amp;4028814858b9b8e50158bef5d32f00cd">青海</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bef6eec900d1&amp;4028814858b9b8e50158bef7e82500d5">宁夏</li> 
+     <li onclick="changefgLi(this,2,&quot;dfxfg&quot;)" value="4028814858b9b8e50158bef9249700d9&amp;4028814858b9b8e50158bef9d8b900dd">新疆</li> 
+    </ul> 
+    <div class="double-list"> 
+     <div class="double-list-left" id="fgdiv1">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODk3MzAxOTc1MjI3NWMzNTJhNmY%3D', '_blank')" title="滁州市养老服务促进条例" style="cursor:pointer;" class="list-wen"> 滁州市养老服务促进条例 </p> </li> 
+       <li class="list-time"> <p> [2025-06-03] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODZiZjAxOTc1ZGQ5OGUzNjZjYzM%3D', '_blank')" title="河南省母婴保健条例" style="cursor:pointer;" class="list-wen"> 河南省母婴保健条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODk3MzAxOTc1ZGRiZTI1YTcxNTQ%3D', '_blank')" title="河南省人工影响天气管理条例" style="cursor:pointer;" class="list-wen"> 河南省人工影响天气管理条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul>
+     </div> 
+     <div class="double-list-left double-list-right" id="fgdiv2">
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODNhYjAxOTc1ZGRkYzlhZTAyZGE%3D', '_blank')" title="河南省统计管理条例" style="cursor:pointer;" class="list-wen"> 河南省统计管理条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODNhYjAxOTc1ZGM1YTRlOTAxNmM%3D', '_blank')" title="河南省职业教育条例" style="cursor:pointer;" class="list-wen"> 河南省职业教育条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul> 
+      <ul class="list"> 
+       <li> <img src="/images/home-point.png"> </li> 
+       <li> <p onclick="window.open('./detail2.html?ZmY4MDgxODE5NzFiODZiZjAxOTc1ZGQ3MWNmMDZjOWU%3D', '_blank')" title="河南省城市房地产开发经营管理条例" style="cursor:pointer;" class="list-wen"> 河南省城市房地产开发经营管理条例 </p> </li> 
+       <li class="list-time"> <p> [2025-05-30] </p> </li> 
+      </ul>
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="loading"></div> 
+  <table cellpadding="0" cellspacing="0" class="list-box" style="display: none;"> 
+   <tbody> 
+    <tr> 
+     <th class="l-sx0"><h1 style="font-weight:bold;">序号</h1></th> 
+     <th class="l-sx1"><h1 class="l-sx" style="font-weight:bold;"> 
+       <ul> 
+        <li>标题</li> 
+       </ul></h1></th> 
+     <th class="l-sx2"><h1 class="l-sx" style="font-weight:bold;"> 
+       <ul> 
+        <li>制定机关</li> 
+        <li><input type="button" onclick="sortBytr(&quot;f_tgjgmc_s&quot;)" class="l-sx-but"></li> 
+       </ul></h1></th> 
+     <th class="l-sx3"><h1 class="l-sx" style="font-weight:bold;"> 
+       <ul> 
+        <li>法律性质</li> 
+        <li><input type="button" onclick="sortBytr(&quot;f_xldj_s&quot;)" class="l-sx-but"></li> 
+       </ul></h1></th> 
+     <th class="l-sx3"><h1 class="l-sx" style="font-weight:bold;"> 
+       <ul> 
+        <li>时效性</li> 
+        <li><input type="button" onclick="sortBytr(&quot;f_dqzt_s&quot;)" class="l-sx-but"></li> 
+       </ul></h1></th> 
+     <th class="l-sx3"><h1 class="l-sx" style="font-weight:bold;"> 
+       <ul> 
+        <li>公布日期</li> 
+        <li><input type="button" onclick="sortBytr(&quot;f_bbrq_s&quot;)" class="l-sx-but"></li> 
+       </ul></h1></th> 
+    </tr> 
+   </tbody> 
+   <tbody id="flData"></tbody> 
+  </table> 
+  <div class="page" id="flpage"></div> 
+  <div class="extendsBox"> 
+   <a href="http://www.npc.gov.cn/flcaw/" target="__blank"><img src="./css/images/bottomleft.png" style="width:24px;height:20px;margin-top:-3px"> 法律草案征求意见 <span id="fljxz"><span id="jxz" style="background-color: #c64141; padding: 0px 8px; font-size: 14px; border-radius: 2px; display: none;"> <img src="./images/jxz.gif" style="width:18px;height:16px;margin: -6px 6px 0 0;"> 进行中 </span></span> </a> 
+   <a href="http://www.npc.gov.cn/fgba" target="__blank"><img src="./css/images/bottomright.png" style="width:24px;height:20px;margin-top:-3px"> 审查建议在线提交 </a> 
+   <a href="http://www.npc.gov.cn/wszb/zzzb31/zzzb31.shtml" target="__blank"><img src="./css/images/zb.png" style="width:24px;height:20px;margin-top:-3px"> 直播</a> 
+  </div> 
+  <div class="linkend"> 
+   <div class="linkral">
+     相关链接 
+   </div> 
+   <div class="linktext"> 
+    <a href="http://www.gov.cn/zhengce/xxgk/gjgzk/index.htm" target="__blank">国家规章库</a> 
+   </div> 
+   <div class="linkline">
+     | 
+   </div> 
+   <div class="linktext"> 
+    <a href="http://treaty.mfa.gov.cn/web/index.jsp" target="__blank">外交部：条约数据库</a> 
+   </div> 
+  </div> 
+  <div class="footer-box" style="height: 111px;"> 
+   <div class="footer"> 
+    <div class="footer-left"> 
+     <p class="footer-content">版权所有 © 全国人大常委会办公厅</p> 
+     <p class="footer-content">联系我们 flk@npc.gov.cn</p> 
+     <p class="footer-content">建议使用谷歌Chrome65.0、火狐Firefox47.0、IE10及以上版本浏览器</p> 
+    </div> 
+    <div class="footer-right" style="width:10%;cursor:default"> 
+     <div style="float:left;cursor:pointer;" id="explain"> 
+      <i class="footer-icon iconfont"></i> 
+      <p class="footer-explain">说明</p> 
+     </div> 
+     <div style="float:right;cursor:pointer;" id="jc" onclick="changeDiv(this)"> 
+      <img src="./images/jc.png"> 
+      <p class="footer-explain">纠错</p> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+  <script type="text/javascript" src="./js/jquery.min.js"></script> 
+  <script type="text/javascript" src="./js/layui/layui.js"></script> 
+  <script type="text/javascript" src="./js/common3.js"></script> 
+  <script type="text/javascript" src="./js/index.js"></script> 
+  <!-- <script type="text/javascript" src="./js/index4.js"></script> --> 
+  <script>var _hmt=_hmt||[];!function(){var e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?54434aa6770b6d9fef104d146430b53b";var t=document.getElementsByTagName("script")[0];t.parentNode.insertBefore(e,t)}()</script>  
+ </body>
+</html>

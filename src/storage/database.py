@@ -81,31 +81,30 @@ class DatabaseManager:
             return query.first()
             
     def search_laws(self, keyword: str, law_type: Optional[str] = None, 
-                   is_valid: Optional[bool] = None, limit: int = 50) -> List[LawRegulation]:
+                   status: Optional[str] = None, limit: int = 50) -> List[LawMetadata]:
         """搜索法律法规"""
         with self.get_session() as session:
-            query = session.query(LawRegulation)
+            query = session.query(LawMetadata)
             
             if keyword:
                 query = query.filter(
-                    (LawRegulation.name.contains(keyword)) |
-                    (LawRegulation.content.contains(keyword)) |
-                    (LawRegulation.keywords.contains(keyword))
+                    (LawMetadata.name.contains(keyword)) |
+                    (LawMetadata.keywords.contains(keyword))
                 )
                 
             if law_type:
-                query = query.filter(LawRegulation.law_type == law_type)
+                query = query.filter(LawMetadata.law_type == law_type)
                 
-            if is_valid is not None:
-                query = query.filter(LawRegulation.is_valid == is_valid)
+            if status is not None:
+                query = query.filter(LawMetadata.status == status)
                 
             return query.limit(limit).all()
             
-    def update_law(self, law_id: int, **kwargs) -> Optional[LawRegulation]:
+    def update_law(self, law_id: str, **kwargs) -> Optional[LawMetadata]:
         """更新法律法规信息"""
         with self.get_session() as session:
-            law = session.query(LawRegulation).filter(
-                LawRegulation.id == law_id
+            law = session.query(LawMetadata).filter(
+                LawMetadata.law_id == law_id
             ).first()
             
             if law:
@@ -113,7 +112,7 @@ class DatabaseManager:
                     if hasattr(law, key):
                         setattr(law, key, value)
                         
-                law.update_time = datetime.now()
+                law.updated_at = datetime.now()
                 session.commit()
                 session.refresh(law)
                 
@@ -153,16 +152,16 @@ class DatabaseManager:
     def get_statistics(self) -> Dict[str, Any]:
         """获取统计信息"""
         with self.get_session() as session:
-            total_laws = session.query(func.count(LawRegulation.id)).scalar()
-            valid_laws = session.query(func.count(LawRegulation.id)).filter(
-                LawRegulation.is_valid == True
+            total_laws = session.query(func.count(LawMetadata.id)).scalar()
+            valid_laws = session.query(func.count(LawMetadata.id)).filter(
+                LawMetadata.status == 'effective'
             ).scalar()
             
             # 按类型统计
             type_stats = session.query(
-                LawRegulation.law_type,
-                func.count(LawRegulation.id)
-            ).group_by(LawRegulation.law_type).all()
+                LawMetadata.law_type,
+                func.count(LawMetadata.id)
+            ).group_by(LawMetadata.law_type).all()
             
             # 任务统计
             total_tasks = session.query(func.count(CrawlTask.id)).scalar()

@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from src.crawler.strategies.national_crawler import NationalLawCrawler
 from src.storage.database import DatabaseManager
-from src.storage.models import CrawlTask, LawRegulation
+from src.storage.models import CrawlTask, LawMetadata
 from config.config import CRAWLER_CONFIG
 
 
