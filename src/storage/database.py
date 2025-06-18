@@ -35,6 +35,15 @@ class DatabaseManager:
         # 创建表
         self._create_tables()
         
+        # 创建默认会话供外部使用
+        self.session = self.get_session()
+        
+        # 导出模型类以便外部使用
+        self.LawMetadata = LawMetadata
+        self.LawDocument = LawDocument
+        self.LawChangeLog = LawChangeLog
+        self.CrawlTask = CrawlTask
+        
     def _create_tables(self):
         """创建数据库表"""
         try:
@@ -185,4 +194,14 @@ class DatabaseManager:
                     "failed": failed_tasks,
                     "pending": total_tasks - success_tasks - failed_tasks
                 }
-            } 
+            }
+            
+    def get_total_laws_count(self) -> int:
+        """获取法规总数"""
+        with self.get_session() as session:
+            return session.query(LawMetadata).count()
+            
+    def close(self):
+        """关闭数据库连接"""
+        if hasattr(self, 'session'):
+            self.session.close() 
