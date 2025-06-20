@@ -1,17 +1,33 @@
-# 法律法规爬虫与RAG系统
+# 法律爬虫系统 (Law Crawler RPA RAG MCP)
 
-一个用于爬取中国法律法规并构建智能问答系统的项目。
+一个基于Python的法律文档爬虫系统，支持批量采集法律条文、法规和司法解释，并生成结构化报告。
 
-## 项目特性
+## 项目结构
 
-- 🕷️ **智能爬虫系统**：支持从国家法律法规数据库等多个数据源爬取
-- 📊 **三层数据架构**：元数据层、文档层、向量层分离设计，支持大规模扩展
-- 🔄 **版本控制**：完整的法规版本追踪和变更历史记录
-- ⏰ **时效性管理**：自动跟踪法规的生效、修正、废止状态
-- 📈 **可观测性**：结构化日志、JSON格式统计输出、性能监控
-- 📋 **台账生成**：自动生成法律法规台账，支持Excel、CSV、HTML格式
-- 🤖 **RAG问答系统**：基于检索增强生成的法律问答（开发中）
-- 🔌 **MCP服务**：支持与大语言模型集成（开发中）
+```
+Law-Crawler-RPA-RAG-MCP/
+├── main.py                 # 主入口程序
+├── src/                    # 源代码目录
+│   ├── crawler/           # 爬虫模块
+│   │   ├── strategies/    # 爬虫策略
+│   │   │   ├── search_based_crawler.py  # 搜索API爬虫
+│   │   │   └── law_matcher.py           # 法律匹配器
+│   │   └── crawler_manager.py           # 爬虫管理器
+│   ├── storage/           # 数据存储
+│   ├── report/            # 报告生成
+│   └── rag/               # RAG模块
+├── config/                # 配置文件
+├── data/                  # 数据目录 (已加入.gitignore)
+├── logs/                  # 日志目录
+└── tests/                 # 测试目录
+```
+
+## 核心功能
+
+- **智能搜索爬虫**: 基于搜索API的法律采集，支持模糊匹配
+- **本地缓存管理**: 分类存储法律文档，避免重复采集
+- **Excel报告生成**: 自动生成包含完整信息的Excel报告
+- **错误处理**: 完善的异常处理和重试机制
 
 ## 快速开始
 
@@ -21,63 +37,78 @@
 pip install -r requirements.txt
 ```
 
-### 2. 配置数据库
+### 2. 配置设置
 
-项目默认使用SQLite数据库，无需额外配置。如需使用PostgreSQL，请设置环境变量：
+编辑 `config/config.py` 中的配置参数：
 
-```bash
-export DATABASE_URL=postgresql://user:password@localhost:5432/law_crawler
+```python
+CRAWLER_CONFIG = {
+    'max_concurrent': 5,      # 最大并发数
+    'timeout': 30,           # 请求超时时间
+    'retry_times': 3,        # 重试次数
+    'delay': 1               # 请求间隔
+}
 ```
 
 ### 3. 运行爬虫
 
-从Excel文件批量爬取法律法规：
-
 ```bash
-python main.py --action crawl --excel "Background info/law list.xls"
+python main.py
 ```
 
-重试失败的任务：
+## 使用方法
 
-```bash
-python main.py --action retry
-```
+### 批量采集法律
 
-查看统计信息：
+1. 准备Excel文件，包含法律名称列表
+2. 运行主程序：`python main.py`
+3. 系统将自动：
+   - 搜索并匹配法律
+   - 采集详细信息
+   - 生成Excel报告
 
-```bash
-python main.py --action stats
+### 输出文件
 
-# JSON格式输出（便于可视化）
-python main.py --action stats --json > stats.json
+- **JSON文件**: 按分类存储在 `data/` 目录
+- **Excel报告**: 包含完整字段和超链接
+- **日志文件**: 详细的执行日志
 
-# 使用自定义配置文件
-python main.py --config config/prod.toml --action crawl
-```
+## 技术特点
 
-### 4. 生成法律法规台账
+- **模块化设计**: 清晰的架构分离
+- **缓存机制**: 避免重复请求
+- **错误恢复**: 自动重试和错误处理
+- **数据完整性**: 包含所有必要字段
 
-爬取完成后，系统会自动生成法律法规台账。您也可以手动生成：
+## 配置说明
 
-```bash
-# 生成Excel格式台账（默认）
-python generate_ledger.py
+### 爬虫配置
 
-# 生成所有格式的台账
-python generate_ledger.py --format all
+- `max_concurrent`: 控制并发数量
+- `timeout`: 网络请求超时
+- `retry_times`: 失败重试次数
+- `delay`: 请求间隔时间
 
-# 只生成有效法规的台账
-python generate_ledger.py --status effective
+### 数据存储
 
-# 生成特定类型法规的台账
-python generate_ledger.py --law-type "法律"
+- 本地JSON缓存
+- 分类存储结构
+- 自动文件命名
 
-# 指定输出文件名
-python generate_ledger.py --output my_ledger
+## 开发说明
 
-# 生成带汇总报告的台账
-python generate_ledger.py --summary
-```
+### 项目架构
+
+- **单一入口**: `main.py` 作为唯一入口点
+- **策略模式**: 可扩展的爬虫策略
+- **管理器模式**: 统一的爬虫管理
+
+### 扩展开发
+
+1. 在 `src/crawler/strategies/` 中添加新的爬虫策略
+2. 继承 `BaseCrawler` 类
+3. 实现必要的抽象方法
+4. 在 `crawler_manager.py` 中注册新策略
 
 台账包含以下信息：
 - 法规名称、文号、发布机关
@@ -311,3 +342,7 @@ mypy src/
 ## 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情 
+
+## 许可证
+
+MIT License - 详见 LICENSE 文件 
