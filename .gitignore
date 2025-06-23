@@ -20,6 +20,7 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -27,6 +28,8 @@ share/python-wheels/
 MANIFEST
 
 # PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -47,7 +50,6 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
 
 # Translations
 *.mo
@@ -70,7 +72,6 @@ instance/
 docs/_build/
 
 # PyBuilder
-.pybuilder/
 target/
 
 # Jupyter Notebook
@@ -84,15 +85,13 @@ ipython_config.py
 .python-version
 
 # pipenv
-Pipfile.lock
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
 
-# poetry
-poetry.lock
-
-# pdm
-.pdm.toml
-
-# PEP 582
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
 
 # Celery stuff
@@ -129,60 +128,40 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-.idea/
-
-# VSCode
-.vscode/
-
-# Cursor
-.cursor/
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Data directories
-data/raw_laws/
-data/processed_laws/
-data/vectors/
-
-# Log files
+# Project specific
 logs/
 *.log
+data/
+data/*
+!data/.gitkeep
 
-# Downloaded files
-downloads/
-*.pdf
-*.doc
-*.docx
-
-# Temporary files
-temp/
-tmp/
-*.tmp
-*.bak
+# IDE
+.vscode/
+.idea/
 *.swp
+*.swo
 *~
 
-# OS files
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Windows
-desktop.ini
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Test files
+test_*.py
+*_test.py
+
+# Generated files
+*.json
+*.xlsx
+*.csv
+!requirements*.txt
+!package*.json
 
 # Excel temporary files
 ~$*.xls
@@ -190,5 +169,4 @@ desktop.ini
 
 # Project specific
 Background info/law list.xls
-test_*.py
 clean_*.py 
