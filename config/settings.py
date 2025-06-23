@@ -1,11 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
-项目配置系统 - 基于 Pydantic Settings
+配置管理模块 - 使用Pydantic Settings优雅处理多环境配置
+配置优先级：环境变量 > dev.toml > 默认值
 """
 from typing import Dict, List, Optional
 from pathlib import Path
-from pydantic import BaseSettings, Field, validator
+from pydantic import Field, validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 import json
+import toml
 
 
 class CrawlerSettings(BaseSettings):
@@ -15,27 +20,19 @@ class CrawlerSettings(BaseSettings):
     timeout: int = Field(30, description="请求超时（秒）")
     max_concurrent: int = Field(3, description="最大并发数")
     rate_limit: int = Field(5, description="每分钟最大请求数")
+    crawl_limit: int = Field(25, description="本次爬取数量限制，0表示不限制")
     user_agents: List[str] = Field(
         default=[
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Firefox/119.0"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
         ],
         description="User-Agent列表"
-    )
-    default_headers: Dict[str, str] = Field(
-        default={
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive"
-        },
-        description="默认请求头"
     )
 
 
 class DatabaseSettings(BaseSettings):
     """数据库配置"""
-    url: str = Field("sqlite:///data/law_crawler.db", env="DATABASE_URL")
+    url: str = Field("sqlite:///data/law_crawler.db", description="数据库连接URL")
     echo: bool = Field(False, description="是否打印SQL语句")
     pool_size: int = Field(10, description="连接池大小")
     max_overflow: int = Field(20, description="最大溢出连接数")
@@ -48,34 +45,10 @@ class DatabaseSettings(BaseSettings):
         return v
 
 
-class RedisSettings(BaseSettings):
-    """Redis配置"""
-    host: str = Field("localhost", env="REDIS_HOST")
-    port: int = Field(6379, env="REDIS_PORT")
-    db: int = Field(0, env="REDIS_DB")
-    password: Optional[str] = Field(None, env="REDIS_PASSWORD")
-    
-    @property
-    def url(self) -> str:
-        """生成Redis URL"""
-        if self.password:
-            return f"redis://:{self.password}@{self.host}:{self.port}/{self.db}"
-        return f"redis://{self.host}:{self.port}/{self.db}"
-
-
 class LogSettings(BaseSettings):
     """日志配置"""
-    level: str = Field("INFO", env="LOG_LEVEL")
-    format: str = Field(
-        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-        "<level>{level: <8}</level> | "
-        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-        "<level>{message}</level>"
-    )
-    rotation: str = Field("10 MB", description="日志轮转大小")
-    retention: str = Field("7 days", description="日志保留时间")
-    compression: str = Field("zip", description="日志压缩格式")
-    serialize: bool = Field(False, description="是否序列化为JSON")
+    level: str = Field("INFO", description="日志级别")
+    serialize: bool = Field(False, description="是否序列化为JSON格式")
     
     @validator("level")
     def validate_log_level(cls, v):
@@ -88,46 +61,33 @@ class LogSettings(BaseSettings):
 
 class DataSourceSettings(BaseSettings):
     """数据源配置"""
-    sources: Dict[str, Dict[str, any]] = Field(
-        default={
-            "national": {
-                "name": "国家法律法规数据库",
-                "base_url": "https://flk.npc.gov.cn",
-                "priority": 1,
-                "enabled": True
-            },
-            "gov_legal": {
-                "name": "中国政府法制信息网",
-                "base_url": "http://www.gov.cn/zhengce/",
-                "priority": 2,
-                "enabled": False
-            }
-        }
-    )
+    national_name: str = Field("国家法律法规数据库", description="国家数据库名称")
+    national_base_url: str = Field("https://flk.npc.gov.cn", description="国家数据库URL")
+    national_enabled: bool = Field(True, description="是否启用国家数据库")
+    
+    gov_legal_name: str = Field("中国政府网", description="政府网名称")
+    gov_legal_base_url: str = Field("http://www.gov.cn/zhengce/", description="政府网URL")
+    gov_legal_enabled: bool = Field(True, description="是否启用政府网")
 
 
 class Settings(BaseSettings):
-    """主配置类"""
+    """主配置类 - 支持环境变量和配置文件覆盖"""
+    
     # 项目基本信息
     project_name: str = Field("法律法规爬虫系统", description="项目名称")
     version: str = Field("1.0.0", description="版本号")
-    debug: bool = Field(False, env="DEBUG")
-    
-    # 路径配置
-    project_root: Path = Field(default_factory=lambda: Path(__file__).parent.parent)
-    data_dir: Path = Field(default_factory=lambda: Path("data"))
+    debug: bool = Field(False, description="调试模式")
     
     # 子配置
     crawler: CrawlerSettings = Field(default_factory=CrawlerSettings)
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
-    redis: RedisSettings = Field(default_factory=RedisSettings)
     log: LogSettings = Field(default_factory=LogSettings)
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
     
     # 法律类型映射
     law_type_mapping: Dict[str, str] = Field(
         default={
-            "中华人民共和国主席令": "国家法律",
+            "中华人民共和国主席令": "法律",
             "国务院令": "行政法规",
             "部令": "部门规章",
             "地方性法规": "地方性法规",
@@ -135,41 +95,90 @@ class Settings(BaseSettings):
         }
     )
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-        
-    def to_json(self) -> str:
-        """导出为JSON格式"""
-        return json.dumps(self.dict(), indent=2, ensure_ascii=False, default=str)
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_nested_delimiter="__",  # 支持嵌套配置，如 CRAWLER__CRAWL_LIMIT=40
+        case_sensitive=False,
+        extra="ignore"
+    )
     
     @classmethod
-    def from_file(cls, config_file: str) -> "Settings":
-        """从配置文件加载"""
-        config_path = Path(config_file)
-        if config_path.suffix == ".json":
-            with open(config_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return cls(**data)
-        elif config_path.suffix in [".yaml", ".yml"]:
-            import yaml
-            with open(config_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-            return cls(**data)
-        elif config_path.suffix == ".toml":
-            import toml
-            with open(config_path, "r", encoding="utf-8") as f:
-                data = toml.load(f)
-            return cls(**data)
-        else:
-            raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
+    def load_from_toml(cls, toml_path: str = "config/dev.toml") -> "Settings":
+        """从TOML文件加载配置"""
+        config_file = Path(toml_path)
+        
+        if not config_file.exists():
+            print(f"配置文件 {toml_path} 不存在，使用默认配置")
+            return cls()
+        
+        try:
+            toml_data = toml.load(config_file)
+            print(f"从 {toml_path} 加载配置")
+            
+            # 展平嵌套配置，Pydantic会自动处理
+            flat_config = {}
+            
+            # 处理爬虫配置
+            if 'crawler' in toml_data:
+                for key, value in toml_data['crawler'].items():
+                    flat_config[f'crawler__{key}'] = value
+            
+            # 处理数据库配置
+            if 'database' in toml_data:
+                for key, value in toml_data['database'].items():
+                    flat_config[f'database__{key}'] = value
+            
+            # 处理日志配置
+            if 'log' in toml_data:
+                for key, value in toml_data['log'].items():
+                    flat_config[f'log__{key}'] = value
+            
+            # 处理数据源配置
+            if 'data_sources' in toml_data:
+                ds = toml_data['data_sources']
+                if 'national' in ds:
+                    for key, value in ds['national'].items():
+                        flat_config[f'data_sources__national_{key}'] = value
+                if 'gov_legal' in ds:
+                    for key, value in ds['gov_legal'].items():
+                        flat_config[f'data_sources__gov_legal_{key}'] = value
+            
+            # 处理顶级配置
+            for key in ['project_name', 'version', 'debug']:
+                if key in toml_data:
+                    flat_config[key] = toml_data[key]
+            
+            # 处理default节（兼容旧配置）
+            if 'default' in toml_data:
+                for key, value in toml_data['default'].items():
+                    flat_config[key] = value
+            
+            return cls(**flat_config)
+            
+        except Exception as e:
+            print(f"加载配置文件失败: {e}，使用默认配置")
+            return cls()
+    
+    def to_json(self) -> str:
+        """导出为JSON格式"""
+        return json.dumps(self.model_dump(), indent=2, ensure_ascii=False, default=str)
+    
+    def show_config(self):
+        """显示当前配置"""
+        print("=== 当前配置 ===")
+        print(f"项目: {self.project_name} v{self.version}")
+        print(f"调试模式: {self.debug}")
+        print(f"爬取限制: {self.crawler.crawl_limit} ({'无限制' if self.crawler.crawl_limit == 0 else '条'})")
+        print(f"数据库: {self.database.url}")
+        print(f"日志级别: {self.log.level}")
+        print(f"数据源: {self.data_sources.national_name}, {self.data_sources.gov_legal_name}")
 
 
 @lru_cache()
 def get_settings() -> Settings:
-    """获取配置单例"""
-    return Settings()
+    """获取配置单例 - 自动加载dev.toml"""
+    return Settings.load_from_toml()
 
 
 # 导出配置实例

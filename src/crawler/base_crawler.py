@@ -13,7 +13,7 @@ from fake_useragent import UserAgent
 from loguru import logger
 import sys
 sys.path.append('..')
-from config.config import CRAWLER_CONFIG
+from config.settings import settings
 
 
 class BaseCrawler(ABC):
@@ -21,15 +21,18 @@ class BaseCrawler(ABC):
     
     def __init__(self, source_name: str):
         self.source_name = source_name
+        self.name = source_name  # 添加name属性以兼容CrawlerManager
         self.session = None
         self.ua = UserAgent()
         self.request_count = 0
         self.last_request_time = 0
+        self.crawler_config = settings.crawler
+        self.law_type_mapping = settings.law_type_mapping
         
     async def __aenter__(self):
         """异步上下文管理器入口"""
         self.session = httpx.AsyncClient(
-            timeout=CRAWLER_CONFIG['timeout'],
+            timeout=self.crawler_config.timeout,
             follow_redirects=True
         )
         return self
@@ -41,18 +44,21 @@ class BaseCrawler(ABC):
             
     def _get_headers(self) -> Dict[str, str]:
         """获取请求头"""
-        headers = CRAWLER_CONFIG['headers'].copy()
-        headers['User-Agent'] = random.choice(CRAWLER_CONFIG['user_agents'])
+        headers = self.crawler_config.default_headers.copy() if hasattr(self.crawler_config, 'default_headers') else {}
+        user_agents = self.crawler_config.user_agents if hasattr(self.crawler_config, 'user_agents') else []
+        if user_agents:
+            headers['User-Agent'] = random.choice(user_agents)
         return headers
         
     async def _rate_limit(self):
         """速率限制"""
         current_time = time.time()
+        rate_limit = self.crawler_config.rate_limit if hasattr(self.crawler_config, 'rate_limit') else 5
         time_since_last_request = current_time - self.last_request_time
         
         # 确保请求间隔
-        if time_since_last_request < 60 / CRAWLER_CONFIG['rate_limit']:
-            sleep_time = 60 / CRAWLER_CONFIG['rate_limit'] - time_since_last_request
+        if time_since_last_request < 60 / rate_limit:
+            sleep_time = 60 / rate_limit - time_since_last_request
             # 添加随机抖动
             sleep_time += random.uniform(0.5, 1.5)
             await asyncio.sleep(sleep_time)
@@ -61,8 +67,8 @@ class BaseCrawler(ABC):
         self.request_count += 1
         
     @retry(
-        stop=stop_after_attempt(CRAWLER_CONFIG['max_retries']),
-        wait=wait_exponential(multiplier=CRAWLER_CONFIG['retry_delay'], max=60)
+        stop=stop_after_attempt(getattr(settings.crawler, 'max_retries', 3)),
+        wait=wait_exponential(multiplier=getattr(settings.crawler, 'retry_delay', 2), max=60)
     )
     async def fetch(self, url: str, **kwargs) -> httpx.Response:
         """发送HTTP请求"""
@@ -76,7 +82,7 @@ class BaseCrawler(ABC):
         # 确保session存在
         if not self.session:
             self.session = httpx.AsyncClient(
-                timeout=CRAWLER_CONFIG['timeout'],
+                timeout=self.crawler_config.timeout,
                 follow_redirects=True
             )
         
@@ -128,9 +134,7 @@ class BaseCrawler(ABC):
         
     def extract_law_type(self, law_number: str) -> str:
         """从法规编号提取法规类型"""
-        from config.config import LAW_TYPE_MAPPING
-        
-        for key, value in LAW_TYPE_MAPPING.items():
+        for key, value in self.law_type_mapping.items():
             if key in law_number:
                 return value
                 
