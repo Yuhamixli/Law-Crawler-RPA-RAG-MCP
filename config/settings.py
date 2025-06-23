@@ -20,7 +20,7 @@ class CrawlerSettings(BaseSettings):
     timeout: int = Field(30, description="请求超时（秒）")
     max_concurrent: int = Field(3, description="最大并发数")
     rate_limit: int = Field(5, description="每分钟最大请求数")
-    crawl_limit: int = Field(25, description="本次爬取数量限制，0表示不限制")
+    crawl_limit: int = Field(5, description="本次爬取数量限制，0表示不限制")
     user_agents: List[str] = Field(
         default=[
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

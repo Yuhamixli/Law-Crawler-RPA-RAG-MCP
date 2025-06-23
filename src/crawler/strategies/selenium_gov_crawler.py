@@ -21,6 +21,63 @@ from loguru import logger
 from ..base_crawler import BaseCrawler
 
 
+def normalize_date_format(date_str: str) -> str:
+    """
+    将各种日期格式统一转换为 yyyy-mm-dd 格式
+    支持的输入格式：
+    - 2013年2月4日 -> 2013-02-04
+    - 2013-2-4 -> 2013-02-04
+    - 2013.2.4 -> 2013-02-04
+    - 2025-05-29 00:00:00 -> 2025-05-29
+    """
+    if not date_str or date_str.strip() == '':
+        return ''
+    
+    import re
+    from datetime import datetime
+    
+    date_str = str(date_str).strip()
+    
+    try:
+        # 格式1: 2013年2月4日
+        match = re.match(r'(\d{4})年(\d{1,2})月(\d{1,2})日', date_str)
+        if match:
+            year, month, day = match.groups()
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        
+        # 格式2: 2013-2-4 或 2013/2/4 或 2013.2.4
+        match = re.match(r'(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})', date_str)
+        if match:
+            year, month, day = match.groups()
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        
+        # 格式3: 2025-05-29 00:00:00 (带时间)
+        match = re.match(r'(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}:\d{2}', date_str)
+        if match:
+            return match.group(1)
+        
+        # 格式4: 已经是 yyyy-mm-dd 格式
+        match = re.match(r'\d{4}-\d{2}-\d{2}$', date_str)
+        if match:
+            return date_str
+        
+        # 格式5: 尝试使用datetime解析
+        for fmt in ['%Y-%m-%d', '%Y/%m/%d', '%Y.%m.%d', '%Y年%m月%d日']:
+            try:
+                dt = datetime.strptime(date_str, fmt)
+                return dt.strftime('%Y-%m-%d')
+            except:
+                continue
+        
+        # 如果都无法解析，返回原始字符串
+        logger.warning(f"无法解析日期格式: {date_str}")
+        return date_str
+        
+    except Exception as e:
+        logger.warning(f"日期格式化失败: {date_str}, 错误: {e}")
+        return date_str
+
+
 class SeleniumGovCrawler(BaseCrawler):
     """基于Selenium的中国政府网爬虫"""
     
@@ -146,42 +203,96 @@ class SeleniumGovCrawler(BaseCrawler):
             
             # 步骤2: 定位搜索框并输入关键词
             try:
-                # 根据你提供的HTML结构查找搜索框
-                search_input = self.driver.find_element(By.NAME, "headSearchword")
+                # 等待搜索框可见并可点击
+                search_input = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "input.header_search_txt[name='headSearchword']"))
+                )
                 search_input.clear()
                 search_input.send_keys(keyword)
-                self.logger.info(f"已输入搜索关键词: {keyword}")
+                logger.info(f"已输入搜索关键词: {keyword}")
                 
-                # 点击搜索按钮
-                search_button = self.driver.find_element(By.CLASS_NAME, "header_search_btn")
-                search_button.click()
-                self.logger.info("已点击搜索按钮")
+                # 点击搜索按钮 - 使用多种定位方式
+                search_button = None
+                try:
+                    # 方式1：通过CSS选择器定位按钮
+                    search_button = self.driver.find_element(By.CSS_SELECTOR, "button.header_search_btn")
+                except:
+                    try:
+                        # 方式2：通过XPath定位按钮
+                        search_button = self.driver.find_element(By.XPATH, "//button[@class='header_search_btn']")
+                    except:
+                        # 方式3：通过父容器查找按钮
+                        search_form = self.driver.find_element(By.CLASS_NAME, "header_search")
+                        search_button = search_form.find_element(By.TAG_NAME, "button")
                 
-                # 等待页面跳转
-                WebDriverWait(self.driver, 15).until(
-                    lambda driver: "sousuo" in driver.current_url or "search" in driver.current_url
-                )
+                if search_button:
+                    # 使用JavaScript点击，避免被其他元素遮挡
+                    self.driver.execute_script("arguments[0].click();", search_button)
+                    logger.info("已点击搜索按钮")
+                    
+                    # 等待页面跳转到搜索结果页 - 使用更灵活的等待策略
+                    try:
+                        # 方式1：等待URL变化（增加等待时间）
+                        WebDriverWait(self.driver, 20).until(
+                            lambda driver: "sousuo" in driver.current_url.lower() or "search" in driver.current_url.lower()
+                        )
+                        logger.info("页面跳转成功")
+                    except:
+                        # 方式2：如果URL没变，检查页面内容是否已经变化
+                        try:
+                            WebDriverWait(self.driver, 10).until(
+                                lambda driver: ("相关结果" in driver.page_source or 
+                                              "搜索结果" in driver.page_source or
+                                              "排序方式" in driver.page_source or
+                                              keyword in driver.page_source)
+                            )
+                            logger.info("搜索结果页面内容已加载")
+                        except:
+                            # 方式3：延迟检测 - 给更多时间让页面完全加载
+                            time.sleep(5)
+                            current_url = self.driver.current_url
+                            page_source = self.driver.page_source
+                            
+                            # 更全面的成功判断条件
+                            success_indicators = [
+                                "sousuo" in current_url.lower(),
+                                "search" in current_url.lower(),
+                                "相关结果" in page_source,
+                                "搜索结果" in page_source,
+                                "排序方式" in page_source,
+                                keyword in page_source,
+                                "检索方式" in page_source
+                            ]
+                            
+                            if any(success_indicators):
+                                logger.info("搜索页面确认成功（延迟检测）")
+                            else:
+                                logger.warning(f"页面跳转可能失败，当前URL: {current_url}")
+                                # 不抛出异常，让备用方案处理
+                                raise Exception("页面未跳转到搜索结果")
+                else:
+                    raise Exception("无法找到搜索按钮")
                 
             except Exception as e:
-                self.logger.warning(f"首页搜索框操作失败: {e}")
-                # 备用方案：直接构造搜索URL，使用与手工操作相同的参数
+                logger.warning(f"首页搜索框操作失败: {e}")
+                # 备用方案：直接构造搜索URL
                 import urllib.parse
                 encoded_keyword = urllib.parse.quote(keyword)
                 search_url = f"https://sousuo.www.gov.cn/sousuo/search.shtml?code=17da70961a7&searchWord={encoded_keyword}&dataTypeId=107&sign=9c1d305f-d6a7-46ba-9d42-ca7411f93ffe"
-                self.logger.info(f"使用备用搜索URL: {search_url}")
+                logger.info(f"使用备用搜索URL: {search_url}")
                 self.driver.get(search_url)
             
             # 步骤3: 等待搜索结果页面加载
-            self.logger.info("等待搜索结果加载...")
+            logger.info("等待搜索结果加载...")
             time.sleep(8)  # 给足时间让JavaScript执行
             
             # 检查是否有搜索结果
             current_url = self.driver.current_url
-            self.logger.info(f"当前页面URL: {current_url}")
+            logger.info(f"当前页面URL: {current_url}")
             
             # 如果还在首页，说明搜索没有成功，直接使用备用URL
             if "www.gov.cn" == self.driver.current_url or "index.htm" in self.driver.current_url:
-                self.logger.warning("搜索未跳转，使用备用搜索URL")
+                logger.warning("搜索未跳转，使用备用搜索URL")
                 import urllib.parse
                 encoded_keyword = urllib.parse.quote(keyword)
                 search_url = f"https://sousuo.www.gov.cn/sousuo/search.shtml?code=17da70961a7&searchWord={encoded_keyword}&dataTypeId=107&sign=9c1d305f-d6a7-46ba-9d42-ca7411f93ffe"
@@ -192,13 +303,13 @@ class SeleniumGovCrawler(BaseCrawler):
             results = self._parse_search_results_from_browser(keyword)
             
             if results:
-                self.logger.info(f"浏览器搜索成功，找到 {len(results)} 个结果")
+                logger.info(f"浏览器搜索成功，找到 {len(results)} 个结果")
                 
                 # 步骤5: 点击进入详情页面并提取完整信息
                 enhanced_results = []
                 for i, result in enumerate(results[:3]):  # 只处理前3个结果
                     try:
-                        self.logger.info(f"正在提取第 {i+1} 个结果的详细信息...")
+                        logger.info(f"正在提取第 {i+1} 个结果的详细信息...")
                         detailed_info = self._extract_detailed_info(result, keyword)
                         if detailed_info:
                             enhanced_results.append(detailed_info)
@@ -217,7 +328,7 @@ class SeleniumGovCrawler(BaseCrawler):
                                 'content': ''
                             })
                     except Exception as e:
-                        self.logger.warning(f"提取第 {i+1} 个结果的详细信息失败: {e}")
+                        logger.warning(f"提取第 {i+1} 个结果的详细信息失败: {e}")
                         # 保留基本信息
                         enhanced_results.append({
                             'title': result.get('title', ''),
@@ -234,21 +345,21 @@ class SeleniumGovCrawler(BaseCrawler):
                 
                 return enhanced_results
             else:
-                self.logger.warning("浏览器搜索未找到结果")
+                logger.warning("浏览器搜索未找到结果")
                 # 保存页面截图用于调试
                 try:
                     import os
                     os.makedirs("debug", exist_ok=True)
                     screenshot_path = f"debug/no_result_{keyword.replace(' ', '_')}.png"
                     self.driver.save_screenshot(screenshot_path)
-                    self.logger.info(f"无结果页面截图已保存: {screenshot_path}")
+                    logger.info(f"无结果页面截图已保存: {screenshot_path}")
                 except:
                     pass
             
             return results
             
         except Exception as e:
-            self.logger.error(f"浏览器搜索失败: {e}")
+            logger.error(f"浏览器搜索失败: {e}")
             return []
     
     def _parse_search_results_from_browser(self, keyword: str) -> List[Dict[str, Any]]:
@@ -431,15 +542,25 @@ class SeleniumGovCrawler(BaseCrawler):
         try:
             # 基础信息
             detail_info = {
+                'success': True,  # 标记为成功
                 'title': base_result.get('title', ''),
+                'name': base_result.get('title', ''),  # 添加name字段
                 'url': base_result.get('url', ''),
+                'source_url': base_result.get('url', ''),  # 添加source_url字段
                 'summary': base_result.get('summary', ''),
                 'date': base_result.get('date', ''),
                 'source': '中国政府网',
                 'document_number': '',
+                'number': '',  # 添加number字段别名
                 'issuing_authority': '',
+                'office': '',  # 添加office字段别名
                 'effective_date': '',
+                'valid_from': '',  # 添加valid_from字段别名
+                'publish_date': '',  # 添加publish_date字段
+                'valid_to': None,  # 添加valid_to字段
+                'status': '有效',  # 添加status字段
                 'law_level': '',
+                'level': '',  # 添加level字段别名
                 'content': ''
             }
             
@@ -640,6 +761,16 @@ class SeleniumGovCrawler(BaseCrawler):
             # 根据文档编号判断法规层级
             if detail_info['document_number']:
                 detail_info['law_level'] = self.determine_law_level(detail_info['document_number'])
+                detail_info['level'] = detail_info['law_level']  # 同步别名字段
+            
+            # 格式化日期字段
+            detail_info['publish_date'] = normalize_date_format(detail_info.get('publish_date', ''))
+            detail_info['effective_date'] = normalize_date_format(detail_info.get('effective_date', ''))
+            
+            # 同步所有别名字段
+            detail_info['number'] = detail_info['document_number']
+            detail_info['office'] = detail_info['issuing_authority']
+            detail_info['valid_from'] = detail_info['effective_date']
             
             self.logger.info(f"成功提取详细信息: {detail_info['title'][:30]}...")
             return detail_info
@@ -843,68 +974,57 @@ class SeleniumGovCrawler(BaseCrawler):
             self.logger.error(f"获取页面详情失败: {e}")
             return None
     
-    async def crawl_law(self, law_name: str, law_number: str = None) -> Optional[Dict]:
-        """爬取单个法规 - 主要入口方法"""
+    def _create_failed_result(self, law_name: str, error_message: str) -> Dict[str, Any]:
+        """创建失败结果的标准格式"""
+        return {
+            'success': False,
+            'name': law_name,
+            'number': '',
+            'publish_date': '',
+            'valid_from': '',
+            'valid_to': '',
+            'office': '',
+            'level': '',
+            'status': '',
+            'source_url': '',
+            'content': '',
+            'target_name': law_name,
+            'search_keyword': law_name,
+            'crawl_time': datetime.now().isoformat(),
+            'source': 'selenium_gov_web',
+            'error': error_message
+        }
+
+    async def crawl_law(self, law_name: str, law_number: str = None) -> Dict[str, Any]:
+        """
+        爬取指定法规
+        每次爬取完成后关闭浏览器，避免页面积累
+        """
+        logger.info(f"Selenium政府网爬取: {law_name}")
+        
         try:
-            self.logger.info(f"Selenium政府网爬取: {law_name}")
+            # 每次爬取都重新初始化浏览器
+            self.setup_driver()
             
-            if not self.driver:
-                self.logger.error("WebDriver未初始化，无法执行搜索")
-                return None
+            # 执行搜索
+            results = self.search_law_with_browser(law_name)
             
-            # 搜索法规
-            search_results = self.search_law_with_browser(law_name)
+            if not results:
+                logger.warning(f"Selenium政府网所有搜索策略都未找到结果: {law_name}")
+                return self._create_failed_result(law_name, "未找到匹配结果")
             
-            if not search_results:
-                # 尝试关键词搜索
-                keywords = self._extract_keywords(law_name)
-                for keyword in keywords:
-                    self.logger.info(f"尝试关键词搜索: {keyword}")
-                    search_results = self.search_law_with_browser(keyword)
-                    if search_results:
-                        break
-            
-            if not search_results:
-                self.logger.warning(f"Selenium政府网所有搜索策略都未找到结果: {law_name}")
-                return None
-            
-            # 选择最佳匹配
-            best_match = self.find_best_match(law_name, search_results)
-            if not best_match:
-                self.logger.warning(f"未找到匹配的搜索结果: {law_name}")
-                return None
-            
-            # 获取详细信息
-            detail = self.get_law_detail_from_url(best_match['url'])
-            if not detail:
-                self.logger.warning(f"获取法规详情失败: {best_match['url']}")
-                return None
-            
-            # 构造返回结果，字段匹配main.py的期望
-            result = {
-                'success': True,
-                'name': law_name,
-                'number': detail.get('document_number', ''),
-                'publish_date': detail.get('publish_date', ''),
-                'valid_from': detail.get('effective_date', ''),
-                'valid_to': detail.get('valid_to', ''),
-                'office': detail.get('issuing_authority', ''),
-                'level': self.determine_law_level(detail.get('document_number', '')),
-                'status': detail.get('status', '有效'),
-                'source_url': best_match['url'],
-                'content': detail.get('content', ''),
-                'target_name': law_name,
-                'search_keyword': law_name,
-                'crawl_time': datetime.now().isoformat(),
-                'source': 'selenium_gov_web'
-            }
-            
-            self.logger.success(f"Selenium政府网爬取成功: {law_name}")
+            # 获取第一个结果的详细信息
+            result = results[0]
+            logger.success(f"Selenium政府网爬取成功: {law_name}")
             return result
             
         except Exception as e:
-            self.logger.error(f"Selenium政府网爬取失败: {law_name}, 错误: {e}")
-            return None
+            logger.error(f"Selenium政府网爬取异常: {law_name} - {e}")
+            return self._create_failed_result(law_name, f"爬取异常: {str(e)}")
+        
+        finally:
+            # 每次爬取完成后立即关闭浏览器
+            self.close_driver()
     
     def find_best_match(self, target_name: str, search_results: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """找到最佳匹配的搜索结果"""

@@ -21,6 +21,62 @@ from typing import List, Dict, Any
 from config.settings import settings
 from src.crawler.crawler_manager import CrawlerManager
 
+def normalize_date_format(date_str: str) -> str:
+    """
+    将各种日期格式统一转换为 yyyy-mm-dd 格式
+    支持的输入格式：
+    - 2013年2月4日 -> 2013-02-04
+    - 2013-2-4 -> 2013-02-04
+    - 2013.2.4 -> 2013-02-04
+    - 2025-05-29 00:00:00 -> 2025-05-29
+    """
+    if not date_str or date_str.strip() == '':
+        return ''
+    
+    import re
+    from datetime import datetime
+    
+    date_str = str(date_str).strip()
+    
+    try:
+        # 格式1: 2013年2月4日
+        match = re.match(r'(\d{4})年(\d{1,2})月(\d{1,2})日', date_str)
+        if match:
+            year, month, day = match.groups()
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        
+        # 格式2: 2013-2-4 或 2013/2/4 或 2013.2.4
+        match = re.match(r'(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})', date_str)
+        if match:
+            year, month, day = match.groups()
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        
+        # 格式3: 2025-05-29 00:00:00 (带时间)
+        match = re.match(r'(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}:\d{2}', date_str)
+        if match:
+            return match.group(1)
+        
+        # 格式4: 已经是 yyyy-mm-dd 格式
+        match = re.match(r'\d{4}-\d{2}-\d{2}$', date_str)
+        if match:
+            return date_str
+        
+        # 格式5: 尝试使用datetime解析
+        for fmt in ['%Y-%m-%d', '%Y/%m/%d', '%Y.%m.%d', '%Y年%m月%d日']:
+            try:
+                dt = datetime.strptime(date_str, fmt)
+                return dt.strftime('%Y-%m-%d')
+            except:
+                continue
+        
+        # 如果都无法解析，返回原始字符串
+        print(f"无法解析日期格式: {date_str}")
+        return date_str
+        
+    except Exception as e:
+        print(f"日期格式化失败: {date_str}, 错误: {e}")
+        return date_str
+
 def load_target_laws_from_excel(excel_path: str) -> List[str]:
     """从Excel文件加载目标法规列表"""
     try:
@@ -85,9 +141,9 @@ async def save_results(results: List[Dict[str, Any]], target_laws: List[str], ou
                 "搜索关键词": law_data.get('search_keyword', target_law),
                 "法规名称": law_data.get('name', ''),
                 "文号": law_data.get('number', ''),
-                "发布日期": law_data.get('publish_date', ''),
-                "实施日期": law_data.get('valid_from', ''),
-                "失效日期": law_data.get('valid_to', ''),
+                "发布日期": normalize_date_format(law_data.get('publish_date', '')),
+                "实施日期": normalize_date_format(law_data.get('valid_from', '')),
+                "失效日期": normalize_date_format(law_data.get('valid_to', '')),
                 "发布机关": law_data.get('office', ''),
                 "法规级别": law_data.get('level', ''),
                 "状态": law_data.get('status', ''),

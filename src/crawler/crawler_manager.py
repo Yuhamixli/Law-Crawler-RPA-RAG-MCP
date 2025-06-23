@@ -152,7 +152,18 @@ class CacheManager:
 
 
 class CrawlerManager:
-    """爬虫管理器"""
+    """
+    爬虫管理器 - 双数据源策略
+    
+    数据源优先级：
+    1. 国家法律法规数据库 (flk.npc.gov.cn) - SearchBasedCrawler
+    2. 中国政府网 (www.gov.cn) - SeleniumGovCrawler (浏览器自动化)
+    
+    特性：
+    - 双数据源确保数据完整性
+    - Selenium绕过反爬机制
+    - 台账字段完整提取
+    """
     
     def __init__(self):
         pass
@@ -169,18 +180,15 @@ class CrawlerManager:
             ("search_api", SearchBasedCrawler()),  # 优先：全国人大法律法规数据库
         ]
         
-        # 初始化政府网爬虫 - 优先使用Selenium版本
+        # 使用Selenium政府网爬虫（已验证可行）
         try:
             from .strategies.selenium_gov_crawler import SeleniumGovCrawler
             gov_crawler = SeleniumGovCrawler()
             self.crawlers.append(("selenium_gov_web", gov_crawler))
             logger.info("使用Selenium政府网爬虫")
         except Exception as selenium_error:
-            logger.warning(f"Selenium爬虫初始化失败，回退到普通爬虫: {selenium_error}")
-            from .strategies.gov_web_crawler import GovWebCrawler
-            gov_crawler = GovWebCrawler()
-            self.crawlers.append(("gov_web", gov_crawler))
-            logger.info("使用普通政府网爬虫")
+            logger.error(f"Selenium爬虫初始化失败: {selenium_error}")
+            logger.warning("无法使用政府网数据源，仅使用人大网数据库")
         
         logger.info(f"初始化爬虫策略: {[name for name, _ in self.crawlers]}")
         logger.info("已启用双数据源策略，确保数据完整性")
