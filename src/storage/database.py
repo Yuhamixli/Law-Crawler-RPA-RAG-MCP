@@ -10,7 +10,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from src.storage.models import Base, LawMetadata, LawDocument, LawChangeLog, CrawlTask
-from config.config import DATABASE_CONFIG
+from config.settings import settings
 
 
 class DatabaseManager:
@@ -19,10 +19,10 @@ class DatabaseManager:
     def __init__(self):
         # 创建数据库引擎
         self.engine = create_engine(
-            DATABASE_CONFIG['url'],
-            echo=DATABASE_CONFIG['echo'],
-            pool_size=DATABASE_CONFIG['pool_size'],
-            max_overflow=DATABASE_CONFIG['max_overflow']
+            settings.database.url,
+            echo=settings.database.echo,
+            pool_size=settings.database.pool_size,
+            max_overflow=settings.database.max_overflow
         )
         
         # 创建会话工厂
