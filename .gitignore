@@ -134,6 +134,7 @@ logs/
 data/
 data/*
 !data/.gitkeep
+debug/
 
 # IDE
 .vscode/
