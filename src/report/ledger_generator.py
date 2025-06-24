@@ -143,7 +143,8 @@ class LedgerGenerator:
                 '失效日期': law['valid_to'].strftime('%Y-%m-%d') if law['valid_to'] else '',
                 '状态': self._get_status_text(law['status']),
                 '数据来源': law['source'] or '',
-                '爬取时间': law['created_at'].strftime('%Y-%m-%d %H:%M:%S') if law['created_at'] else '',
+                '来源链接': law['source_url'] or '',  # 添加来源链接字段
+                '采集时间': law['created_at'].strftime('%Y-%m-%d %H:%M:%S') if law['created_at'] else '',
                 '更新时间': law['updated_at'].strftime('%Y-%m-%d %H:%M:%S') if law['updated_at'] else ''
             }
             ledger_records.append(record)
@@ -159,6 +160,9 @@ class LedgerGenerator:
             LawStatus.REPEALED: "已废止",
             LawStatus.EXPIRED: "已失效"
         }
+        # 统一状态字段 - 将"现行有效"统一为"有效"
+        if status in ["现行有效", "有效"]:
+            return "有效"
         return status_map.get(status, status)
         
     def _generate_excel(self, data: pd.DataFrame, filename: str) -> str:
@@ -217,7 +221,7 @@ class LedgerGenerator:
             cell.alignment = header_alignment
             cell.border = thin_border
             
-        # 设置列宽
+        # 设置列宽 - 更新为12列（增加了来源链接）
         column_widths = {
             'A': 8,   # 序号
             'B': 50,  # 法规名称
@@ -228,19 +232,27 @@ class LedgerGenerator:
             'G': 15,  # 失效日期
             'H': 12,  # 状态
             'I': 20,  # 数据来源
-            'J': 20,  # 爬取时间
-            'K': 20   # 更新时间
+            'J': 40,  # 来源链接
+            'K': 20,  # 采集时间
+            'L': 20   # 更新时间
         }
         
         for col, width in column_widths.items():
             worksheet.column_dimensions[col].width = width
             
-        # 应用数据行样式
+        # 应用数据行样式和超链接
         for row in range(2, row_count + 2):
-            for col in range(1, 12):
+            for col in range(1, 13):  # 更新为13列
                 cell = worksheet.cell(row=row, column=col)
                 cell.border = thin_border
                 cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+                
+                # 处理来源链接列（第J列）的超链接
+                if col == 10:  # 来源链接列
+                    cell_value = cell.value
+                    if cell_value and cell_value.startswith('http'):
+                        cell.hyperlink = cell_value
+                        cell.style = "Hyperlink"
                 
         # 冻结首行
         worksheet.freeze_panes = 'A2'
