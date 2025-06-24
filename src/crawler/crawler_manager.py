@@ -1,8 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
-爬虫管理器 - 整合版本
-参考example project的单一入口模式
-支持多数据源优先级爬取，内置缓存管理
+爬虫管理器
+负责协调不同的爬虫策略，优化效率
 """
+
 import asyncio
 import pandas as pd
 import json
@@ -18,8 +20,10 @@ from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from src.crawler.strategies.search_based_crawler import SearchBasedCrawler
-
-
+from src.crawler.strategies.selenium_gov_crawler import SeleniumGovCrawler
+from src.crawler.strategies.search_engine_crawler import SearchEngineCrawler
+from src.crawler.strategies.direct_url_crawler import DirectUrlCrawler
+from src.crawler.strategies.optimized_selenium_crawler import OptimizedSeleniumCrawler
 
 from config.settings import settings
 
@@ -156,43 +160,58 @@ class CrawlerManager:
     爬虫管理器 - 双数据源策略
     
     数据源优先级：
-    1. 国家法律法规数据库 (flk.npc.gov.cn) - SearchBasedCrawler
-    2. 中国政府网 (www.gov.cn) - SeleniumGovCrawler (浏览器自动化)
+    1. 国家法律法规数据库 (flk.npc.gov.cn) - SearchBasedCrawler [法律法规数据库]
+    2. 搜索引擎爬虫 (SearchEngineCrawler) - 通过搜索引擎定位法规
     
     特性：
-    - 双数据源确保数据完整性
-    - Selenium绕过反爬机制
+    - 法律法规数据库优先，确保权威性
+    - 搜索引擎补充，提高覆盖率
     - 台账字段完整提取
     """
     
     def __init__(self):
-        pass
+        self.logger = logger
+        # 延迟初始化爬虫，实现浏览器复用
+        self._search_crawler = None
+        self._selenium_crawler = None
+        self._optimized_selenium_crawler = None
+        self._search_engine_crawler = None
+        self._direct_url_crawler = None
         self.cache = CacheManager()
         self.semaphore = asyncio.Semaphore(settings.crawler.max_concurrent)
-        self._init_crawlers()
-        
-    def _init_crawlers(self):
-        """初始化爬虫策略 - 双数据源优先级策略"""
-        
-        # 按优先级排序：flk.npc.gov.cn -> www.gov.cn
-        # 启用双数据源策略确保数据完整性
-        self.crawlers = [
-            ("search_api", SearchBasedCrawler()),  # 优先：全国人大法律法规数据库
-        ]
-        
-        # 使用Selenium政府网爬虫（已验证可行）
-        try:
-            from .strategies.selenium_gov_crawler import SeleniumGovCrawler
-            gov_crawler = SeleniumGovCrawler()
-            self.crawlers.append(("selenium_gov_web", gov_crawler))
-            logger.info("使用Selenium政府网爬虫")
-        except Exception as selenium_error:
-            logger.error(f"Selenium爬虫初始化失败: {selenium_error}")
-            logger.warning("无法使用政府网数据源，仅使用人大网数据库")
-        
-        logger.info(f"初始化爬虫策略: {[name for name, _ in self.crawlers]}")
-        logger.info("已启用双数据源策略，确保数据完整性")
-        
+    
+    def _get_search_crawler(self):
+        """获取搜索爬虫实例"""
+        if self._search_crawler is None:
+            self._search_crawler = SearchBasedCrawler()
+        return self._search_crawler
+    
+    def _get_selenium_crawler(self):
+        """获取Selenium爬虫实例（复用浏览器）"""
+        if self._selenium_crawler is None:
+            self._selenium_crawler = SeleniumGovCrawler()
+            # 预先初始化浏览器
+            self._selenium_crawler.setup_driver()
+        return self._selenium_crawler
+    
+    def _get_search_engine_crawler(self):
+        """获取搜索引擎爬虫实例"""
+        if self._search_engine_crawler is None:
+            self._search_engine_crawler = SearchEngineCrawler()
+        return self._search_engine_crawler
+    
+    def _get_direct_url_crawler(self):
+        """获取直接URL爬虫实例"""
+        if self._direct_url_crawler is None:
+            self._direct_url_crawler = DirectUrlCrawler()
+        return self._direct_url_crawler
+    
+    def _get_optimized_selenium_crawler(self):
+        """获取优化版Selenium爬虫实例"""
+        if self._optimized_selenium_crawler is None:
+            self._optimized_selenium_crawler = OptimizedSeleniumCrawler()
+        return self._optimized_selenium_crawler
+    
     async def fetch(self, url: str, params: Dict = None, headers: Dict = None) -> aiohttp.ClientResponse:
         """通用HTTP请求方法"""
         if headers is None:
@@ -216,158 +235,288 @@ class CrawlerManager:
                 logger.error(f"HTTP请求失败: {url}, 错误: {e}")
                 raise
         
-    def add_crawler(self, crawler):
-        """添加爬虫（保留兼容性）"""
-        self.crawlers.append((crawler.name, crawler))
+    async def crawl_law(self, law_name: str, law_number: str = None) -> Dict[str, Any]:
+        """
+        爬取单个法规
+        优化策略：按效率和成功率排序
+        """
+        self.logger.info(f"开始爬取法规: {law_name}")
         
-    async def crawl_law(self, law_name: str, law_number: str = None, use_cache: bool = False) -> Optional[Dict]:
-        """单一入口：爬取单个法律（禁用缓存以确保数据时效性）"""
-        # 缓存已禁用 - 避免法律法规失效但缓存中依然存在的情况
-        # cache_key = self.cache._get_cache_key(f"{law_name}_{law_number}")
+        # 策略1: 国家法律法规数据库爬虫（优先级最高）
+        # 优势：数据权威，结构化好，官方数据源
+        try:
+            self.logger.info("尝试策略1: 国家法律法规数据库（权威数据源）")
+            search_crawler = self._get_search_crawler()
+            result = await search_crawler.crawl_law(law_name, law_number)
+            
+            if result and result.get('success'):
+                self.logger.success(f"国家法律法规数据库成功: {law_name}")
+                result['crawler_strategy'] = 'search_based'
+                return result
+            else:
+                self.logger.warning(f"国家法律法规数据库无结果: {law_name}")
+        except Exception as e:
+            self.logger.warning(f"国家法律法规数据库失败: {e}")
         
-        # 1. 不使用缓存，直接从数据源获取最新数据
-        # if use_cache:
-        #     cached_result = self.cache.get(cache_key)
-        #     if cached_result:
-        #         logger.info(f"从缓存获取: {law_name}")
-        #         return cached_result
+        # 策略2: 搜索引擎爬虫
+        # 优势：绕过反爬机制，覆盖面广，速度快，不依赖浏览器
+        try:
+            self.logger.info("尝试策略2: 搜索引擎爬虫（补充策略）")
+            search_engine_crawler = self._get_search_engine_crawler()
+            result = await search_engine_crawler.crawl_law(law_name, law_number)
             
-        # 2. 暂时禁用数据库检查，直接爬取真实数据源
-        # existing = self.db_manager.get_law_by_name_and_number(law_name, law_number)
-        # if existing:
-        #     logger.info(f"从数据库获取: {law_name}")
-        #     result = {
-        #         "law_id": existing.law_id,
-        #         "name": existing.name,
-        #         "number": existing.number,
-        #         "source": "database",
-        #         "success": True,
-        #         "source_url": existing.source_url,
-        #         "publish_date": existing.publish_date.isoformat() if existing.publish_date else None,
-        #         "valid_from": existing.valid_from.isoformat() if existing.valid_from else None,
-        #         "valid_to": existing.valid_to.isoformat() if existing.valid_to else None,
-        #         "crawl_time": datetime.now().isoformat()
-        #     }
-        #     # 保存到分类目录
-        #     self.cache.write_law(result)
-        #     return result
+            if result and result.get('success'):
+                self.logger.success(f"搜索引擎爬虫成功: {law_name}")
+                result['crawler_strategy'] = 'search_engine'
+                return result
+            else:
+                self.logger.warning(f"搜索引擎爬虫无结果: {law_name}")
+        except Exception as e:
+            self.logger.warning(f"搜索引擎爬虫失败: {e}")
+        
+        # 策略3: Selenium政府网爬虫
+        # 优势：成功率高，但速度慢
+        try:
+            self.logger.info("尝试策略3: Selenium政府网爬虫")
+            selenium_crawler = self._get_selenium_crawler()
+            result = await selenium_crawler.crawl_law(law_name, law_number)
             
-        # 3. 按优先级尝试不同数据源
-        for crawler_name, crawler in self.crawlers:
-            try:
-                logger.info(f"使用 {crawler_name} 爬取: {law_name}")
-                
-                result = await crawler.crawl_law(law_name, law_number)
-                
-                if result and result.get('success'):
-                    # 添加来源信息
-                    result['source'] = crawler_name
-                    result['crawl_time'] = datetime.now().isoformat()
-                    
-                    # 确保包含完整的时间信息
-                    if not result.get('publish_date'):
-                        result['publish_date'] = None
-                    if not result.get('valid_from'):
-                        result['valid_from'] = None
-                    if not result.get('valid_to'):
-                        result['valid_to'] = None
-                        
-                    # 确保包含实际URL
-                    if not result.get('source_url'):
-                        result['source_url'] = None
-                    
-                    # 缓存已禁用 - 确保每次都获取最新数据
-                    # self.cache.set(cache_key, result)
-                    
-                    # 不保存到分类目录 - 避免使用过期数据
-                    # self.cache.write_law(result)
-                    
-                    # 暂时禁用数据库保存
+            if result and result.get('success'):
+                self.logger.success(f"Selenium政府网爬虫成功: {law_name}")
+                result['crawler_strategy'] = 'selenium_gov'
+                return result
+            else:
+                self.logger.warning(f"Selenium政府网爬虫无结果: {law_name}")
+        except Exception as e:
+            self.logger.warning(f"Selenium政府网爬虫失败: {e}")
+        
+        # 策略4: 直接URL访问爬虫（最后保障）
+        # 优势：直接访问已知的政府网链接，绕过搜索限制
+        try:
+            self.logger.info("尝试策略4: 直接URL访问爬虫")
+            direct_url_crawler = self._get_direct_url_crawler()
+            result = await direct_url_crawler.crawl_law(law_name, law_number)
+            
+            if result and result.get('success'):
+                self.logger.success(f"直接URL访问成功: {law_name}")
+                result['crawler_strategy'] = 'direct_url'
+                return result
+            else:
+                self.logger.warning(f"直接URL访问无结果: {law_name}")
+        except Exception as e:
+            self.logger.warning(f"直接URL访问失败: {e}")
+        
+        # 所有策略都失败
+        self.logger.error(f"所有爬取策略都失败: {law_name}")
+        return self._create_failed_result(law_name, "所有爬取策略都失败")
     
-                    
-                    logger.success(f"成功爬取: {law_name} (来源: {crawler_name})")
-                    return result
-                    
-            except Exception as e:
-                logger.warning(f"{crawler_name} 爬取失败: {law_name}, 错误: {e}")
-                continue
-                
-        logger.error(f"所有数据源都失败: {law_name}")
-        return None
+    async def crawl_laws_batch(self, law_list: List[Dict[str, str]], limit: int = None) -> List[Dict[str, Any]]:
+        """
+        批量爬取法规 - 终极优化版本
+        实现多策略并行，浏览器复用，显著提高效率
+        """
+        if limit:
+            law_list = law_list[:limit]
         
-
+        total_count = len(law_list)
+        self.logger.info(f"开始批量爬取 {total_count} 个法规（终极优化模式）")
         
-    async def crawl_laws(self, laws_to_crawl: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """批量爬取法规 - 使用单一入口模式"""
-        results = []
+        # 提取法规名称列表
+        law_names = [law_info.get('名称', law_info.get('name', '')) for law_info in law_list]
         
-        for law_info in laws_to_crawl:
-            result = {
-                'name': law_info['name'],
-                'success': False,
-                'error': None,
-                'source': None,
-                'law_id': None
-            }
+        start_time = time.time()
+        
+        # 策略1: 国家法律法规数据库批量爬取（优先级最高）
+        search_based_results = {}
+        try:
+            self.logger.info("🏛️ 阶段1: 国家法律法规数据库批量爬取（权威数据源）")
+            search_crawler = self._get_search_crawler()
             
+            search_tasks = []
+            for law_name in law_names:
+                search_tasks.append(search_crawler.crawl_law(law_name))
+            
+            search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+            
+            for law_name, result in zip(law_names, search_results):
+                if isinstance(result, Exception):
+                    self.logger.warning(f"法规库异常: {law_name} - {result}")
+                elif result and result.get('success'):
+                    search_based_results[law_name] = result
+                    self.logger.success(f"📚 法规库成功: {law_name}")
+            
+            search_success_rate = len(search_based_results) / len(law_names) * 100
+            self.logger.info(f"法规库阶段完成: {len(search_based_results)}/{len(law_names)} 成功 ({search_success_rate:.1f}%)")
+            
+        except Exception as e:
+            self.logger.error(f"法规库批量爬取失败: {e}")
+        
+        # 策略2: 搜索引擎批量爬取（未找到的法规）
+        remaining_laws = [name for name in law_names if name not in search_based_results]
+        search_engine_results = {}
+        
+        if remaining_laws:
             try:
-                # 使用单一入口爬取
-                crawl_result = await self.crawl_law(
-                    law_info['name'], 
-                    law_info.get('number')
-                )
+                self.logger.info(f"🚀 阶段2: 搜索引擎批量爬取 ({len(remaining_laws)}个剩余)")
+                search_engine_crawler = self._get_search_engine_crawler()
                 
-                if crawl_result:
-                    result['success'] = True
-                    result['source'] = crawl_result.get('source')
-                    result['law_id'] = crawl_result.get('law_id')
-                else:
-                    result['error'] = '所有数据源都失败'
-                        
+                search_tasks = []
+                for law_name in remaining_laws:
+                    search_tasks.append(search_engine_crawler.crawl_law(law_name))
+                
+                search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+                
+                for law_name, result in zip(remaining_laws, search_results):
+                    if isinstance(result, Exception):
+                        self.logger.warning(f"搜索引擎异常: {law_name} - {result}")
+                    elif result and result.get('success'):
+                        search_engine_results[law_name] = result
+                        self.logger.success(f"🎯 搜索引擎成功: {law_name}")
+                
+                search_engine_success_rate = len(search_engine_results) / len(remaining_laws) * 100 if remaining_laws else 0
+                self.logger.info(f"搜索引擎阶段完成: {len(search_engine_results)}/{len(remaining_laws)} 成功 ({search_engine_success_rate:.1f}%)")
+                
             except Exception as e:
-                logger.error(f"处理法规 {law_info['name']} 时出错: {str(e)}")
-                result['error'] = str(e)
+                self.logger.error(f"搜索引擎批量爬取失败: {e}")
+        
+        # 策略3: 优化版Selenium批量爬取（最难的法规）
+        final_remaining_laws = [name for name in law_names if name not in search_based_results and name not in search_engine_results]
+        selenium_results = {}
+        
+        if final_remaining_laws:
+            try:
+                self.logger.info(f"🔧 阶段3: 优化版Selenium批量爬取 ({len(final_remaining_laws)}个困难法规)")
+                optimized_selenium_crawler = self._get_optimized_selenium_crawler()
                 
-            results.append(result)
+                # 使用优化版Selenium的批量处理方法
+                selenium_batch_results = await optimized_selenium_crawler.crawl_laws_batch(final_remaining_laws)
+                
+                for result in selenium_batch_results:
+                    if result and result.get('success'):
+                        law_name = result.get('target_name', result.get('name', ''))
+                        selenium_results[law_name] = result
+                        self.logger.success(f"⚡ 优化Selenium成功: {law_name}")
+                
+                selenium_success_rate = len(selenium_results) / len(final_remaining_laws) * 100 if final_remaining_laws else 0
+                self.logger.info(f"Selenium阶段完成: {len(selenium_results)}/{len(final_remaining_laws)} 成功 ({selenium_success_rate:.1f}%)")
+                
+            except Exception as e:
+                self.logger.error(f"优化Selenium批量爬取失败: {e}")
+        
+        # 合并所有结果
+        results = []
+        success_count = 0
+        
+        for law_info in law_list:
+            law_name = law_info.get('名称', law_info.get('name', ''))
             
+            if law_name in search_based_results:
+                result = search_based_results[law_name]
+                result['crawler_strategy'] = 'search_based'
+                results.append(result)
+                success_count += 1
+            elif law_name in search_engine_results:
+                result = search_engine_results[law_name]
+                result['crawler_strategy'] = 'search_engine'
+                results.append(result)
+                success_count += 1
+            elif law_name in selenium_results:
+                result = selenium_results[law_name]
+                result['crawler_strategy'] = 'optimized_selenium'
+                results.append(result)
+                success_count += 1
+            else:
+                results.append(self._create_failed_result(law_name, "所有批量策略都失败"))
+        
+        total_time = time.time() - start_time
+        success_rate = (success_count / total_count) * 100
+        avg_time_per_law = total_time / total_count
+        
+        self.logger.success(f"🎉 批量爬取完成！")
+        self.logger.info(f"📊 总数: {total_count}, 成功: {success_count}, 成功率: {success_rate:.1f}%")
+        self.logger.info(f"⏱️ 总用时: {total_time:.1f}秒, 平均: {avg_time_per_law:.2f}秒/法规")
+        self.logger.info(f"🚀 策略分布: 搜索引擎({len(search_engine_results)}), 法规库({len(search_based_results)}), Selenium({len(selenium_results)})")
+        
         return results
-        
-    async def crawl_from_excel(self, excel_path: str, generate_ledger: bool = True):
-        """从Excel文件批量爬取 - 参考example project的批量处理"""
-        # 读取Excel文件
-        df = pd.read_excel(excel_path)
-        
-        # 过滤掉空行
-        df = df.dropna(subset=['名称'])
-        
-        total = len(df)
-        logger.info(f"开始爬取，共 {total} 条法规")
-        
-        # 创建任务列表
-        tasks = []
-        for _, row in df.iterrows():
-            law_info = {
-                'name': row['名称'],
-                'number': row.get('编号', '')
-            }
-            task = self.crawl_law(law_info['name'], law_info['number'])
-            tasks.append(task)
+    
+    async def async_cleanup(self):
+        """异步清理资源"""
+        try:
+            if self._selenium_crawler:
+                self._selenium_crawler.close_driver()
+                self.logger.info("Selenium浏览器已关闭")
+            if self._optimized_selenium_crawler:
+                self._optimized_selenium_crawler.close_session()
+                self.logger.info("优化版Selenium浏览器已关闭")
+            if self._search_engine_crawler:
+                try:
+                    await self._search_engine_crawler.close()
+                    self.logger.info("搜索引擎爬虫连接已关闭")
+                except Exception as close_error:
+                    self.logger.warning(f"关闭搜索引擎爬虫连接失败: {close_error}")
+        except Exception as e:
+            self.logger.warning(f"异步清理资源时出错: {e}")
             
-        # 并发执行
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # 统计结果
-        success_count = sum(1 for r in results if r and r.get('success'))
-        failed_count = total - success_count
-        
-        logger.info(f"爬取完成: 成功 {success_count} 条，失败 {failed_count} 条")
-        
-        # 台账生成已移至main.py中统一处理
-        
+    def cleanup(self):
+        """清理资源"""
+        try:
+            if self._selenium_crawler:
+                self._selenium_crawler.close_driver()
+                self.logger.info("Selenium浏览器已关闭")
+            if self._optimized_selenium_crawler:
+                self._optimized_selenium_crawler.close_session()
+                self.logger.info("优化版Selenium浏览器已关闭")
+            if self._search_engine_crawler:
+                # 同步调用异步关闭
+                import asyncio
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        # 如果事件循环正在运行，创建任务
+                        loop.create_task(self._search_engine_crawler.close())
+                    else:
+                        # 如果事件循环未运行，直接执行
+                        loop.run_until_complete(self._search_engine_crawler.close())
+                    self.logger.info("搜索引擎爬虫连接已关闭")
+                except Exception as close_error:
+                    self.logger.warning(f"关闭搜索引擎爬虫连接失败: {close_error}")
+        except Exception as e:
+            self.logger.warning(f"清理资源时出错: {e}")
+    
+    def __del__(self):
+        """析构函数，确保资源清理"""
+        self.cleanup()
+    
+    def _create_failed_result(self, law_name: str, error_message: str) -> Dict[str, Any]:
+        """创建失败结果的标准格式"""
+        from datetime import datetime
         return {
-            "total": total,
-            "success": success_count,
-            "failed": failed_count
+            'success': False,
+            'name': law_name,
+            'title': law_name,
+            'number': '',
+            'document_number': '',
+            'publish_date': '',
+            'valid_from': '',
+            'valid_to': '',
+            'office': '',
+            'issuing_authority': '',
+            'level': '',
+            'law_level': '',
+            'status': '',
+            'source_url': '',
+            'content': '',
+            'target_name': law_name,
+            'search_keyword': law_name,
+            'crawl_time': datetime.now().isoformat(),
+            'source': 'failed',
+            'error': error_message,
+            'crawler_strategy': 'failed'
         }
+
+
+def create_crawler_manager():
+    """创建爬虫管理器实例"""
+    return CrawlerManager()
         
  
