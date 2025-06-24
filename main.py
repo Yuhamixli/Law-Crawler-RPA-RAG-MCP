@@ -15,6 +15,7 @@ import json
 import os
 import pandas as pd
 import argparse
+import time
 from datetime import datetime
 from typing import List, Dict, Any
 
@@ -37,6 +38,15 @@ def normalize_date_format(date_str: str) -> str:
     from datetime import datetime
     
     date_str = str(date_str).strip()
+    
+    # 转换全角字符为半角（修复全角日期问题）
+    full_to_half = {
+        '０': '0', '１': '1', '２': '2', '３': '3', '４': '4',
+        '５': '5', '６': '6', '７': '7', '８': '8', '９': '9',
+        '－': '-', '—': '-', '–': '-'
+    }
+    for full, half in full_to_half.items():
+        date_str = date_str.replace(full, half)
     
     try:
         # 格式1: 2013年2月4日
@@ -76,6 +86,43 @@ def normalize_date_format(date_str: str) -> str:
     except Exception as e:
         print(f"日期格式化失败: {date_str}, 错误: {e}")
         return date_str
+
+
+def normalize_datetime_format(datetime_str: str) -> str:
+    """统一时间格式为YYYY-MM-DD HH:MM:SS，避免Excel识别为超链接"""
+    if not datetime_str or datetime_str.strip() == "":
+        return ""
+    
+    import re
+    datetime_str = datetime_str.strip()
+    
+    # 如果是ISO格式，转换为标准格式
+    if 'T' in datetime_str:
+        try:
+            # 解析ISO格式：2025-06-23T16:25:10.215903
+            dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        except:
+            pass
+    
+    # 如果已经是标准格式，直接返回
+    if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', datetime_str):
+        return datetime_str
+    
+    # 尝试其他格式
+    try:
+        # 尝试解析常见格式
+        for fmt in ["%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S", "%Y-%m-%d", "%Y/%m/%d"]:
+            try:
+                dt = datetime.strptime(datetime_str, fmt)
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            except:
+                continue
+    except:
+        pass
+    
+    # 如果都失败了，返回当前时间格式
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def load_target_laws_from_excel(excel_path: str) -> List[str]:
     """从Excel文件加载目标法规列表"""
@@ -122,17 +169,30 @@ async def save_results(results: List[Dict[str, Any]], target_laws: List[str], ou
         if target_law in results_map:
             law_data = results_map[target_law]
             
-            # 确定来源渠道
+            # 确定来源渠道 - 修复版
             source = law_data.get('source', 'unknown')
+            source_url = law_data.get('source_url', '')
             source_channel = ""
+            
+            # 优先通过source字段判断
             if source == "search_api":
                 source_channel = "国家法律法规数据库"
             elif source == "selenium_gov_web":
                 source_channel = "中国政府网(www.gov.cn)"
             elif source == "gov_web":
                 source_channel = "中国政府网"
+            elif source in ["搜索引擎(政府网)", "DuckDuckGo", "Bing"]:
+                source_channel = "搜索引擎(政府网)"
             else:
-                source_channel = "未知来源"
+                # 通过URL判断来源
+                if "flk.npc.gov.cn" in source_url:
+                    source_channel = "国家法律法规数据库"
+                elif "gov.cn" in source_url:
+                    source_channel = "搜索引擎(政府网)"
+                elif source_url:
+                    source_channel = "其他政府网站"
+                else:
+                    source_channel = "未知来源"
             
             # Excel表格数据（简化版）
             excel_data = {
@@ -149,7 +209,7 @@ async def save_results(results: List[Dict[str, Any]], target_laws: List[str], ou
                 "状态": law_data.get('status', ''),
                 "来源渠道": source_channel,  # 新增的来源渠道列
                 "来源链接": law_data.get('source_url', ''),
-                "采集时间": law_data.get('crawl_time', datetime.now().isoformat()),
+                "采集时间": normalize_datetime_format(law_data.get('crawl_time', datetime.now().isoformat())),
                 "采集状态": "成功"
             }
             
@@ -303,8 +363,132 @@ async def search_single_law(law_name: str, verbose: bool = False):
         print(f"   建议检查法规名称是否正确，或尝试简化搜索关键词")
 
 
-async def batch_crawl():
-    """批量爬取模式（原有功能）"""
+async def batch_crawl_optimized(limit: int = None):
+    """批量爬取模式 - 终极优化版本"""
+    print("=== 批量采集模式 (终极优化版) ===")
+    print(f"版本: {settings.version} | 调试模式: {'开启' if settings.debug else '关闭'}")
+    print("策略: 搜索引擎→法规库→优化Selenium (多层并行)")
+    print()
+    
+    # 获取目标法规列表
+    excel_path = "Background info/law list.xls"
+    if os.path.exists(excel_path):
+        print(f"从Excel文件加载法规列表: {excel_path}")
+        target_laws = load_target_laws_from_excel(excel_path)
+        if not target_laws:
+            print("Excel文件为空或格式错误，程序退出")
+            return
+    else:
+        print("Excel文件不存在，程序退出")
+        return
+    
+    # 根据参数或配置决定爬取数量
+    if limit is not None:
+        crawl_limit = limit
+        print(f"根据命令行参数限制，本次仅采集前 {crawl_limit} 条法规")
+    else:
+        crawl_limit = settings.crawler.crawl_limit
+        if crawl_limit > 0:
+            print(f"根据配置限制，本次仅采集前 {crawl_limit} 条法规")
+        else:
+            print(f"无爬取数量限制，将采集全部 {len(target_laws)} 条法规")
+    
+    if crawl_limit > 0:
+        target_laws = target_laws[:crawl_limit]
+    
+    print(f"目标法规数: {len(target_laws)}")
+    if target_laws:
+        print("前5个法规:", target_laws[:5])
+    print()
+    
+    # 准备法规信息列表
+    law_list = [{'名称': law_name} for law_name in target_laws]
+    
+    # 创建采集管理器
+    crawler_manager = CrawlerManager()
+    
+    try:
+        # 使用终极优化批量爬取
+        print("🚀 开始批量采集（终极优化模式）...")
+        start_time = time.time()
+        
+        results = await crawler_manager.crawl_laws_batch(law_list, limit=crawl_limit)
+        
+        total_time = time.time() - start_time
+        
+        # 保存结果
+        if results or target_laws:
+            await save_results(results, target_laws)
+            
+            # 统计信息
+            success_count = len([r for r in results if r and r.get('success', False)])
+            total_count = len(target_laws)
+            failed_count = total_count - success_count
+            success_rate = success_count / total_count * 100 if total_count > 0 else 0
+            avg_time = total_time / total_count if total_count > 0 else 0
+            
+            print(f"\n=== 🎉 采集完成（终极优化版）===")
+            print(f"目标法规数: {total_count}")
+            print(f"成功采集: {success_count}")
+            print(f"未找到: {failed_count}")
+            print(f"成功率: {success_rate:.1f}%")
+            print(f"总耗时: {total_time:.1f}秒")
+            print(f"平均耗时: {avg_time:.2f}秒/法规")
+            
+            # 效率对比显示
+            original_estimated_time = total_count * 24  # 原版估计24秒/法规
+            efficiency_improvement = ((original_estimated_time - total_time) / original_estimated_time) * 100
+            print(f"🚀 效率提升: {efficiency_improvement:.1f}% (相比原版预估)")
+            
+            # 显示成功采集的法规按策略分类
+            if success_count > 0:
+                print(f"\n✅ 成功采集的法规（按策略分类）:")
+                
+                strategy_groups = {}
+                for result in results:
+                    if result and result.get('success'):
+                        strategy = result.get('crawler_strategy', 'unknown')
+                        if strategy not in strategy_groups:
+                            strategy_groups[strategy] = []
+                        strategy_groups[strategy].append(result)
+                
+                strategy_names = {
+                    'search_engine': '🎯 搜索引擎',
+                    'search_based': '📚 国家法律法规数据库',
+                    'optimized_selenium': '⚡ 优化版Selenium',
+                    'selenium_gov': '🔧 标准Selenium',
+                    'direct_url': '🔗 直接URL访问'
+                }
+                
+                for strategy, laws in strategy_groups.items():
+                    strategy_name = strategy_names.get(strategy, f"🔧 {strategy}")
+                    print(f"  {strategy_name} ({len(laws)}条):")
+                    for i, law in enumerate(laws, 1):
+                        print(f"    {i}. {law.get('name', law.get('target_name'))} ({law.get('level', '未知级别')})")
+            
+            # 显示未找到的法规
+            if failed_count > 0:
+                print(f"\n❌ 未找到的法规 ({failed_count}条):")
+                successful_names = {r.get('name', r.get('target_name')) for r in results if r and r.get('success')}
+                unfound_count = 0
+                for target_law in target_laws:
+                    if target_law not in successful_names:
+                        unfound_count += 1
+                        print(f"  - {target_law}")
+        else:
+            print("❌ 没有目标法规，也未采集到任何信息")
+    
+    finally:
+        # 清理资源
+        try:
+            await crawler_manager.async_cleanup()
+            print("🧹 资源清理完成")
+        except Exception as e:
+            print(f"清理资源时发生错误: {e}")
+
+
+async def batch_crawl(limit: int = None):
+    """批量爬取模式（原有功能，保持向后兼容）"""
     print("=== 批量采集模式 ===")
     print(f"版本: {settings.version} | 调试模式: {'开启' if settings.debug else '关闭'}")
     print("数据源: 国家法律法规数据库 + 中国政府网")
@@ -322,13 +506,19 @@ async def batch_crawl():
         print("Excel文件不存在，程序退出")
         return
     
-    # 根据配置决定爬取数量
-    crawl_limit = settings.crawler.crawl_limit
-    if crawl_limit > 0:
-        print(f"根据配置限制，本次仅采集前 {crawl_limit} 条法规")
-        target_laws = target_laws[:crawl_limit]
+    # 根据参数或配置决定爬取数量
+    if limit is not None:
+        crawl_limit = limit
+        print(f"根据命令行参数限制，本次仅采集前 {crawl_limit} 条法规")
     else:
-        print(f"无爬取数量限制，将采集全部 {len(target_laws)} 条法规")
+        crawl_limit = settings.crawler.crawl_limit
+        if crawl_limit > 0:
+            print(f"根据配置限制，本次仅采集前 {crawl_limit} 条法规")
+        else:
+            print(f"无爬取数量限制，将采集全部 {len(target_laws)} 条法规")
+    
+    if crawl_limit > 0:
+        target_laws = target_laws[:crawl_limit]
     
     print(f"目标法规数: {len(target_laws)}")
     if target_laws:
@@ -346,7 +536,7 @@ async def batch_crawl():
         print(f"[{i}/{len(target_laws)}] 处理: {law_name}")
         
         result = await crawler_manager.crawl_law(law_name)
-        if result:
+        if result and result.get('success', False):
             # 确保包含目标法规名称
             result['target_name'] = law_name
             results.append(result)
@@ -406,6 +596,12 @@ async def batch_crawl():
                     print(f"  - {target_law}")
     else:
         print("❌ 没有目标法规，也未采集到任何信息")
+    
+    # 清理资源
+    try:
+        await crawler_manager.async_cleanup()
+    except Exception as e:
+        print(f"清理资源时发生错误: {e}")
 
 
 def parse_args():
@@ -415,7 +611,9 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
-  python main.py                           # 批量爬取（按配置限制）
+  python main.py                           # 批量爬取（终极优化版）
+  python main.py --limit 10                # 批量爬取前10条（优化版）
+  python main.py --legacy                  # 使用原版批量爬取
   python main.py --law "电子招标投标办法"    # 单独搜索指定法规
   python main.py --law "中华人民共和国民法典" -v  # 详细模式
         """
@@ -425,6 +623,18 @@ def parse_args():
         '--law', '-l',
         type=str,
         help='指定要搜索的单个法规名称'
+    )
+    
+    parser.add_argument(
+        '--limit',
+        type=int,
+        help='限制批量爬取的数量，覆盖配置文件设置'
+    )
+    
+    parser.add_argument(
+        '--legacy',
+        action='store_true',
+        help='使用原版批量爬取模式（逐个处理）'
     )
     
     parser.add_argument(
@@ -445,7 +655,12 @@ async def main():
         await search_single_law(args.law, args.verbose)
     else:
         # 批量爬取模式
-        await batch_crawl()
+        if args.legacy:
+            # 使用原版批量爬取模式
+            await batch_crawl(args.limit)
+        else:
+            # 使用终极优化版批量爬取模式（默认）
+            await batch_crawl_optimized(args.limit)
 
 
 if __name__ == "__main__":
@@ -458,4 +673,8 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n程序被用户中断")
     except Exception as e:
-        print(f"\n程序发生未知错误: {e}") 
+        import traceback
+        print(f"\n程序发生未知错误: {e}")
+        if settings.debug:
+            print("详细错误信息:")
+            traceback.print_exc() 
