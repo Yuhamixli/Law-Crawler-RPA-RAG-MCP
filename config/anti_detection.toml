@@ -1,0 +1,109 @@
+# 反反爬检测配置文件
+
+[proxy_pool]
+# IP代理池配置
+enabled = false  # 是否启用代理池
+rotation_interval = 5  # 代理轮换间隔（请求数）
+
+# 代理列表 - 实际使用时需要配置有效代理
+proxies = [
+    # 示例格式：
+    # { http = "http://username:password@proxy1:port", https = "https://username:password@proxy1:port" },
+    # { http = "http://proxy2:port", https = "https://proxy2:port" },
+]
+
+[user_agents]
+# User-Agent池配置
+rotation_enabled = true
+
+# User-Agent列表
+agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0"
+]
+
+[delays]
+# 请求延迟配置
+min_delay = 2.0  # 最小延迟（秒）
+max_delay = 8.0  # 最大延迟（秒）
+retry_delay = 15.0  # 重试延迟（秒）
+search_delay_multiplier = 1.2  # 搜索操作延迟倍数
+
+[timeouts]
+# 超时控制配置
+single_law_timeout = 20.0  # 单个法规总超时时间（秒）
+single_request_timeout = 10.0  # 单个请求超时时间（秒）
+selenium_timeout = 15.0  # Selenium操作超时时间（秒）
+page_load_timeout = 10.0  # 页面加载超时时间（秒）
+
+[selenium]
+# Selenium配置
+enabled = true  # 是否启用Selenium搜索
+headless = false  # 是否使用无头模式（调试时建议false）
+window_size_random = true  # 是否随机窗口大小
+disable_images = true  # 是否禁用图片加载
+disable_javascript = false  # 是否禁用JavaScript
+max_instances = 2  # 最大Selenium实例数
+
+# Chrome选项
+chrome_options = [
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-blink-features=AutomationControlled",
+    "--disable-web-security",
+    "--disable-features=VizDisplayCompositor"
+]
+
+[search_engines]
+# 搜索引擎配置
+
+[search_engines.baidu_selenium]
+enabled = true
+priority = 1
+method = "selenium"
+max_results = 10
+
+[search_engines.bing_selenium]
+enabled = true
+priority = 2
+method = "selenium"
+max_results = 10
+
+[search_engines.baidu_requests]
+enabled = false  # 暂时禁用，反爬严重
+priority = 3
+method = "requests"
+api_url = "https://www.baidu.com/s"
+
+[search_engines.duckduckgo]
+enabled = false  # 暂时禁用，连接超时
+priority = 4
+method = "requests"
+api_url = "https://html.duckduckgo.com/html/"
+
+[retry_strategy]
+# 重试策略配置
+max_retries = 3  # 最大重试次数
+backoff_factor = 2.0  # 退避因子
+retry_on_timeout = true  # 超时时是否重试
+retry_on_connection_error = true  # 连接错误时是否重试
+retry_on_http_error = true  # HTTP错误时是否重试
+
+[rate_limiting]
+# 速率限制配置
+requests_per_minute = 30  # 每分钟最大请求数
+requests_per_hour = 500  # 每小时最大请求数
+burst_size = 5  # 突发请求大小
+
+[detection_avoidance]
+# 检测规避配置
+rotate_headers = true  # 是否轮换请求头
+random_delays = true  # 是否使用随机延迟
+simulate_human_behavior = true  # 是否模拟人类行为
+use_session_cookies = true  # 是否使用会话Cookie 
