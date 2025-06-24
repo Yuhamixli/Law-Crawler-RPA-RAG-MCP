@@ -20,7 +20,7 @@ class CrawlerSettings(BaseSettings):
     timeout: int = Field(30, description="请求超时（秒）")
     max_concurrent: int = Field(3, description="最大并发数")
     rate_limit: int = Field(5, description="每分钟最大请求数")
-    crawl_limit: int = Field(5, description="本次爬取数量限制，0表示不限制")
+    crawl_limit: int = Field(0, description="本次爬取数量限制，0表示不限制")
     user_agents: List[str] = Field(
         default=[
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -70,6 +70,27 @@ class DataSourceSettings(BaseSettings):
     gov_legal_enabled: bool = Field(True, description="是否启用政府网")
 
 
+class ProxyPoolSettings(BaseSettings):
+    """代理池配置"""
+    enabled: bool = Field(False, description="是否启用代理池")
+    config_file: str = Field("config/proxy_config.toml", description="代理池配置文件路径")
+    debug_mode: bool = Field(False, description="调试模式")
+    rotation_enabled: bool = Field(True, description="是否启用代理轮换")
+    check_interval_minutes: int = Field(30, description="代理检查间隔(分钟)")
+    max_retries: int = Field(3, description="最大重试次数")
+    timeout_seconds: int = Field(10, description="代理连接超时")
+
+
+class IPPoolSettings(BaseSettings):
+    """IP池配置 (传统配置，保持兼容性)"""
+    enabled: bool = Field(False, description="是否启用IP池")
+    min_proxies: int = Field(5, description="最小代理数量")
+    max_proxies: int = Field(50, description="最大代理数量")
+    refresh_interval_hours: int = Field(1, description="刷新间隔(小时)")
+    check_timeout: int = Field(10, description="代理检查超时(秒)")
+    use_free_proxies: bool = Field(True, description="是否使用免费代理")
+
+
 class Settings(BaseSettings):
     """主配置类 - 支持环境变量和配置文件覆盖"""
     
@@ -83,6 +104,8 @@ class Settings(BaseSettings):
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     log: LogSettings = Field(default_factory=LogSettings)
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
+    proxy_pool: ProxyPoolSettings = Field(default_factory=ProxyPoolSettings)
+    ip_pool: IPPoolSettings = Field(default_factory=IPPoolSettings)
     
     # 法律类型映射
     law_type_mapping: Dict[str, str] = Field(
@@ -143,6 +166,16 @@ class Settings(BaseSettings):
                 if 'gov_legal' in ds:
                     for key, value in ds['gov_legal'].items():
                         flat_config[f'data_sources__gov_legal_{key}'] = value
+            
+            # 处理代理池配置
+            if 'proxy_pool' in toml_data:
+                for key, value in toml_data['proxy_pool'].items():
+                    flat_config[f'proxy_pool__{key}'] = value
+            
+            # 处理IP池配置
+            if 'ip_pool' in toml_data:
+                for key, value in toml_data['ip_pool'].items():
+                    flat_config[f'ip_pool__{key}'] = value
             
             # 处理顶级配置
             for key in ['project_name', 'version', 'debug']:
