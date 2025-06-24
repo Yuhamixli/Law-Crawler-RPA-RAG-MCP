@@ -11,6 +11,26 @@ debug = true
 max_concurrent = 5  # 开发环境可以适当增加并发
 rate_limit = 10     # 开发环境放宽限制
 crawl_limit = 40    # 开发环境限制爬取数量，避免过多测试数据
+timeout = 30        # 请求超时时间
+
+# 代理池配置 - 开发环境 (引用独立配置文件)
+[proxy_pool]
+config_file = "config/proxy_config.toml"  # 代理池配置文件路径
+enabled = true                             # 是否启用代理池
+debug_mode = true                         # 开发环境启用调试模式
+rotation_enabled = true                   # 启用代理轮换
+check_interval_minutes = 30              # 代理检查间隔
+max_retries = 3                          # 最大重试次数
+timeout_seconds = 10                     # 代理连接超时
+
+# 传统IP池配置 (保持兼容性)
+[ip_pool]
+enabled = false             # 关闭旧的IP池，使用新的代理池
+min_proxies = 3            # 最小代理数量
+max_proxies = 20           # 最大代理数量
+refresh_interval_hours = 1  # 刷新间隔(小时)
+check_timeout = 10         # 代理检查超时(秒)
+use_free_proxies = true    # 是否使用免费代理
 
 # 数据库配置 - 开发环境
 [database]
