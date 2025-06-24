@@ -1,0 +1,81 @@
+# 代理池配置文件
+# 支持多种代理类型和配置方式
+
+[proxy_pool]
+enabled = true                    # 是否启用代理池
+rotation_enabled = true           # 是否启用代理轮换
+check_interval_minutes = 30       # 代理检查间隔(分钟)
+max_retries = 3                  # 最大重试次数
+timeout_seconds = 10             # 代理连接超时
+
+# 付费代理配置 - 从截图中的配置
+[proxy_pool.paid_proxies]
+enabled = true
+priority = 1  # 最高优先级
+
+# 主要代理服务器 (从截图配置)
+[[proxy_pool.paid_proxies.servers]]
+name = "新加坡代理"
+remarks = "新加坡C|中转|Trojan"
+address = "best.cute-cloud.de"
+port = 52203
+password = "d32b360a-621a-472d-a29e-38f2ca977970"
+protocol = "trojan"  # 或者 "socks5", "http"
+transport = "tcp"
+tls = true
+sni = "sgc.cloud-services.top"
+flow = ""
+network = "tcp"
+type = "none"
+host = ""
+path = ""
+alpn = ""
+fingerprint = ""
+allowInsecure = true
+
+# 可以添加更多代理服务器
+# [[proxy_pool.paid_proxies.servers]]
+# name = "备用代理1"
+# address = "proxy2.example.com"
+# port = 1080
+# username = "user"
+# password = "pass"
+# protocol = "socks5"
+
+# 免费代理配置
+[proxy_pool.free_proxies]
+enabled = false  # 默认关闭免费代理，因为有付费代理
+priority = 3     # 最低优先级
+sources = [
+    "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
+    "https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt"
+]
+check_interval_hours = 2
+max_concurrent_checks = 50
+
+# 代理验证配置
+[proxy_pool.validation]
+test_urls = [
+    "https://httpbin.org/ip",
+    "https://ipinfo.io/json",
+    "https://api.ipify.org?format=json"
+]
+success_threshold = 2  # 至少2个测试URL成功才认为代理可用
+response_timeout = 8   # 验证超时时间
+
+# 代理使用策略
+[proxy_pool.strategy]
+mode = "rotation"      # 轮换模式: "rotation", "random", "failover"
+retry_on_failure = true
+fallback_to_direct = false  # 代理失败时不回退到直连
+max_failures_before_disable = 5  # 连续失败多少次后禁用代理
+
+# 特定网站代理配置
+[proxy_pool.site_specific]
+# 国家法律法规数据库
+"flk.npc.gov.cn" = { use_proxy = true, preferred_type = "paid" }
+# 政府网站
+"*.gov.cn" = { use_proxy = true, preferred_type = "paid" }
+# 搜索引擎
+"*.google.com" = { use_proxy = true, preferred_type = "paid" }
+"*.baidu.com" = { use_proxy = false }  # 百度可能不需要代理 
