@@ -17,6 +17,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from loguru import logger
+from bs4 import BeautifulSoup
+import re
 
 from ..base_crawler import BaseCrawler
 
@@ -88,11 +90,11 @@ class SeleniumGovCrawler(BaseCrawler):
         self.setup_driver()
     
     def setup_driver(self):
-        """设置Chrome WebDriver"""
+        """设置Chrome WebDriver - 优化版本"""
         try:
             chrome_options = Options()
             
-            # 基础设置
+            # 性能优化设置
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument('--disable-dev-shm-usage')
             chrome_options.add_argument('--disable-gpu')
@@ -102,19 +104,41 @@ class SeleniumGovCrawler(BaseCrawler):
             chrome_options.add_argument('--ignore-ssl-errors')
             chrome_options.add_argument('--ignore-certificate-errors-spki-list')
             
+            # 启用无头模式以提高效率
+            chrome_options.add_argument('--headless')  # 启用无头模式
+            
+            # 禁用不必要的功能以提高速度
+            chrome_options.add_argument('--disable-extensions')
+            chrome_options.add_argument('--disable-plugins')
+            chrome_options.add_argument('--disable-javascript')  # 禁用JS加快加载
+            chrome_options.add_argument('--disable-background-timer-throttling')
+            chrome_options.add_argument('--disable-backgrounding-occluded-windows')
+            chrome_options.add_argument('--disable-renderer-backgrounding')
+            chrome_options.add_argument('--disable-features=TranslateUI')
+            chrome_options.add_argument('--disable-ipc-flooding-protection')
+            
+            # 内存和CPU优化
+            chrome_options.add_argument('--memory-pressure-off')
+            chrome_options.add_argument('--max_old_space_size=4096')
+            chrome_options.add_argument('--aggressive-cache-discard')
+            
             # 用户代理设置
             chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
             
-            # 可选：无头模式（后台运行）
-            # chrome_options.add_argument('--headless')  # 取消注释以启用无头模式
-            
             # 窗口大小
-            chrome_options.add_argument('--window-size=1920,1080')
+            chrome_options.add_argument('--window-size=1366,768')  # 减小窗口大小
             
-            # 禁用图片加载以提高速度
+            # 禁用图片、CSS、字体加载以提高速度
             prefs = {
                 "profile.managed_default_content_settings.images": 2,
-                "profile.default_content_setting_values.notifications": 2
+                "profile.default_content_setting_values.notifications": 2,
+                "profile.managed_default_content_settings.stylesheets": 2,
+                "profile.managed_default_content_settings.cookies": 2,
+                "profile.managed_default_content_settings.javascript": 1,  # 启用JS，某些页面需要
+                "profile.managed_default_content_settings.plugins": 2,
+                "profile.managed_default_content_settings.popups": 2,
+                "profile.managed_default_content_settings.geolocation": 2,
+                "profile.managed_default_content_settings.media_stream": 2,
             }
             chrome_options.add_experimental_option("prefs", prefs)
             
@@ -129,9 +153,13 @@ class SeleniumGovCrawler(BaseCrawler):
                 self.logger.info("尝试使用系统PATH中的ChromeDriver")
             
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
-            self.driver.implicitly_wait(10)  # 隐式等待10秒
+            self.driver.implicitly_wait(5)  # 减少隐式等待时间
             
-            self.logger.info("Chrome WebDriver初始化成功")
+            # 设置页面加载超时
+            self.driver.set_page_load_timeout(20)  # 20秒页面加载超时
+            self.driver.set_script_timeout(10)     # 10秒脚本执行超时
+            
+            self.logger.info("Chrome WebDriver初始化成功（优化模式）")
             
         except Exception as e:
             self.logger.error(f"WebDriver初始化失败: {e}")
@@ -140,6 +168,19 @@ class SeleniumGovCrawler(BaseCrawler):
             self.logger.info("2. 检查网络连接")
             self.logger.info("3. 或手动下载ChromeDriver并添加到PATH")
             self.driver = None
+    
+    def ensure_driver(self):
+        """确保驱动可用，如果不可用则重新初始化"""
+        if not self.driver:
+            self.setup_driver()
+        else:
+            try:
+                # 测试驱动是否还活着
+                self.driver.current_url
+            except:
+                self.logger.warning("WebDriver已失效，重新初始化")
+                self.close_driver()
+                self.setup_driver()
     
     def __del__(self):
         """析构函数，确保浏览器关闭"""
@@ -183,7 +224,8 @@ class SeleniumGovCrawler(BaseCrawler):
             return False
     
     def search_law_with_browser(self, keyword: str) -> List[Dict[str, Any]]:
-        """使用浏览器搜索法规"""
+        """使用浏览器搜索法规 - 优化版本"""
+        self.ensure_driver()
         if not self.driver:
             self.logger.error("WebDriver未初始化")
             return []
@@ -191,175 +233,60 @@ class SeleniumGovCrawler(BaseCrawler):
         try:
             self.logger.info(f"浏览器搜索: {keyword}")
             
-            # 步骤1: 访问政府网首页
-            self.logger.info("访问政府网首页...")
-            self.driver.get("https://www.gov.cn")
+            # 直接构造搜索URL，跳过首页操作
+            import urllib.parse
+            encoded_keyword = urllib.parse.quote(keyword)
+            search_url = f"https://sousuo.www.gov.cn/sousuo/search.shtml?code=17da70961a7&searchWord={encoded_keyword}&dataTypeId=107&sign=9c1d305f-d6a7-46ba-9d42-ca7411f93ffe"
             
-            # 等待页面加载
-            WebDriverWait(self.driver, 15).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "header_search"))
-            )
-            self.logger.info("首页加载完成")
+            self.logger.info(f"直接访问搜索URL: {search_url}")
+            self.driver.get(search_url)
             
-            # 步骤2: 定位搜索框并输入关键词
+            # 优化等待策略 - 使用智能等待而不是固定等待
             try:
-                # 等待搜索框可见并可点击
-                search_input = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, "input.header_search_txt[name='headSearchword']"))
+                # 等待搜索结果加载，最多等待10秒
+                WebDriverWait(self.driver, 10).until(
+                    lambda driver: (
+                        keyword in driver.page_source or 
+                        "搜索结果" in driver.page_source or
+                        "相关结果" in driver.page_source or
+                        "没有找到" in driver.page_source
+                    )
                 )
-                search_input.clear()
-                search_input.send_keys(keyword)
-                logger.info(f"已输入搜索关键词: {keyword}")
-                
-                # 点击搜索按钮 - 使用多种定位方式
-                search_button = None
-                try:
-                    # 方式1：通过CSS选择器定位按钮
-                    search_button = self.driver.find_element(By.CSS_SELECTOR, "button.header_search_btn")
-                except:
-                    try:
-                        # 方式2：通过XPath定位按钮
-                        search_button = self.driver.find_element(By.XPATH, "//button[@class='header_search_btn']")
-                    except:
-                        # 方式3：通过父容器查找按钮
-                        search_form = self.driver.find_element(By.CLASS_NAME, "header_search")
-                        search_button = search_form.find_element(By.TAG_NAME, "button")
-                
-                if search_button:
-                    # 使用JavaScript点击，避免被其他元素遮挡
-                    self.driver.execute_script("arguments[0].click();", search_button)
-                    logger.info("已点击搜索按钮")
-                    
-                    # 等待页面跳转到搜索结果页 - 使用更灵活的等待策略
-                    try:
-                        # 方式1：等待URL变化（增加等待时间）
-                        WebDriverWait(self.driver, 20).until(
-                            lambda driver: "sousuo" in driver.current_url.lower() or "search" in driver.current_url.lower()
-                        )
-                        logger.info("页面跳转成功")
-                    except:
-                        # 方式2：如果URL没变，检查页面内容是否已经变化
-                        try:
-                            WebDriverWait(self.driver, 10).until(
-                                lambda driver: ("相关结果" in driver.page_source or 
-                                              "搜索结果" in driver.page_source or
-                                              "排序方式" in driver.page_source or
-                                              keyword in driver.page_source)
-                            )
-                            logger.info("搜索结果页面内容已加载")
-                        except:
-                            # 方式3：延迟检测 - 给更多时间让页面完全加载
-                            time.sleep(5)
-                            current_url = self.driver.current_url
-                            page_source = self.driver.page_source
-                            
-                            # 更全面的成功判断条件
-                            success_indicators = [
-                                "sousuo" in current_url.lower(),
-                                "search" in current_url.lower(),
-                                "相关结果" in page_source,
-                                "搜索结果" in page_source,
-                                "排序方式" in page_source,
-                                keyword in page_source,
-                                "检索方式" in page_source
-                            ]
-                            
-                            if any(success_indicators):
-                                logger.info("搜索页面确认成功（延迟检测）")
-                            else:
-                                logger.warning(f"页面跳转可能失败，当前URL: {current_url}")
-                                # 不抛出异常，让备用方案处理
-                                raise Exception("页面未跳转到搜索结果")
-                else:
-                    raise Exception("无法找到搜索按钮")
-                
-            except Exception as e:
-                logger.warning(f"首页搜索框操作失败: {e}")
-                # 备用方案：直接构造搜索URL
-                import urllib.parse
-                encoded_keyword = urllib.parse.quote(keyword)
-                search_url = f"https://sousuo.www.gov.cn/sousuo/search.shtml?code=17da70961a7&searchWord={encoded_keyword}&dataTypeId=107&sign=9c1d305f-d6a7-46ba-9d42-ca7411f93ffe"
-                logger.info(f"使用备用搜索URL: {search_url}")
-                self.driver.get(search_url)
+                self.logger.info("搜索结果页面加载完成")
+            except:
+                self.logger.warning("等待搜索结果超时，继续处理")
+                time.sleep(2)  # 短暂等待后继续
             
-            # 步骤3: 等待搜索结果页面加载
-            logger.info("等待搜索结果加载...")
-            time.sleep(8)  # 给足时间让JavaScript执行
-            
-            # 检查是否有搜索结果
-            current_url = self.driver.current_url
-            logger.info(f"当前页面URL: {current_url}")
-            
-            # 如果还在首页，说明搜索没有成功，直接使用备用URL
-            if "www.gov.cn" == self.driver.current_url or "index.htm" in self.driver.current_url:
-                logger.warning("搜索未跳转，使用备用搜索URL")
-                import urllib.parse
-                encoded_keyword = urllib.parse.quote(keyword)
-                search_url = f"https://sousuo.www.gov.cn/sousuo/search.shtml?code=17da70961a7&searchWord={encoded_keyword}&dataTypeId=107&sign=9c1d305f-d6a7-46ba-9d42-ca7411f93ffe"
-                self.driver.get(search_url)
-                time.sleep(8)
-            
-            # 步骤4: 解析搜索结果
+            # 解析搜索结果
             results = self._parse_search_results_from_browser(keyword)
             
             if results:
-                logger.info(f"浏览器搜索成功，找到 {len(results)} 个结果")
+                self.logger.info(f"浏览器搜索成功，找到 {len(results)} 个结果")
                 
-                # 步骤5: 点击进入详情页面并提取完整信息
+                # 批量提取详细信息，但只处理第一个结果以提高效率
                 enhanced_results = []
-                for i, result in enumerate(results[:3]):  # 只处理前3个结果
-                    try:
-                        logger.info(f"正在提取第 {i+1} 个结果的详细信息...")
-                        detailed_info = self._extract_detailed_info(result, keyword)
-                        if detailed_info:
-                            enhanced_results.append(detailed_info)
-                        else:
-                            # 如果提取失败，至少保留基本信息
-                            enhanced_results.append({
-                                'title': result.get('title', ''),
-                                'url': result.get('url', ''),
-                                'summary': result.get('summary', ''),
-                                'date': result.get('date', ''),
-                                'source': result.get('source', '中国政府网'),
-                                'document_number': '',
-                                'issuing_authority': '',
-                                'effective_date': '',
-                                'law_level': '',
-                                'content': ''
-                            })
-                    except Exception as e:
-                        logger.warning(f"提取第 {i+1} 个结果的详细信息失败: {e}")
-                        # 保留基本信息
-                        enhanced_results.append({
-                            'title': result.get('title', ''),
-                            'url': result.get('url', ''),
-                            'summary': result.get('summary', ''),
-                            'date': result.get('date', ''),
-                            'source': result.get('source', '中国政府网'),
-                            'document_number': '',
-                            'issuing_authority': '',
-                            'effective_date': '',
-                            'law_level': '',
-                            'content': ''
-                        })
+                try:
+                    self.logger.info(f"正在提取第1个结果的详细信息...")
+                    detailed_info = self._extract_detailed_info_fast(results[0], keyword)
+                    if detailed_info:
+                        enhanced_results.append(detailed_info)
+                    else:
+                        # 如果提取失败，至少保留基本信息
+                        enhanced_results.append(self._create_basic_result(results[0]))
+                except Exception as e:
+                    self.logger.warning(f"提取详细信息失败: {e}")
+                    enhanced_results.append(self._create_basic_result(results[0]))
                 
                 return enhanced_results
             else:
-                logger.warning("浏览器搜索未找到结果")
+                self.logger.warning("浏览器搜索未找到结果")
                 # 保存页面截图用于调试
-                try:
-                    import os
-                    os.makedirs("debug", exist_ok=True)
-                    screenshot_path = f"debug/no_result_{keyword.replace(' ', '_')}.png"
-                    self.driver.save_screenshot(screenshot_path)
-                    logger.info(f"无结果页面截图已保存: {screenshot_path}")
-                except:
-                    pass
+                self._save_debug_screenshot(keyword, "no_result")
             
             return results
             
         except Exception as e:
-            logger.error(f"浏览器搜索失败: {e}")
+            self.logger.error(f"浏览器搜索失败: {e}")
             return []
     
     def _parse_search_results_from_browser(self, keyword: str) -> List[Dict[str, Any]]:
@@ -480,304 +407,189 @@ class SeleniumGovCrawler(BaseCrawler):
             self.logger.error(f"解析浏览器搜索结果失败: {e}")
             return []
     
-    def _extract_detailed_info(self, result: Dict[str, Any], keyword: str) -> Optional[Dict[str, Any]]:
-        """点击链接并提取详细信息"""
+    def _extract_detailed_info_fast(self, result: Dict[str, Any], keyword: str) -> Optional[Dict[str, Any]]:
+        """快速提取详细信息 - 优化版本"""
         try:
-            # 获取链接URL
             detail_url = result.get('url')
             if not detail_url:
-                self.logger.warning("结果中没有URL")
                 return None
             
-            # 如果有保存的元素引用，尝试直接点击
-            element = result.get('element')
-            if element:
-                try:
-                    # 滚动到元素可见
-                    self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
-                    time.sleep(1)
-                    
-                    # 点击链接
-                    element.click()
-                    self.logger.info(f"已点击链接: {result.get('title', '')[:30]}...")
-                    
-                    # 等待新页面加载
-                    time.sleep(3)
-                    
-                except Exception as e:
-                    self.logger.warning(f"点击元素失败: {e}，尝试直接访问URL")
-                    self.driver.get(detail_url)
-                    time.sleep(3)
-            else:
-                # 直接访问URL
-                self.logger.info(f"直接访问详情页面: {detail_url}")
-                self.driver.get(detail_url)
-                time.sleep(3)
+            # 在当前标签页中导航到详情页
+            self.logger.info(f"访问详情页面: {detail_url}")
+            self.driver.get(detail_url)
             
-            # 保存详情页面截图
+            # 优化等待策略
             try:
-                import os
-                os.makedirs("debug", exist_ok=True)
-                screenshot_path = f"debug/detail_{keyword.replace(' ', '_')}.png"
-                self.driver.save_screenshot(screenshot_path)
-                self.logger.info(f"详情页面截图已保存: {screenshot_path}")
+                WebDriverWait(self.driver, 8).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "body"))
+                )
             except:
-                pass
+                time.sleep(2)  # 简单等待作为备选
+            
+            # 快速保存调试信息
+            self._save_debug_screenshot(keyword, "detail")
             
             # 提取详情页面信息
-            detail_info = self._parse_detail_page(result, keyword)
-            
-            # 返回搜索结果页面
-            self.driver.back()
-            time.sleep(2)
+            detail_info = self._parse_detail_page_fast(result, keyword)
             
             return detail_info
             
         except Exception as e:
-            self.logger.error(f"提取详细信息失败: {e}")
+            self.logger.error(f"快速提取详细信息失败: {e}")
             return None
     
-    def _parse_detail_page(self, base_result: Dict[str, Any], keyword: str) -> Dict[str, Any]:
-        """解析详情页面内容"""
+    def _parse_detail_page_fast(self, base_result: Dict[str, Any], keyword: str) -> Dict[str, Any]:
+        """快速解析详情页面内容"""
         try:
             # 基础信息
             detail_info = {
-                'success': True,  # 标记为成功
+                'success': True,
                 'title': base_result.get('title', ''),
-                'name': base_result.get('title', ''),  # 添加name字段
+                'name': base_result.get('title', ''),
                 'url': base_result.get('url', ''),
-                'source_url': base_result.get('url', ''),  # 添加source_url字段
+                'source_url': base_result.get('url', ''),
                 'summary': base_result.get('summary', ''),
                 'date': base_result.get('date', ''),
                 'source': '中国政府网',
                 'document_number': '',
-                'number': '',  # 添加number字段别名
+                'number': '',
                 'issuing_authority': '',
-                'office': '',  # 添加office字段别名
+                'office': '',
                 'effective_date': '',
-                'valid_from': '',  # 添加valid_from字段别名
-                'publish_date': '',  # 添加publish_date字段
-                'valid_to': None,  # 添加valid_to字段
-                'status': '有效',  # 添加status字段
+                'valid_from': '',
+                'publish_date': '',
+                'valid_to': None,
+                'status': '有效',
                 'law_level': '',
-                'level': '',  # 添加level字段别名
+                'level': '',
                 'content': ''
             }
             
-            # 获取页面源码
-            page_source = self.driver.page_source
-            
-            # 保存详情页面HTML用于调试
+            # 快速获取页面文本（不进行复杂的DOM解析）
             try:
-                import os
-                os.makedirs("debug", exist_ok=True)
-                debug_file = f"debug/detail_{keyword.replace(' ', '_')}.html"
-                with open(debug_file, 'w', encoding='utf-8') as f:
-                    f.write(page_source)
-                self.logger.info(f"详情页面HTML已保存: {debug_file}")
-            except:
-                pass
+                page_source = self.driver.page_source
+                soup = BeautifulSoup(page_source, 'html.parser')
+                
+                # 移除脚本和样式标签
+                for script in soup(["script", "style"]):
+                    script.decompose()
+                
+                # 获取主要文本内容
+                text_content = soup.get_text()
+                
+                # 限制内容长度
+                detail_info['content'] = text_content[:1500] if text_content else ""
+                
+                # 使用正则表达式快速提取结构化信息
+                self._extract_info_with_regex(detail_info, text_content)
+                
+            except Exception as e:
+                self.logger.warning(f"解析页面内容失败: {e}")
             
-            # 尝试提取页面标题
-            try:
-                title_element = self.driver.find_element(By.TAG_NAME, "title")
-                page_title = title_element.get_attribute("textContent").strip()
-                if page_title and len(page_title) > len(detail_info['title']):
-                    detail_info['title'] = page_title
-            except:
-                pass
-            
-            # 尝试提取文档编号（文号）
-            try:
-                import re
-                # 根据你提供的截图，完整文号应该是：
-                # "中华人民共和国国家发展和改革委员会...令 第20号"
-                
-                # 查找完整的发布机关和文号
-                full_document_pattern = r'(中华人民共和国.*?令[\s\n]*第\s*\d+\s*号)'
-                full_matches = re.findall(full_document_pattern, page_source, re.DOTALL)
-                
-                if full_matches:
-                    # 清理换行和多余空格
-                    full_number = re.sub(r'\s+', ' ', full_matches[0].strip())
-                    full_number = re.sub(r'令\s*第', '令\n第', full_number)  # 在"令"和"第"之间加换行
-                    detail_info['document_number'] = full_number
-                else:
-                    # 如果没找到完整的，尝试简单的"第X号"模式
-                    simple_patterns = [
-                        r'第\s*(\d+)\s*号',
-                        r'([国发|国办发|国函|部令|令]\s*[\[〔]\s*\d{4}\s*[\]〕]\s*第?\s*\d+\s*号)',
-                    ]
-                    
-                    for pattern in simple_patterns:
-                        matches = re.findall(pattern, page_source, re.IGNORECASE)
-                        if matches:
-                            if pattern == r'第\s*(\d+)\s*号':
-                                detail_info['document_number'] = f"第{matches[0]}号"
-                            else:
-                                detail_info['document_number'] = matches[0]
-                            break
-            except:
-                pass
-            
-            # 尝试提取发布机关
-            try:
-                import re
-                # 根据你提供的截图，发布机关是8个部委联合发布
-                # 完整的发布机关列表
-                authority_pattern = r'(中华人民共和国国家发展和改革委员会[\s\n]*中\s*华\s*人\s*民\s*共\s*和\s*国\s*工\s*业\s*和\s*信\s*息\s*化\s*部[\s\n]*中\s*华\s*人\s*民\s*共\s*和\s*国\s*监\s*察\s*部[\s\n]*中\s*华\s*人\s*民\s*共\s*和\s*国\s*住\s*房\s*和\s*城\s*乡\s*建\s*设\s*部[\s\n]*中\s*华\s*人\s*民\s*共\s*和\s*国\s*交\s*通\s*运\s*输\s*部[\s\n]*中\s*华\s*人\s*民\s*共\s*和\s*国\s*铁\s*道\s*部[\s\n]*中\s*华\s*人\s*民\s*共\s*和\s*国\s*水\s*利\s*部[\s\n]*中\s*华\s*人\s*民\s*共\s*和\s*国\s*商\s*务\s*部)'
-                
-                full_authority_match = re.search(authority_pattern, page_source, re.DOTALL)
-                
-                if full_authority_match:
-                    # 清理格式，保持标准格式
-                    authority_text = full_authority_match.group(1)
-                    # 规范化格式：去除多余空格，保持换行
-                    authority_text = re.sub(r'\s+', ' ', authority_text)
-                    authority_text = authority_text.replace(' 中 华', '\n中华')
-                    detail_info['issuing_authority'] = authority_text.strip()
-                else:
-                    # 备用方案：查找各个部委
-                    authority_list = [
-                        '中华人民共和国国家发展和改革委员会',
-                        '中华人民共和国工业和信息化部', 
-                        '中华人民共和国监察部',
-                        '中华人民共和国住房和城乡建设部',
-                        '中华人民共和国交通运输部',
-                        '中华人民共和国铁道部',
-                        '中华人民共和国水利部',
-                        '中华人民共和国商务部'
-                    ]
-                    
-                    found_authorities = []
-                    for authority in authority_list:
-                        if authority in page_source:
-                            found_authorities.append(authority)
-                    
-                    if found_authorities:
-                        detail_info['issuing_authority'] = '\n'.join(found_authorities)
-                
-                # 如果还是没找到，尝试通用模式
-                if not detail_info['issuing_authority']:
-                    authority_keywords = ['发布机关', '制定机关', '发文机关', '颁布机关']
-                    for keyword_auth in authority_keywords:
-                        if keyword_auth in page_source:
-                            lines = page_source.split('\n')
-                            for line in lines:
-                                if keyword_auth in line:
-                                    match = re.search(f'{keyword_auth}[：:]\\s*([^<>\\n]+)', line)
-                                    if match:
-                                        detail_info['issuing_authority'] = match.group(1).strip()
-                                        break
-                            if detail_info['issuing_authority']:
-                                break
-            except:
-                pass
-            
-            # 尝试提取发布日期和实施日期
-            try:
-                import re
-                
-                # 根据你提供的截图：发布日期：2013年2月4日，实施日期：2013年5月1日
-                
-                # 查找发布日期（2013年2月4日）
-                publish_date_pattern = r'2013年2月4日'
-                if publish_date_pattern in page_source:
-                    detail_info['publish_date'] = '2013年2月4日'
-                
-                # 查找实施日期（2013年5月1日）
-                effective_date_pattern = r'自?2013年5月1日起?施行'
-                if re.search(effective_date_pattern, page_source):
-                    detail_info['effective_date'] = '2013年5月1日'
-                
-                # 通用日期模式（备用）
-                if not detail_info.get('publish_date') or not detail_info.get('effective_date'):
-                    date_patterns = [
-                        r'(\d{4}年\d{1,2}月\d{1,2}日)',  # 2013年2月4日
-                        r'(\d{4}-\d{1,2}-\d{1,2})',     # 2013-2-4
-                        r'(\d{4}\.\d{1,2}\.\d{1,2})',   # 2013.2.4
-                    ]
-                    
-                    all_dates = []
-                    for pattern in date_patterns:
-                        matches = re.findall(pattern, page_source)
-                        all_dates.extend(matches)
-                    
-                    # 如果找到日期，第一个通常是发布日期，第二个是实施日期
-                    if all_dates:
-                        if not detail_info.get('publish_date'):
-                            detail_info['publish_date'] = all_dates[0]
-                        if not detail_info.get('effective_date') and len(all_dates) > 1:
-                            detail_info['effective_date'] = all_dates[1]
-                        elif not detail_info.get('effective_date'):
-                            detail_info['effective_date'] = all_dates[0]
-                
-                # 失效日期（默认为无）
-                detail_info['valid_to'] = None
-                
-                # 状态（默认为有效）
-                detail_info['status'] = '有效'
-                
-            except:
-                pass
-            
-            # 尝试提取正文内容
-            try:
-                # 查找正文容器
-                content_selectors = [
-                    '.content',
-                    '.article-content', 
-                    '.text-content',
-                    '#content',
-                    '.main-content',
-                    'article',
-                    '.detail-content'
-                ]
-                
-                content_text = ""
-                for selector in content_selectors:
-                    try:
-                        content_elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                        if content_elements:
-                            content_text = content_elements[0].text.strip()
-                            if len(content_text) > 100:  # 确保内容足够长
-                                break
-                    except:
-                        continue
-                
-                # 如果没找到专门的内容区域，尝试获取body的文本
-                if not content_text:
-                    try:
-                        body = self.driver.find_element(By.TAG_NAME, "body")
-                        content_text = body.text.strip()
-                    except:
-                        pass
-                
-                detail_info['content'] = content_text[:2000] if content_text else ""  # 限制长度
-                
-            except:
-                pass
-            
-            # 根据文档编号判断法规层级
-            if detail_info['document_number']:
-                detail_info['law_level'] = self.determine_law_level(detail_info['document_number'])
-                detail_info['level'] = detail_info['law_level']  # 同步别名字段
-            
-            # 格式化日期字段
-            detail_info['publish_date'] = normalize_date_format(detail_info.get('publish_date', ''))
-            detail_info['effective_date'] = normalize_date_format(detail_info.get('effective_date', ''))
-            
-            # 同步所有别名字段
-            detail_info['number'] = detail_info['document_number']
-            detail_info['office'] = detail_info['issuing_authority']
-            detail_info['valid_from'] = detail_info['effective_date']
-            
-            self.logger.info(f"成功提取详细信息: {detail_info['title'][:30]}...")
             return detail_info
             
         except Exception as e:
             self.logger.error(f"解析详情页面失败: {e}")
-            return base_result
+            return self._create_basic_result(base_result)
+    
+    def _extract_info_with_regex(self, detail_info: Dict[str, Any], content: str):
+        """使用正则表达式快速提取信息"""
+        try:
+            # 提取文号
+            number_patterns = [
+                r'(国务院令第\d+号)',
+                r'(第\d+号)',
+                r'([国办发|国发]〔\d{4}〕\d+号)',
+                r'(\w+〔\d{4}〕\d+号)'
+            ]
+            
+            for pattern in number_patterns:
+                match = re.search(pattern, content)
+                if match:
+                    detail_info['document_number'] = match.group(1)
+                    detail_info['number'] = match.group(1)
+                    break
+            
+            # 提取日期（只取第一个找到的）
+            date_patterns = [
+                r'(\d{4}年\d{1,2}月\d{1,2}日)',
+                r'(\d{4}-\d{1,2}-\d{1,2})'
+            ]
+            
+            for pattern in date_patterns:
+                match = re.search(pattern, content)
+                if match:
+                    date_str = match.group(1)
+                    normalized_date = normalize_date_format(date_str)
+                    detail_info['publish_date'] = normalized_date
+                    detail_info['valid_from'] = normalized_date
+                    break
+            
+            # 提取发布机关（简化版）
+            authority_patterns = [
+                r'(国务院)',
+                r'([\u4e00-\u9fff]{2,8}部)',
+                r'([\u4e00-\u9fff]{2,8}委员会)',
+                r'([\u4e00-\u9fff]{2,8}局)'
+            ]
+            
+            for pattern in authority_patterns:
+                match = re.search(pattern, content)
+                if match:
+                    detail_info['issuing_authority'] = match.group(1)
+                    detail_info['office'] = match.group(1)
+                    break
+            
+            # 快速判断法规层级
+            title = detail_info.get('title', '')
+            if '条例' in title:
+                detail_info['law_level'] = '行政法规'
+            elif any(word in title for word in ['规定', '办法', '细则']):
+                detail_info['law_level'] = '部门规章'
+            elif '通知' in title:
+                detail_info['law_level'] = '规范性文件'
+            else:
+                detail_info['law_level'] = '其他'
+            
+            detail_info['level'] = detail_info['law_level']
+            
+        except Exception as e:
+            self.logger.warning(f"正则提取信息失败: {e}")
+    
+    def _create_basic_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """创建基本结果信息"""
+        return {
+            'success': True,
+            'title': result.get('title', ''),
+            'name': result.get('title', ''),
+            'url': result.get('url', ''),
+            'source_url': result.get('url', ''),
+            'summary': result.get('summary', ''),
+            'date': result.get('date', ''),
+            'source': '中国政府网',
+            'document_number': '',
+            'number': '',
+            'issuing_authority': '',
+            'office': '',
+            'effective_date': '',
+            'valid_from': '',
+            'publish_date': '',
+            'valid_to': None,
+            'status': '有效',
+            'law_level': '',
+            'level': '',
+            'content': ''
+        }
+    
+    def _save_debug_screenshot(self, keyword: str, suffix: str):
+        """保存调试截图（非阻塞）"""
+        try:
+            import os
+            os.makedirs("debug", exist_ok=True)
+            screenshot_path = f"debug/{suffix}_{keyword.replace(' ', '_')}.png"
+            self.driver.save_screenshot(screenshot_path)
+        except:
+            pass  # 忽略截图错误，不影响主流程
     
     def get_law_detail_from_url(self, url: str) -> Optional[Dict[str, Any]]:
         """从URL获取法规详情页面信息"""
@@ -997,20 +809,20 @@ class SeleniumGovCrawler(BaseCrawler):
 
     async def crawl_law(self, law_name: str, law_number: str = None) -> Dict[str, Any]:
         """
-        爬取指定法规
-        每次爬取完成后关闭浏览器，避免页面积累
+        爬取指定法规 - 优化版本
+        保持浏览器会话，避免频繁启动关闭
         """
         logger.info(f"Selenium政府网爬取: {law_name}")
         
         try:
-            # 每次爬取都重新初始化浏览器
-            self.setup_driver()
+            # 确保驱动可用
+            self.ensure_driver()
             
             # 执行搜索
             results = self.search_law_with_browser(law_name)
             
             if not results:
-                logger.warning(f"Selenium政府网所有搜索策略都未找到结果: {law_name}")
+                logger.warning(f"Selenium政府网未找到结果: {law_name}")
                 return self._create_failed_result(law_name, "未找到匹配结果")
             
             # 获取第一个结果的详细信息
@@ -1022,9 +834,7 @@ class SeleniumGovCrawler(BaseCrawler):
             logger.error(f"Selenium政府网爬取异常: {law_name} - {e}")
             return self._create_failed_result(law_name, f"爬取异常: {str(e)}")
         
-        finally:
-            # 每次爬取完成后立即关闭浏览器
-            self.close_driver()
+        # 注意：不再每次都关闭浏览器，而是复用会话
     
     def find_best_match(self, target_name: str, search_results: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """找到最佳匹配的搜索结果"""
