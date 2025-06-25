@@ -8,22 +8,22 @@ check_interval_minutes = 30       # 代理检查间隔(分钟)
 max_retries = 3                  # 最大重试次数
 timeout_seconds = 10             # 代理连接超时
 
-# 付费代理配置 - 从截图中的配置
+# 付费代理配置 - 多地区代理服务器
 [proxy_pool.paid_proxies]
 enabled = true
 priority = 1  # 最高优先级
 
-# 主要代理服务器 (从截图配置)
+# 香港代理服务器
 [[proxy_pool.paid_proxies.servers]]
-name = "新加坡代理"
-remarks = "新加坡C|中转|Trojan"
-address = "best.cute-cloud.de"
-port = 52203
+name = "香港代理"
+remarks = "HK 香港Y | 直连 | Trojan"
+address = "hky.cloud-services.top"
+port = 443
 password = "d32b360a-621a-472d-a29e-38f2ca977970"
-protocol = "trojan"  # 或者 "socks5", "http"
+protocol = "trojan"
 transport = "tcp"
 tls = true
-sni = "sgc.cloud-services.top"
+sni = "zs.cloud-services.top"
 flow = ""
 network = "tcp"
 type = "none"
@@ -33,14 +33,105 @@ alpn = ""
 fingerprint = ""
 allowInsecure = true
 
-# 可以添加更多代理服务器
-# [[proxy_pool.paid_proxies.servers]]
-# name = "备用代理1"
-# address = "proxy2.example.com"
-# port = 1080
-# username = "user"
-# password = "pass"
-# protocol = "socks5"
+# 台湾代理服务器
+[[proxy_pool.paid_proxies.servers]]
+name = "台湾代理"
+remarks = "TW 台湾A | 中转 | Trojan"
+address = "best.cutecloud.link"
+port = 52924
+password = "d32b360a-621a-472d-a29e-38f2ca977970"
+protocol = "trojan"
+transport = "tcp"
+tls = true
+sni = "zs.cloud-services.top"
+flow = ""
+network = "tcp"
+type = "none"
+host = ""
+path = ""
+alpn = ""
+fingerprint = ""
+allowInsecure = true
+
+# 日本代理服务器
+[[proxy_pool.paid_proxies.servers]]
+name = "日本代理"
+remarks = "JP 日本A | 中转 | Trojan"
+address = "fast.cutecloud.link"
+port = 52111
+password = "d32b360a-621a-472d-a29e-38f2ca977970"
+protocol = "trojan"
+transport = "tcp"
+tls = true
+sni = "zs.cloud-services.top"
+flow = ""
+network = "tcp"
+type = "none"
+host = ""
+path = ""
+alpn = ""
+fingerprint = ""
+allowInsecure = true
+
+# 加拿大代理服务器
+[[proxy_pool.paid_proxies.servers]]
+name = "加拿大代理"
+remarks = "CA 加拿大A | 中转"
+address = "most.cutecloud.link"
+port = 53807
+password = "d32b360a-621a-472d-a29e-38f2ca977970"
+protocol = "trojan"
+transport = "tcp"
+tls = false
+encryption = "chacha20-ietf-poly1305"
+flow = ""
+network = "tcp"
+type = "none"
+host = ""
+path = ""
+alpn = ""
+fingerprint = ""
+allowInsecure = true
+
+# 马来西亚代理服务器
+[[proxy_pool.paid_proxies.servers]]
+name = "马来西亚代理"
+remarks = "MY 马来西亚A | 中转"
+address = "best.cutecloud.link"
+port = 52901
+password = "d32b360a-621a-472d-a29e-38f2ca977970"
+protocol = "trojan"
+transport = "tcp"
+tls = true
+sni = "zs.cloud-services.top"
+flow = ""
+network = "tcp"
+type = "none"
+host = ""
+path = ""
+alpn = ""
+fingerprint = ""
+allowInsecure = true
+
+# 台湾备用代理服务器
+[[proxy_pool.paid_proxies.servers]]
+name = "台湾备用代理"
+remarks = "TW 台湾Y | 直连 | Trojan"
+address = "twy.cloud-services.top"
+port = 443
+password = "d32b360a-621a-472d-a29e-38f2ca977970"
+protocol = "trojan"
+transport = "tcp"
+tls = true
+sni = "zs.cloud-services.top"
+flow = ""
+network = "tcp"
+type = "none"
+host = ""
+path = ""
+alpn = ""
+fingerprint = ""
+allowInsecure = true
 
 # 免费代理配置
 [proxy_pool.free_proxies]
@@ -78,4 +169,6 @@ max_failures_before_disable = 5  # 连续失败多少次后禁用代理
 "*.gov.cn" = { use_proxy = true, preferred_type = "paid" }
 # 搜索引擎
 "*.google.com" = { use_proxy = true, preferred_type = "paid" }
+"*.bing.com" = { use_proxy = true, preferred_type = "paid" }
+"*.duckduckgo.com" = { use_proxy = true, preferred_type = "paid" }
 "*.baidu.com" = { use_proxy = false }  # 百度可能不需要代理 

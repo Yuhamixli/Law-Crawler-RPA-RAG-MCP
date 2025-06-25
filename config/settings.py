@@ -72,7 +72,7 @@ class DataSourceSettings(BaseSettings):
 
 class ProxyPoolSettings(BaseSettings):
     """代理池配置"""
-    enabled: bool = Field(False, description="是否启用代理池")
+    enabled: bool = Field(True, description="是否启用代理池")
     config_file: str = Field("config/proxy_config.toml", description="代理池配置文件路径")
     debug_mode: bool = Field(False, description="调试模式")
     rotation_enabled: bool = Field(True, description="是否启用代理轮换")
@@ -83,7 +83,7 @@ class ProxyPoolSettings(BaseSettings):
 
 class IPPoolSettings(BaseSettings):
     """IP池配置 (传统配置，保持兼容性)"""
-    enabled: bool = Field(False, description="是否启用IP池")
+    enabled: bool = Field(True, description="是否启用IP池")
     min_proxies: int = Field(5, description="最小代理数量")
     max_proxies: int = Field(50, description="最大代理数量")
     refresh_interval_hours: int = Field(1, description="刷新间隔(小时)")
