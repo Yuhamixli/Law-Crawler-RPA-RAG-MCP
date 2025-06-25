@@ -12,8 +12,16 @@ from datetime import datetime
 from typing import List, Dict, Optional, Any
 import re
 from loguru import logger
-
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import TimeoutException, WebDriverException
+import sys
+sys.path.append('..')
 from ..base_crawler import BaseCrawler
+import random
 
 
 def normalize_date_format(date_str: str) -> str:
@@ -78,27 +86,70 @@ class SearchBasedCrawler(BaseCrawler):
     
     def __init__(self):
         super().__init__("search_api")
-        self.setup_headers()
         self.logger = logger
-        
-    def setup_headers(self):
-        """设置请求头，参考示例项目的成功配置"""
         self.session = requests.Session()
+        self.setup_headers()
+        self.base_url = "https://flk.npc.gov.cn"
+        
+        # WAF状态追踪
+        self.waf_triggered = False
+        self.consecutive_waf_count = 0
+        self.last_successful_time = time.time()
+        
+        # 初始化访问，获取必要的cookies
+        self._initialize_session()
+    
+    def setup_headers(self):
+        """设置请求头 - 增强版，模拟真实浏览器"""
         self.session.headers.update({
-            "authority": "flk.npc.gov.cn",
-            "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Microsoft Edge";v="99"',
-            "accept": "application/json, text/javascript, */*; q=0.01",
-            "x-requested-with": "XMLHttpRequest",
-            "sec-ch-ua-mobile": "?0",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36 Edg/99.0.1150.39",
-            "sec-ch-ua-platform": '"macOS"',
-            "sec-fetch-site": "same-origin",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-dest": "empty",
-            "referer": "https://flk.npc.gov.cn/fl.html",
-            "accept-language": "en-AU,en-GB;q=0.9,en;q=0.8,en-US;q=0.7,zh-CN;q=0.6,zh;q=0.5",
-            "cookie": "yfx_c_g_u_id_10006696=_ck22022520424713255117764923111; cna=NdafGk8tiAgCAd9IPxhfROag; yfx_f_l_v_t_10006696=f_t_1645792967326__r_t_1646401808964__v_t_1646401808964__r_c_5; Hm_lvt_54434aa6770b6d9fef104d146430b53b=1646407223,1646570042,1646666110,1647148584; acw_tc=75a1461516471485843844814eb808af266b8ede0e0502ec1c46ab1581; Hm_lpvt_54434aa6770b6d9fef104d146430b53b=1647148626",
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Referer': 'https://flk.npc.gov.cn/',
+            'Origin': 'https://flk.npc.gov.cn',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
         })
+        
+        # 设置Session级别的配置
+        self.session.verify = True
+        self.session.allow_redirects = True
+        self.session.max_redirects = 5
+    
+    def _initialize_session(self):
+        """初始化session，访问首页获取cookies"""
+        try:
+            # 先访问首页
+            home_response = self.session.get(
+                "https://flk.npc.gov.cn/",
+                timeout=10,
+                allow_redirects=True
+            )
+            self.logger.debug(f"首页访问状态码: {home_response.status_code}")
+            
+            # 再访问法规搜索页面
+            search_page_response = self.session.get(
+                "https://flk.npc.gov.cn/fl.html",
+                timeout=10,
+                allow_redirects=True
+            )
+            self.logger.debug(f"搜索页面访问状态码: {search_page_response.status_code}")
+            
+            # 等待一下，模拟真实用户行为
+            time.sleep(1)
+            
+        except Exception as e:
+            self.logger.warning(f"初始化session失败: {str(e)}")
+            # 不中断，继续尝试
     
     async def search(self, law_name: str, law_number: Optional[str] = None) -> List[Dict[str, Any]]:
         """搜索法规 - 实现抽象方法"""
@@ -122,39 +173,248 @@ class SearchBasedCrawler(BaseCrawler):
             self.logger.error(f"下载文件失败: {str(e)}")
             return False
     
-    def search_law(self, keyword: str) -> List[Dict[str, Any]]:
-        """搜索法规"""
-        params = [
-            ("searchType", "title;accurate;1,3"),
-            ("sortTr", "f_bbrq_s;desc"),
-            ("gbrqStart", ""),
-            ("gbrqEnd", ""),
-            ("sxrqStart", ""),
-            ("sxrqEnd", ""),
-            ("sort", "true"),
-            ("page", "1"),
-            ("size", "20"),
-            ("fgbt", keyword),  # 搜索关键词
-            ("_", int(time.time() * 1000)),
-        ]
-        
+    def search_law_selenium(self, keyword: str) -> List[Dict[str, Any]]:
+        """使用Selenium搜索法规 - WAF绕过方案"""
+        driver = None
         try:
-            response = self.session.get(
-                "https://flk.npc.gov.cn/api/",
-                params=params,
-                timeout=10
-            )
+            # 配置Chrome选项
+            chrome_options = Options()
+            chrome_options.add_argument('--headless')  # 无头模式
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--window-size=1920,1080')
+            chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
             
-            if response.status_code == 200:
-                result = response.json()
-                if result.get('success') and result.get('result', {}).get('data'):
-                    return result['result']['data']
+            # 启动浏览器
+            driver = webdriver.Chrome(options=chrome_options)
+            wait = WebDriverWait(driver, 10)
             
-            return []
+            self.logger.debug(f"    使用Selenium搜索: {keyword}")
+            
+            # 访问搜索页面
+            driver.get("https://flk.npc.gov.cn/fl.html")
+            
+            # 等待页面加载
+            wait.until(EC.presence_of_element_located((By.ID, "fgbt")))
+            
+            # 输入搜索关键词
+            search_input = driver.find_element(By.ID, "fgbt")
+            search_input.clear()
+            search_input.send_keys(keyword)
+            
+            # 点击搜索按钮
+            search_button = driver.find_element(By.CSS_SELECTOR, ".search_btn")
+            search_button.click()
+            
+            # 等待搜索结果
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".search_result")))
+            
+            # 解析搜索结果
+            results = []
+            result_items = driver.find_elements(By.CSS_SELECTOR, ".search_result .result_item")
+            
+            for item in result_items:
+                try:
+                    title_element = item.find_element(By.CSS_SELECTOR, ".title a")
+                    title = title_element.text.strip()
+                    link = title_element.get_attribute("href")
+                    
+                    # 提取法规ID
+                    law_id = ""
+                    if "id=" in link:
+                        law_id = link.split("id=")[1].split("&")[0]
+                    
+                    # 获取其他信息
+                    info_elements = item.find_elements(By.CSS_SELECTOR, ".info span")
+                    publish_date = ""
+                    status = 1  # 默认有效
+                    
+                    for info_elem in info_elements:
+                        text = info_elem.text.strip()
+                        if "发布日期" in text:
+                            publish_date = text.replace("发布日期：", "")
+                        elif "失效" in text:
+                            status = 5
+                    
+                    result = {
+                        'id': law_id,
+                        'title': title,
+                        'link': link,
+                        'publish_date': publish_date,
+                        'status': status
+                    }
+                    results.append(result)
+                    
+                except Exception as e:
+                    self.logger.warning(f"解析搜索结果项失败: {str(e)}")
+                    continue
+            
+            self.logger.debug(f"    Selenium搜索找到 {len(results)} 个结果")
+            return results
             
         except Exception as e:
-            self.logger.error(f"搜索法规失败: {str(e)}")
+            self.logger.error(f"Selenium搜索失败: {str(e)}")
             return []
+        finally:
+            if driver:
+                driver.quit()
+    
+    def search_law(self, keyword: str) -> List[Dict[str, Any]]:
+        """搜索法规 - 智能版：优先API，WAF激活时自动切换Selenium"""
+        
+        # 如果WAF已激活，直接使用Selenium
+        if self.waf_triggered:
+            self.logger.debug(f"    WAF已激活，直接使用Selenium搜索")
+            return self.search_law_selenium(keyword)
+        
+        # 尝试HTTP API搜索
+        results = self._search_law_http(keyword)
+        
+        # 检查结果并处理WAF状态
+        if results:
+            self._handle_waf_detection(False)  # 成功，重置WAF状态
+            return results
+        else:
+            # API失败，可能是WAF拦截，尝试Selenium备用
+            self.logger.debug(f"    HTTP API失败，尝试Selenium备用搜索")
+            selenium_results = self.search_law_selenium(keyword)
+            
+            # 如果Selenium成功而API失败，说明可能是WAF问题
+            if selenium_results:
+                self._handle_waf_detection(True)  # 标记可能的WAF拦截
+            
+            return selenium_results
+    
+    def _search_law_http(self, keyword: str) -> List[Dict[str, Any]]:
+        """HTTP API搜索法规 - 增强WAF检测"""
+        search_strategies = [
+            ("title;vague", keyword),  # 标题模糊搜索
+            ("title;accurate;1,3", keyword),  # 标题精确搜索（法律+行政法规）
+        ]
+        
+        for search_type, search_keyword in search_strategies:
+            # 检查是否需要WAF冷却等待
+            self._should_wait_for_waf()
+            
+            params = [
+                ("type", search_type),
+                ("searchType", "title;vague" if "vague" in search_type else "title;accurate"),
+                ("sortTr", "f_bbrq_s;desc"),
+                ("gbrqStart", ""),
+                ("gbrqEnd", ""),
+                ("sxrqStart", ""),
+                ("sxrqEnd", ""),
+                ("sort", "true"),
+                ("page", "1"),
+                ("size", "20"),
+                ("fgbt", keyword),  # 搜索关键词
+                ("_", int(time.time() * 1000)),
+            ]
+            
+            try:
+                self.logger.debug(f"    尝试API搜索策略: {search_type}")
+                
+                # 添加随机延迟，避免触发WAF
+                if self.consecutive_waf_count > 0:
+                    delay = random.uniform(2, 5)
+                    self.logger.debug(f"    添加随机延迟: {delay:.1f}秒")
+                    time.sleep(delay)
+                
+                response = self.session.get(
+                    "https://flk.npc.gov.cn/api/",
+                    params=params,
+                    timeout=15
+                )
+                
+                # 详细的响应检查
+                self.logger.debug(f"    API响应状态码: {response.status_code}")
+                content_type = response.headers.get('Content-Type', '')
+                self.logger.debug(f"    API响应Content-Type: {content_type}")
+                
+                if response.status_code == 200:
+                    # 检查是否被WAF拦截
+                    waf_detected = self._check_waf_response(response)
+                    
+                    if waf_detected:
+                        self.logger.debug(f"    检测到WAF拦截 (策略: {search_type})")
+                        self._handle_waf_detection(True)
+                        continue  # 尝试下一个策略
+                    
+                    # 正常JSON响应
+                    if not response.text.strip():
+                        self.logger.debug(f"    API返回空内容 (策略: {search_type})")
+                        continue
+                        
+                    try:
+                        result = response.json()
+                        if result.get('success') and result.get('result', {}).get('data'):
+                            results = result['result']['data']
+                            self.logger.debug(f"    API搜索成功: {len(results)} 个结果 (策略: {search_type})")
+                            self._handle_waf_detection(False)  # 成功，重置WAF状态
+                            return results
+                        else:
+                            self.logger.debug(f"    API搜索无结果 (策略: {search_type})")
+                    except json.JSONDecodeError as e:
+                        self.logger.debug(f"    JSON解析失败 (策略: {search_type}): {str(e)}")
+                        # 可能是WAF返回的HTML
+                        self._handle_waf_detection(True)
+                        continue
+                else:
+                    self.logger.debug(f"    API HTTP错误 (策略: {search_type}): {response.status_code}")
+                    
+            except Exception as e:
+                self.logger.debug(f"    API请求异常 (策略: {search_type}): {str(e)}")
+                continue
+        
+        self.logger.debug(f"    所有API搜索策略都失败")
+        return []
+    
+    def _check_waf_response(self, response) -> bool:
+        """检查响应是否被WAF拦截"""
+        # 检查Content-Type
+        content_type = response.headers.get('Content-Type', '').lower()
+        if 'text/html' in content_type:
+            return True
+        
+        # 检查WAF标识
+        if 'WZWS-RAY' in response.headers:
+            return True
+        
+        # 检查响应内容
+        if "<!DOCTYPE HTML>" in response.text and "JavaScript" in response.text:
+            return True
+        
+        return False
+    
+    def _handle_waf_detection(self, waf_detected: bool):
+        """处理WAF检测结果"""
+        if waf_detected:
+            self.consecutive_waf_count += 1
+            if self.consecutive_waf_count >= 2:  # 连续2次被拦截才认为WAF激活
+                self.waf_triggered = True
+                self.logger.warning(f"🚫 WAF已激活，连续拦截{self.consecutive_waf_count}次，切换到Selenium模式")
+        else:
+            # 成功请求，重置计数器
+            self.consecutive_waf_count = 0
+            self.last_successful_time = time.time()
+            if self.waf_triggered:
+                self.logger.info("✅ API恢复正常，WAF可能已解除")
+                self.waf_triggered = False
+    
+    def _should_wait_for_waf(self) -> bool:
+        """判断是否需要等待WAF冷却"""
+        if not self.waf_triggered:
+            return False
+        
+        # 如果WAF被触发，等待一定时间再尝试
+        time_since_last_success = time.time() - self.last_successful_time
+        if time_since_last_success < 60:  # 60秒冷却时间
+            wait_time = 60 - time_since_last_success
+            self.logger.info(f"⏱️ WAF冷却中，等待 {wait_time:.1f} 秒...")
+            time.sleep(wait_time)
+        
+        return True
     
     def get_law_detail(self, law_id: str) -> Optional[Dict[str, Any]]:
         """获取法规详情"""
@@ -192,39 +452,74 @@ class SearchBasedCrawler(BaseCrawler):
         return normalized.strip()
     
     def calculate_match_score(self, target: str, result: str) -> float:
-        """计算匹配分数"""
+        """计算匹配分数 - 改进版"""
+        if not target or not result:
+            return 0.0
+            
+        # 完全匹配
         if target == result:
             return 1.0
         
-        # 计算包含关系
-        if target in result:
-            return 0.8 + (len(target) / len(result)) * 0.2
-        if result in target:
-            return 0.8 + (len(result) / len(target)) * 0.2
+        # 标准化处理
+        target_clean = re.sub(r'[（(].*?[）)]', '', target).strip()
+        result_clean = re.sub(r'[（(].*?[）)]', '', result).strip()
+        
+        # 去掉修订年份后的匹配
+        if target_clean == result_clean:
+            return 0.95
+        
+        # 包含关系 - 但要避免匹配到司法解释
+        if "解释" in result and "解释" not in target:
+            return 0.1  # 大幅降低司法解释的匹配分数
+        
+        if "意见" in result and "意见" not in target:
+            return 0.1  # 大幅降低意见类文件的匹配分数
+            
+        # 检查核心关键词匹配
+        target_core = target_clean.replace("中华人民共和国", "")
+        result_core = result_clean.replace("中华人民共和国", "")
+        
+        if target_core and result_core:
+            # 完全匹配核心部分
+            if target_core == result_core:
+                return 0.9
+            
+            # 包含关系
+            if target_core in result_core:
+                ratio = len(target_core) / len(result_core)
+                return 0.7 + ratio * 0.2
+            if result_core in target_core:
+                ratio = len(result_core) / len(target_core)
+                return 0.7 + ratio * 0.2
         
         # 计算公共子串
         common_length = 0
-        for i in range(min(len(target), len(result))):
+        min_len = min(len(target), len(result))
+        for i in range(min_len):
             if target[i] == result[i]:
                 common_length += 1
             else:
                 break
         
         if common_length > 0:
-            return common_length / max(len(target), len(result))
+            base_score = common_length / max(len(target), len(result))
+            # 如果公共前缀很长，给更高分数
+            if common_length >= 6:
+                return min(0.8, base_score * 1.2)
+            return base_score
         
         return 0.0
     
     def find_best_match(self, target_name: str, search_results: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-        """在搜索结果中找到最佳匹配"""
+        """在搜索结果中找到最佳匹配 - 优化版，优先选择有效法规"""
         if not search_results:
             return None
         
         # 标准化目标名称
         target_normalized = self.normalize_law_name(target_name)
         
-        best_match = None
-        best_score = 0
+        # 记录所有候选项的分数和状态
+        candidates = []
         
         for law in search_results:
             law_title = law.get('title', '')
@@ -233,15 +528,57 @@ class SearchBasedCrawler(BaseCrawler):
             # 计算匹配分数
             score = self.calculate_match_score(target_normalized, law_normalized)
             
-            if score > best_score:
-                best_score = score
-                best_match = law
+            # 获取法规状态 (1=有效, 5=失效) - 处理字符串类型
+            status = law.get('status', 0)
+            # 确保状态是整数类型
+            try:
+                status_int = int(status)
+            except (ValueError, TypeError):
+                status_int = 0
+            
+            is_valid = (status_int == 1)
+            
+            candidates.append({
+                'title': law_title,
+                'score': score,
+                'law': law,
+                'status': status_int,
+                'is_valid': is_valid,
+                'status_text': '有效' if is_valid else '失效'
+            })
         
-        # 只有匹配分数足够高才返回
-        if best_score >= 0.7:  # 70%匹配度
-            return best_match
+        # 按分数排序
+        candidates.sort(key=lambda x: x['score'], reverse=True)
         
-        return None
+        # 调试信息
+        self.logger.debug(f"    匹配候选项:")
+        for candidate in candidates[:5]:  # 显示前5个
+            self.logger.debug(f"      {candidate['title']}: {candidate['score']:.3f} ({candidate['status_text']})")
+        
+        # 设置匹配阈值
+        threshold = 0.75
+        
+        # 筛选出达到阈值的候选项
+        qualified_candidates = [c for c in candidates if c['score'] >= threshold]
+        
+        if not qualified_candidates:
+            self.logger.debug(f"    没有候选项达到阈值 {threshold}")
+            return None
+        
+        # 优先级选择逻辑
+        # 1. 优先选择有效的法规
+        valid_candidates = [c for c in qualified_candidates if c['is_valid']]
+        
+        if valid_candidates:
+            # 有有效法规，选择分数最高的有效法规
+            best_candidate = valid_candidates[0]  # 已按分数排序
+            self.logger.debug(f"    优先选择有效法规: {best_candidate['title']} (分数: {best_candidate['score']:.3f}, 状态: {best_candidate['status_text']})")
+            return best_candidate['law']
+        else:
+            # 没有有效法规，选择分数最高的失效法规
+            best_candidate = qualified_candidates[0]  # 已按分数排序
+            self.logger.debug(f"    无有效法规，选择失效法规: {best_candidate['title']} (分数: {best_candidate['score']:.3f}, 状态: {best_candidate['status_text']})")
+            return best_candidate['law']
     
     def generate_search_keywords(self, law_name: str) -> List[str]:
         """生成搜索关键词"""
@@ -256,7 +593,7 @@ class SearchBasedCrawler(BaseCrawler):
         
         # 3. 提取主干名称（移除括号内容）
         main_name = re.sub(r'[（(].*?[）)]', '', law_name)
-        if main_name != law_name:
+        if main_name != law_name and main_name.strip():
             keywords.append(main_name.strip())
         
         # 4. 提取核心词汇
@@ -264,10 +601,30 @@ class SearchBasedCrawler(BaseCrawler):
             # 提取"法"前面的部分
             parts = law_name.split("法")
             if parts[0]:
-                keywords.append(parts[0] + "法")
+                core_name = parts[0] + "法"
+                if core_name not in keywords:
+                    keywords.append(core_name)
+        
+        # 5. 对于办法、条例等，尝试不同的搜索策略
+        if any(word in law_name for word in ["办法", "条例", "规定", "细则"]):
+            # 提取关键词组合
+            for suffix in ["办法", "条例", "规定", "细则"]:
+                if suffix in law_name:
+                    # 找到第一个关键词
+                    parts = law_name.split(suffix)
+                    if parts[0]:
+                        # 尝试不同长度的关键词
+                        base = parts[0].strip()
+                        # 移除修订年份
+                        base = re.sub(r'[（(].*?[）)]', '', base).strip()
+                        if base and len(base) >= 4:  # 至少4个字符
+                            keywords.append(base + suffix)
+                            # 尝试更短的关键词
+                            if len(base) > 6:
+                                keywords.append(base[-6:] + suffix)
         
         # 去重并过滤空字符串
-        keywords = list(set([k for k in keywords if k.strip()]))
+        keywords = list(dict.fromkeys([k for k in keywords if k.strip()]))  # 保持顺序的去重
         
         return keywords
     

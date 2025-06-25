@@ -29,6 +29,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from ..base_crawler import BaseCrawler
 from ..utils.ip_pool import get_ip_pool, SmartIPPool
+from ..utils.enhanced_proxy_pool import get_enhanced_proxy_pool, EnhancedProxyPool
+from config.settings import get_settings
 
 
 class AntiDetectionManager:
@@ -37,15 +39,9 @@ class AntiDetectionManager:
     def __init__(self):
         self.logger = logger
         
-        # IP池配置 (示例代理，实际使用时需要配置真实代理)
-        self.proxy_pool = [
-            # 免费代理示例 - 实际使用时需要替换为有效代理
-            # {"http": "http://proxy1:port", "https": "https://proxy1:port"},
-            # {"http": "http://proxy2:port", "https": "https://proxy2:port"},
-        ]
-        
-        self.current_proxy_index = 0
-        self.failed_proxies = set()
+        # 现在使用真实的代理池
+        self.enhanced_proxy_pool: Optional[EnhancedProxyPool] = None
+        self.ip_pool: Optional[SmartIPPool] = None
         
         # User-Agent池
         self.user_agents = [
@@ -67,35 +63,62 @@ class AntiDetectionManager:
         
         # 失败计数
         self.failure_counts = {}
+    
+    async def initialize_proxy_pools(self):
+        """初始化代理池"""
+        settings = get_settings()
         
+        try:
+            # 1. 优先使用enhanced_proxy_pool
+            if settings.proxy_pool.enabled:
+                self.enhanced_proxy_pool = await get_enhanced_proxy_pool()
+                self.logger.success("Enhanced代理池初始化成功")
+        except Exception as e:
+            self.logger.warning(f"Enhanced代理池初始化失败: {e}")
+        
+        try:
+            # 2. IP池作为备用
+            if settings.ip_pool.enabled:
+                from ..utils.ip_pool import get_ip_pool
+                self.ip_pool = await get_ip_pool()
+                self.logger.success("IP池初始化成功")
+        except Exception as e:
+            self.logger.warning(f"IP池初始化失败: {e}")
+    
+    async def get_proxy(self) -> Optional[str]:
+        """获取可用代理URL"""
+        # 优先使用enhanced_proxy_pool
+        if self.enhanced_proxy_pool:
+            try:
+                proxy_info = await self.enhanced_proxy_pool.get_proxy(prefer_paid=True)
+                if proxy_info:
+                    self.logger.debug(f"使用Enhanced代理: {proxy_info.name}")
+                    return proxy_info.proxy_url
+            except Exception as e:
+                self.logger.debug(f"Enhanced代理获取失败: {e}")
+        
+        # 备用IP池
+        if self.ip_pool:
+            try:
+                proxy_info = await self.ip_pool.get_proxy()
+                if proxy_info:
+                    self.logger.debug(f"使用IP池代理: {proxy_info.ip}:{proxy_info.port}")
+                    return proxy_info.proxy_url
+            except Exception as e:
+                self.logger.debug(f"IP池代理获取失败: {e}")
+        
+        self.logger.debug("无可用代理")
+        return None
+    
+    async def mark_proxy_failed(self, proxy_url: str):
+        """标记代理失败"""
+        # 这里可以通知代理池某个代理失败了
+        # 实现会比较复杂，暂时简化
+        self.logger.debug(f"标记代理失败: {proxy_url}")
+    
     def get_random_user_agent(self) -> str:
         """获取随机User-Agent"""
         return random.choice(self.user_agents)
-    
-    def get_next_proxy(self) -> Optional[Dict[str, str]]:
-        """获取下一个可用代理"""
-        if not self.proxy_pool:
-            return None
-            
-        available_proxies = [p for i, p in enumerate(self.proxy_pool) 
-                           if i not in self.failed_proxies]
-        
-        if not available_proxies:
-            # 重置失败代理列表
-            self.failed_proxies.clear()
-            available_proxies = self.proxy_pool
-            
-        if available_proxies:
-            self.current_proxy_index = (self.current_proxy_index + 1) % len(available_proxies)
-            return available_proxies[self.current_proxy_index]
-        
-        return None
-    
-    def mark_proxy_failed(self, proxy: Dict[str, str]):
-        """标记代理失败"""
-        if proxy in self.proxy_pool:
-            index = self.proxy_pool.index(proxy)
-            self.failed_proxies.add(index)
     
     async def smart_delay(self, operation_type: str = "default"):
         """智能延迟"""
@@ -134,7 +157,7 @@ class SeleniumSearchEngine:
         self.logger = logger
         self.driver = None
         
-    def setup_driver(self) -> webdriver.Chrome:
+    async def setup_driver(self) -> webdriver.Chrome:
         """设置Chrome驱动 - 优化版"""
         try:
             options = Options()
@@ -179,12 +202,24 @@ class SeleniumSearchEngine:
             }
             options.add_experimental_option("prefs", prefs)
             
-            # 代理配置
-            proxy = self.anti_detection.get_next_proxy()
-            if proxy and proxy.get('http'):
-                proxy_address = proxy['http'].replace('http://', '')
-                options.add_argument(f'--proxy-server={proxy_address}')
-                self.logger.info(f"使用代理: {proxy_address}")
+            # 代理配置 - 使用新的代理池
+            proxy_url = await self.anti_detection.get_proxy()
+            if proxy_url:
+                # 解析代理URL
+                if proxy_url.startswith('http://'):
+                    proxy_address = proxy_url.replace('http://', '')
+                elif proxy_url.startswith('https://'):
+                    proxy_address = proxy_url.replace('https://', '')
+                elif proxy_url.startswith('socks5://'):
+                    proxy_address = proxy_url.replace('socks5://', '')
+                    options.add_argument(f'--proxy-server=socks5://{proxy_address}')
+                else:
+                    proxy_address = proxy_url
+                
+                if not proxy_url.startswith('socks5://'):
+                    options.add_argument(f'--proxy-server={proxy_address}')
+                    
+                self.logger.info(f"Selenium使用代理: {proxy_address}")
             
             # 创建驱动 - 使用更快的方式
             try:
@@ -212,7 +247,7 @@ class SeleniumSearchEngine:
     async def search_with_selenium(self, query: str, engine: str = "baidu") -> List[Dict[str, Any]]:
         """使用Selenium进行搜索"""
         if not self.driver:
-            self.driver = self.setup_driver()
+            self.driver = await self.setup_driver()
             if not self.driver:
                 return []
         
@@ -409,36 +444,39 @@ class SearchEngineCrawler(BaseCrawler):
         # 初始化Selenium搜索引擎
         self.selenium_engine = SeleniumSearchEngine(self.anti_detection)
         
+        # 初始化标志
+        self.initialized = False
+        
         # IP池
         self.ip_pool: Optional[SmartIPPool] = None
         
-        # 搜索引擎配置 - 启用部分搜索引擎并增加Selenium支持
+        # 搜索引擎配置 - 重新优化策略顺序
         self.search_engines = [
+            {
+                "name": "DuckDuckGo",
+                "enabled": True,
+                "priority": 1,  # 最高优先级：快速HTTP搜索
+                "api_url": "https://html.duckduckgo.com/html/",
+                "method": "requests"
+            },
+            {
+                "name": "Bing",
+                "enabled": True,
+                "priority": 2,  # 次优先级：Bing HTTP搜索
+                "api_url": "https://www.bing.com/search",
+                "method": "requests"
+            },
             {
                 "name": "Baidu_Selenium",
                 "enabled": True,
-                "priority": 1,
+                "priority": 3,  # 备用策略：Selenium百度
                 "method": "selenium"
             },
             {
                 "name": "Bing_Selenium", 
                 "enabled": True,
-                "priority": 2,
+                "priority": 4,  # 备用策略：Selenium Bing
                 "method": "selenium"
-            },
-            {
-                "name": "Baidu",
-                "enabled": True,
-                "priority": 3,
-                "api_url": "https://www.baidu.com/s",
-                "method": "requests"
-            },
-            {
-                "name": "DuckDuckGo",
-                "enabled": True,
-                "priority": 4,
-                "api_url": "https://html.duckduckgo.com/html/",
-                "method": "requests"
             }
         ]
         
@@ -450,14 +488,14 @@ class SearchEngineCrawler(BaseCrawler):
             'selenium_search_timeout': 25.0,  # Selenium搜索超时时间
         }
         
-        # 反反爬配置 - 极速优化版
-        self.anti_detection = {
+        # 反反爬配置保留（但主要使用AntiDetectionManager）
+        self.anti_detection_config = {
             "min_delay": 0.1,  # 最小延迟极速优化
             "max_delay": 0.5,  # 最大延迟极速优化
             "retry_delay": 2.0,  # 重试延迟极速优化
             "max_retries": 2,  # 减少重试次数
             "rotate_headers": True,  # 轮换请求头
-            "use_proxy": False  # 暂不使用代理
+            "use_proxy": False  # 暂不使用代理（已在AntiDetectionManager中处理）
         }
         
         # 请求头 - 模拟更真实的浏览器行为
@@ -502,23 +540,53 @@ class SearchEngineCrawler(BaseCrawler):
                 connector=connector
             )
     
+    async def _ensure_initialized(self):
+        """确保爬虫已初始化 - 按需初始化代理池"""
+        if not self.initialized:
+            # 不立即初始化代理池，等到需要时再初始化
+            self.initialized = True
+    
+    async def _lazy_init_proxy_pools(self):
+        """延迟初始化代理池 - 只在直连失败时调用"""
+        if self.enhanced_proxy_pool is None and self.ip_pool is None:
+            await self.anti_detection.initialize_proxy_pools()
+            # 将初始化后的代理池引用赋值给当前实例
+            self.enhanced_proxy_pool = self.anti_detection.enhanced_proxy_pool
+    
     async def _ensure_ip_pool(self):
-        """确保IP池存在"""
+        """确保IP池存在 - 优化版，减少检查数量"""
         if self.ip_pool is None:
             try:
-                self.ip_pool = await get_ip_pool()
-                self.logger.info("IP池初始化完成")
+                # 只在真正需要时才初始化IP池，并限制检查数量
+                from ..utils.ip_pool import get_ip_pool
+                self.ip_pool = await get_ip_pool(max_check=10)  # 只检查10个代理，提高速度
+                self.logger.info("IP池初始化完成（快速模式）")
             except Exception as e:
                 self.logger.warning(f"IP池初始化失败: {e}")
     
-    async def _get_proxy_for_request(self):
-        """获取用于请求的代理"""
+    async def _get_proxy_for_request(self, force_proxy: bool = False):
+        """获取用于请求的代理 - 优化版"""
+        # 如果不强制使用代理，先返回None（直连）
+        if not force_proxy:
+            return None
+        
+        await self._ensure_initialized()
+        
+        # 延迟初始化代理池
+        await self._lazy_init_proxy_pools()
+        
+        # 优先使用enhanced_proxy_pool
+        proxy_url = await self.anti_detection.get_proxy()
+        if proxy_url:
+            return proxy_url
+        
+        # 备用IP池（快速模式）
         try:
             await self._ensure_ip_pool()
             if self.ip_pool:
                 proxy = await self.ip_pool.get_proxy()
                 if proxy:
-                    self.logger.debug(f"使用代理: {proxy.ip}:{proxy.port}")
+                    self.logger.debug(f"使用IP池代理: {proxy.ip}:{proxy.port}")
                     return proxy.proxy_url
         except Exception as e:
             self.logger.debug(f"获取代理失败: {e}")
@@ -547,12 +615,14 @@ class SearchEngineCrawler(BaseCrawler):
                 self.logger.debug(f"尝试{engine_name}搜索...")
                 
                 results = []
-                if engine_name == 'Bing_Selenium':
-                    results = await self.selenium_engine.search_with_selenium(query, 'bing')
+                if engine_name == 'DuckDuckGo':
+                    results = await self._search_duckduckgo(query)
+                elif engine_name == 'Bing':
+                    results = await self._search_bing(query)
                 elif engine_name == 'Baidu_Selenium':
                     results = await self.selenium_engine.search_with_selenium(query, 'baidu')
-                elif engine_name == 'DuckDuckGo':
-                    results = await self._search_duckduckgo(query)
+                elif engine_name == 'Bing_Selenium':
+                    results = await self.selenium_engine.search_with_selenium(query, 'bing')
                 
                 if results:
                     self.logger.success(f"{engine_name}搜索成功，找到{len(results)}个结果")
@@ -635,40 +705,145 @@ class SearchEngineCrawler(BaseCrawler):
         return keywords[:5]  # 返回前5个关键词
     
     async def _search_duckduckgo(self, query: str) -> List[Dict[str, Any]]:
-        """DuckDuckGo搜索"""
+        """DuckDuckGo搜索 - 先直连，失败后用代理"""
+        # 添加随机延迟避免被识别为bot
+        await asyncio.sleep(random.uniform(0.1, 0.3))
+        
+        # DuckDuckGo HTML搜索参数
+        params = {
+            'q': query,
+            'kl': 'cn-zh',  # 中文地区
+            'safe': 'moderate'
+        }
+        
+        await self._ensure_initialized()
+        
+        # 第一次尝试：直连
         try:
-            # 添加随机延迟避免被识别为bot - 极速优化
-            import asyncio
-            import random
-            await asyncio.sleep(random.uniform(0.1, 0.3))
-            
-            # DuckDuckGo HTML搜索
-            params = {
-                'q': query,
-                'kl': 'cn-zh',  # 中文地区
-                'safe': 'moderate'
-            }
-            
-            # 获取代理
-            proxy = await self._get_proxy_for_request()
+            self.logger.debug("尝试DuckDuckGo直连搜索...")
+            async with self.session.get(
+                'https://html.duckduckgo.com/html/',
+                params=params,
+                proxy=None,  # 直连
+                timeout=aiohttp.ClientTimeout(total=8)
+            ) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    results = self._parse_duckduckgo_results(html)
+                    if results:
+                        self.logger.success(f"DuckDuckGo直连成功，找到{len(results)}个结果")
+                        return results
+                else:
+                    self.logger.debug(f"DuckDuckGo直连失败: HTTP {response.status}")
+                    
+        except Exception as e:
+            self.logger.debug(f"DuckDuckGo直连异常: {e}")
+        
+        # 第二次尝试：使用代理
+        try:
+            self.logger.debug("尝试DuckDuckGo代理搜索...")
+            proxy = await self._get_proxy_for_request(force_proxy=True)
+            if proxy:
+                self.logger.debug(f"使用代理: {proxy}")
             
             async with self.session.get(
                 'https://html.duckduckgo.com/html/',
                 params=params,
-                proxy=proxy
+                proxy=proxy,
+                timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
                 if response.status == 200:
                     html = await response.text()
-                    return self._parse_duckduckgo_results(html)
+                    results = self._parse_duckduckgo_results(html)
+                    if results:
+                        self.logger.success(f"DuckDuckGo代理搜索成功，找到{len(results)}个结果")
+                        return results
                 elif response.status == 202:
-                    self.logger.warning(f"DuckDuckGo反爬限制: HTTP 202 - 请求已接受但暂未处理")
+                    self.logger.warning(f"DuckDuckGo反爬限制: HTTP 202")
                 elif response.status == 403:
-                    self.logger.warning(f"DuckDuckGo封锁访问: HTTP 403 - 禁止访问")
+                    self.logger.warning(f"DuckDuckGo封锁访问: HTTP 403")
                 else:
-                    self.logger.warning(f"DuckDuckGo搜索失败: HTTP {response.status}")
+                    self.logger.warning(f"DuckDuckGo代理搜索失败: HTTP {response.status}")
                     
         except Exception as e:
-            self.logger.warning(f"DuckDuckGo搜索异常: {e}")
+            self.logger.warning(f"DuckDuckGo代理搜索异常: {e}")
+        
+        return []
+    
+    async def _search_bing(self, query: str) -> List[Dict[str, Any]]:
+        """Bing HTTP搜索 - 先直连，失败后用代理"""
+        # 添加随机延迟避免被识别为bot
+        await asyncio.sleep(random.uniform(0.1, 0.3))
+        
+        # Bing搜索参数
+        params = {
+            'q': query,
+            'cc': 'CN',  # 中国地区
+            'setlang': 'zh-CN',
+            'safesearch': 'moderate'
+        }
+        
+        headers = self._get_random_headers()
+        headers.update({
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        })
+        
+        await self._ensure_initialized()
+        
+        # 第一次尝试：直连
+        try:
+            self.logger.debug("尝试Bing直连搜索...")
+            async with self.session.get(
+                'https://www.bing.com/search',
+                params=params,
+                headers=headers,
+                proxy=None,  # 直连
+                timeout=aiohttp.ClientTimeout(total=8)
+            ) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    results = self._parse_bing_results(html)
+                    if results:
+                        self.logger.success(f"Bing直连成功，找到{len(results)}个结果")
+                        return results
+                else:
+                    self.logger.debug(f"Bing直连失败: HTTP {response.status}")
+                    
+        except Exception as e:
+            self.logger.debug(f"Bing直连异常: {e}")
+        
+        # 第二次尝试：使用代理
+        try:
+            self.logger.debug("尝试Bing代理搜索...")
+            proxy = await self._get_proxy_for_request(force_proxy=True)
+            if proxy:
+                self.logger.debug(f"使用代理: {proxy}")
+            
+            async with self.session.get(
+                'https://www.bing.com/search',
+                params=params,
+                headers=headers,
+                proxy=proxy,
+                timeout=aiohttp.ClientTimeout(total=12)
+            ) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    results = self._parse_bing_results(html)
+                    if results:
+                        self.logger.success(f"Bing代理搜索成功，找到{len(results)}个结果")
+                        return results
+                elif response.status == 429:
+                    self.logger.warning(f"Bing搜索限流: HTTP 429")
+                elif response.status == 403:
+                    self.logger.warning(f"Bing搜索被封锁: HTTP 403")
+                else:
+                    self.logger.warning(f"Bing代理搜索失败: HTTP {response.status}")
+                    
+        except Exception as e:
+            self.logger.warning(f"Bing代理搜索异常: {e}")
         
         return []
     
