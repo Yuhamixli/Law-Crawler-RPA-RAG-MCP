@@ -423,12 +423,14 @@ class SmartIPPool:
 _global_ip_pool: Optional[SmartIPPool] = None
 
 
-async def get_ip_pool() -> SmartIPPool:
+async def get_ip_pool(max_check: int = 50) -> SmartIPPool:
     """获取全局IP池实例"""
     global _global_ip_pool
     
     if _global_ip_pool is None:
-        _global_ip_pool = SmartIPPool()
+        # 根据max_check参数调整IP池大小，减少检查数量
+        max_proxies = min(max_check, 20)  # 限制最大检查数量
+        _global_ip_pool = SmartIPPool(min_proxies=3, max_proxies=max_proxies)
         await _global_ip_pool.initialize()
     
     return _global_ip_pool
