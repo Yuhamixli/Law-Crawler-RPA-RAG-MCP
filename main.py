@@ -323,19 +323,30 @@ def get_default_law_list() -> List[str]:
     ]
 
 
-async def search_single_law(law_name: str, verbose: bool = False):
+async def search_single_law(law_name: str, verbose: bool = False, strategy: int = None):
     """单独搜索指定法规"""
     print("=== 单法规搜索模式 ===")
     print(f"目标法规: {law_name}")
     print(f"详细模式: {'开启' if verbose else '关闭'}")
-    print("数据源: 国家法律法规数据库 + 中国政府网")
+    
+    if strategy:
+        strategy_names = {
+            1: "国家法律法规数据库",
+            2: "HTTP搜索引擎",
+            3: "Selenium搜索引擎", 
+            4: "Selenium政府网",
+            5: "直接URL访问"
+        }
+        print(f"指定策略: {strategy} - {strategy_names.get(strategy, '未知策略')}")
+    else:
+        print("数据源: 国家法律法规数据库 + 中国政府网")
     print()
     
     # 创建采集管理器（双数据源）
     crawler_manager = CrawlerManager()
     
     print("开始搜索...")
-    result = await crawler_manager.crawl_law(law_name)
+    result = await crawler_manager.crawl_law(law_name, strategy=strategy)
     
     if result:
         print(f"✅ 搜索成功！")
@@ -363,11 +374,22 @@ async def search_single_law(law_name: str, verbose: bool = False):
         print(f"   建议检查法规名称是否正确，或尝试简化搜索关键词")
 
 
-async def batch_crawl_optimized(limit: int = None):
+async def batch_crawl_optimized(limit: int = None, strategy: int = None):
     """批量爬取模式 - 终极优化版本"""
     print("=== 批量采集模式 (终极优化版) ===")
     print(f"版本: {settings.version} | 调试模式: {'开启' if settings.debug else '关闭'}")
-    print("策略: 搜索引擎→法规库→优化Selenium (多层并行)")
+    
+    if strategy:
+        strategy_names = {
+            1: "国家法律法规数据库",
+            2: "HTTP搜索引擎",
+            3: "Selenium搜索引擎", 
+            4: "Selenium政府网",
+            5: "直接URL访问"
+        }
+        print(f"指定策略: {strategy} - {strategy_names.get(strategy, '未知策略')}")
+    else:
+        print("策略: 搜索引擎→法规库→优化Selenium (多层并行)")
     print()
     
     # 获取目标法规列表
@@ -412,7 +434,7 @@ async def batch_crawl_optimized(limit: int = None):
         print("🚀 开始批量采集（终极优化模式）...")
         start_time = time.time()
         
-        results = await crawler_manager.crawl_laws_batch(law_list, limit=crawl_limit)
+        results = await crawler_manager.crawl_laws_batch(law_list, limit=crawl_limit, strategy=strategy)
         
         total_time = time.time() - start_time
         
@@ -487,11 +509,22 @@ async def batch_crawl_optimized(limit: int = None):
             print(f"清理资源时发生错误: {e}")
 
 
-async def batch_crawl(limit: int = None):
+async def batch_crawl(limit: int = None, strategy: int = None):
     """批量爬取模式（原有功能，保持向后兼容）"""
     print("=== 批量采集模式 ===")
     print(f"版本: {settings.version} | 调试模式: {'开启' if settings.debug else '关闭'}")
-    print("数据源: 国家法律法规数据库 + 中国政府网")
+    
+    if strategy:
+        strategy_names = {
+            1: "国家法律法规数据库",
+            2: "HTTP搜索引擎",
+            3: "Selenium搜索引擎", 
+            4: "Selenium政府网",
+            5: "直接URL访问"
+        }
+        print(f"指定策略: {strategy} - {strategy_names.get(strategy, '未知策略')}")
+    else:
+        print("数据源: 国家法律法规数据库 + 中国政府网")
     print()
     
     # 获取目标法规列表
@@ -535,7 +568,7 @@ async def batch_crawl(limit: int = None):
     for i, law_name in enumerate(target_laws, 1):
         print(f"[{i}/{len(target_laws)}] 处理: {law_name}")
         
-        result = await crawler_manager.crawl_law(law_name)
+        result = await crawler_manager.crawl_law(law_name, strategy=strategy)
         if result and result.get('success', False):
             # 确保包含目标法规名称
             result['target_name'] = law_name
@@ -616,6 +649,13 @@ def parse_args():
   python main.py --legacy                  # 使用原版批量爬取
   python main.py --law "电子招标投标办法"    # 单独搜索指定法规
   python main.py --law "中华人民共和国民法典" -v  # 详细模式
+  
+策略选择示例:
+  python main.py --strategy 1              # 仅使用国家法律法规数据库
+  python main.py --strategy 2 --limit 10   # 仅使用HTTP搜索引擎
+  python main.py --strategy 3              # 仅使用Selenium搜索引擎
+  python main.py --strategy 4              # 仅使用Selenium政府网
+  python main.py --strategy 5              # 仅使用直接URL访问
         """
     )
     
@@ -643,6 +683,19 @@ def parse_args():
         help='详细模式，显示更多信息'
     )
     
+    parser.add_argument(
+        '--strategy', '-s',
+        type=int,
+        choices=[1, 2, 3, 4, 5],
+        help='''指定爬虫策略（单一策略模式）:
+        1 - 国家法律法规数据库（权威数据源）
+        2 - HTTP搜索引擎（快速搜索，先直连后代理）
+        3 - Selenium搜索引擎（浏览器搜索引擎）
+        4 - Selenium政府网（针对政府网优化）
+        5 - 直接URL访问（最后保障）
+        不指定则使用默认多层策略'''
+    )
+    
     return parser.parse_args()
 
 
@@ -652,15 +705,15 @@ async def main():
     
     if args.law:
         # 单法规搜索模式
-        await search_single_law(args.law, args.verbose)
+        await search_single_law(args.law, args.verbose, args.strategy)
     else:
         # 批量爬取模式
         if args.legacy:
             # 使用原版批量爬取模式
-            await batch_crawl(args.limit)
+            await batch_crawl(args.limit, args.strategy)
         else:
             # 使用终极优化版批量爬取模式（默认）
-            await batch_crawl_optimized(args.limit)
+            await batch_crawl_optimized(args.limit, args.strategy)
 
 
 if __name__ == "__main__":
@@ -677,4 +730,12 @@ if __name__ == "__main__":
         print(f"\n程序发生未知错误: {e}")
         if settings.debug:
             print("详细错误信息:")
-            traceback.print_exc() 
+            traceback.print_exc()
+    finally:
+        # 确保清理所有WebDriver实例
+        try:
+            from src.crawler.utils.webdriver_manager import cleanup_webdrivers
+            asyncio.run(cleanup_webdrivers())
+            print("🧹 WebDriver清理完成")
+        except Exception as e:
+            print(f"清理WebDriver时发生错误: {e}") 
