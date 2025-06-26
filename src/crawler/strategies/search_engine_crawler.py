@@ -642,13 +642,13 @@ class SearchEngineCrawler(BaseCrawler):
         """构建搜索查询列表"""
         queries = []
         
-        # 1. 原始名称 + site:gov.cn
-        queries.append(f'"{law_name}" site:gov.cn')
-        
-        # 2. 去掉括号内容
+        # 1. 优先：去掉括号内容（更容易找到结果）
         clean_name = re.sub(r'[（(].*?[）)]', '', law_name).strip()
         if clean_name != law_name:
             queries.append(f'"{clean_name}" site:gov.cn')
+        
+        # 2. 原始名称 + site:gov.cn
+        queries.append(f'"{law_name}" site:gov.cn')
         
         # 3. 不使用引号的搜索（有时引号会限制结果）
         queries.append(f'{law_name} site:gov.cn')
@@ -1258,9 +1258,20 @@ class SearchEngineCrawler(BaseCrawler):
                 self.logger.debug(f"跳过下载链接: {url}")
                 continue
             
-            # 跳过明显不相关的页面
-            if any(keyword in title for keyword in ['首页', '导航', '搜索', '登录', '注册']):
+            # 跳过明显不相关的页面 - 但要确保不误杀正确的法规
+            irrelevant_keywords = [
+                '首页', '导航', '搜索', '登录', '注册', '目录', '索引'
+            ]
+            
+            # 对于"清单"类页面，需要更精确的判断
+            if any(keyword in title for keyword in irrelevant_keywords):
                 self.logger.debug(f"跳过不相关页面: {title}")
+                continue
+            
+            # 特殊处理：如果是"检查事项清单"等明显不是法规本身的页面
+            if ('检查事项' in title or '涉企检查' in title or '工作清单' in title or '责任清单' in title) and \
+               not any(core_word in title for core_word in ['招标投标管理办法', '施工招标投标']):
+                self.logger.debug(f"跳过检查清单页面: {title}")
                 continue
             
             filtered_results.append(result)
@@ -1275,29 +1286,57 @@ class SearchEngineCrawler(BaseCrawler):
             snippet = result['snippet'].lower()
             url = result['url'].lower()
             
-            # 标题匹配加分
-            if clean_law_name in title:
-                score += 10
+            # 标题匹配加分 - 更精确的匹配
+            title_clean = re.sub(r'[（(].*?[）)]', '', title).strip()
             
-            # 关键词匹配
+            # 完全匹配（去掉括号后）
+            if clean_law_name == title_clean:
+                score += 25
+            # 高度匹配（目标在标题中）
+            elif clean_law_name in title:
+                score += 20
+            # 标题在目标中（可能是简称）
+            elif title_clean in clean_law_name and len(title_clean) > 6:
+                score += 15
+            
+            # 关键词匹配 - 提取更多关键词进行匹配
             keywords = self._extract_keywords(law_name)
-            for keyword in keywords[:3]:
+            title_keyword_matches = 0
+            for keyword in keywords[:5]:  # 检查前5个关键词
                 if keyword.lower() in title:
-                    score += 3
+                    title_keyword_matches += 1
+                    score += 2
                 if keyword.lower() in snippet:
                     score += 1
             
+            # 关键词匹配度奖励
+            if title_keyword_matches >= 3:
+                score += 5  # 多个关键词匹配奖励
+            
+            # 特殊奖励：如果标题包含法规的核心名称（去掉修订年份）
+            core_name = re.sub(r'[（(].*?[）)]', '', law_name).replace('中华人民共和国', '').strip()
+            if core_name and len(core_name) > 4 and core_name in title:
+                score += 8
+            
+            # URL权威性加分 - 优先中央政府网站
+            if 'www.gov.cn' in url:  # 中国政府网（中央）
+                score += 15
+            elif 'gov.cn' in url and not any(city in url for city in ['yueyang', 'beijing', 'shanghai', 'guangzhou', 'shenzhen']):
+                score += 10  # 其他gov.cn但非地方政府
+            elif 'gov.cn' in url:  # 地方政府网站
+                score += 5
+            
             # URL特征加分
             if 'gongbao' in url:  # 政府公报
-                score += 5
+                score += 8
             elif 'zhengce' in url:  # 政策文件
-                score += 3
+                score += 6
             elif 'content' in url:  # 内容页面
-                score += 2
+                score += 4
             
             # 优先选择HTML页面
             if any(path in url for path in ['content', 'zhengce', 'gongbao', 'flcaw']):
-                score += 2
+                score += 3
             
             # 包含年份信息
             if re.search(r'20\d{2}', title + snippet):
@@ -1443,83 +1482,130 @@ class SearchEngineCrawler(BaseCrawler):
                         self.logger.debug(f"提取到实施日期: {matches[0]}")
                         break
             
-            # 2. 提取发布日期
-            publish_patterns = [
-                r'发布日期[：:](\d{4}年\d{1,2}月\d{1,2}日)',
-                r'颁布日期[：:](\d{4}年\d{1,2}月\d{1,2}日)',
-                r'(\d{4}年\d{1,2}月\d{1,2}日)发布',
-                r'(\d{4}年\d{1,2}月\d{1,2}日)颁布',
-                # 支持横线格式  
-                r'发布日期[：:](\d{4}-\d{1,2}-\d{1,2})',
-                r'颁布日期[：:](\d{4}-\d{1,2}-\d{1,2})',
-                r'(\d{4}-\d{1,2}-\d{1,2})发布',
-                r'(\d{4}-\d{1,2}-\d{1,2})颁布'
-            ]
+            # 2. 提取发布日期 - 增强版，处理复杂的修正情况
+            # 首先尝试提取复杂的发布和修正信息
+            # 修改正则表达式以捕获所有修正信息
+            complex_publish_pattern = r'（(\d{4}年\d{1,2}月\d{1,2}日).*?(第\d+号)发布.*?根据.*?(\d{4}年\d{1,2}月\d{1,2}日).*?(第\d+号).*?修正.*?根据.*?(\d{4}年\d{1,2}月\d{1,2}日).*?(第\d+号).*?修正'
+            complex_matches = re.findall(complex_publish_pattern, content[:2000], re.DOTALL)
             
-            for pattern in publish_patterns:
-                matches = re.findall(pattern, content[:1500], re.IGNORECASE)
-                if matches:
-                    result['publish_date'] = matches[0]
-                    self.logger.debug(f"提取到发布日期: {matches[0]}")
-                    break
+            # 如果没有找到多次修正，尝试单次修正
+            if not complex_matches:
+                simple_revision_pattern = r'（(\d{4}年\d{1,2}月\d{1,2}日).*?(第\d+号)发布.*?根据(\d{4}年\d{1,2}月\d{1,2}日).*?(第\d+号).*?修正'
+                simple_matches = re.findall(simple_revision_pattern, content[:2000], re.DOTALL)
+                if simple_matches:
+                    # 转换为复杂匹配格式（添加空的第二次修正）
+                    original_date, original_number, revision_date, revision_number = simple_matches[-1]
+                    complex_matches = [(original_date, original_number, revision_date, revision_number, '', '')]
             
-            # 如果没有专门的发布日期，从前部分找一般日期
-            if not result['publish_date']:
-                general_date_patterns = [
-                    r'(\d{4}年\d{1,2}月\d{1,2}日)',
-                    r'(\d{4}-\d{1,2}-\d{1,2})',
-                    r'(\d{4}\.\d{1,2}\.\d{1,2})'
+            if complex_matches:
+                # 处理复杂情况：有原始发布日期和修正日期
+                match = complex_matches[-1]  # 取最后一个匹配
+                if len(match) == 6:  # 多次修正
+                    original_date, original_number, first_revision_date, first_revision_number, latest_date, latest_number = match
+                    result['publish_date'] = original_date
+                    result['document_number'] = original_number
+                    result['latest_revision_date'] = latest_date if latest_date else first_revision_date
+                    result['latest_revision_number'] = latest_number if latest_number else first_revision_number
+                    self.logger.debug(f"提取到复杂发布信息 - 原始: {original_date} {original_number}, 最新修正: {result['latest_revision_date']} {result['latest_revision_number']}")
+                else:  # 单次修正
+                    original_date, original_number, latest_date, latest_number = match[:4]
+                    result['publish_date'] = original_date
+                    result['document_number'] = original_number
+                    result['latest_revision_date'] = latest_date
+                    result['latest_revision_number'] = latest_number
+                    self.logger.debug(f"提取到发布信息 - 原始: {original_date} {original_number}, 修正: {latest_date} {latest_number}")
+            else:
+                # 常规发布日期提取
+                publish_patterns = [
+                    r'发布日期[：:](\d{4}年\d{1,2}月\d{1,2}日)',
+                    r'颁布日期[：:](\d{4}年\d{1,2}月\d{1,2}日)',
+                    r'(\d{4}年\d{1,2}月\d{1,2}日)发布',
+                    r'(\d{4}年\d{1,2}月\d{1,2}日)颁布',
+                    # 支持横线格式  
+                    r'发布日期[：:](\d{4}-\d{1,2}-\d{1,2})',
+                    r'颁布日期[：:](\d{4}-\d{1,2}-\d{1,2})',
+                    r'(\d{4}-\d{1,2}-\d{1,2})发布',
+                    r'(\d{4}-\d{1,2}-\d{1,2})颁布',
+                    # 从法规开头的复杂描述中提取原始发布日期
+                    r'（(\d{4}年\d{1,2}月\d{1,2}日).*?发布',
+                    r'（(\d{4}年\d{1,2}月\d{1,2}日).*?令.*?发布'
                 ]
                 
-                for pattern in general_date_patterns:
-                    matches = re.findall(pattern, content[:1000])
+                for pattern in publish_patterns:
+                    matches = re.findall(pattern, content[:1500], re.IGNORECASE)
                     if matches:
                         result['publish_date'] = matches[0]
+                        self.logger.debug(f"提取到发布日期: {matches[0]}")
+                        break
+                
+                # 如果没有专门的发布日期，从前部分找一般日期
+                if not result['publish_date']:
+                    general_date_patterns = [
+                        r'(\d{4}年\d{1,2}月\d{1,2}日)',
+                        r'(\d{4}-\d{1,2}-\d{1,2})',
+                        r'(\d{4}\.\d{1,2}\.\d{1,2})'
+                    ]
+                    
+                    for pattern in general_date_patterns:
+                        matches = re.findall(pattern, content[:1000])
+                        if matches:
+                            result['publish_date'] = matches[0]
+                            break
+            
+            # 3. 提取文号 - 增强版，处理复杂的部门令格式
+            # 如果在复杂发布信息中已经提取到文号，跳过这一步
+            if not result.get('document_number'):
+                number_patterns = [
+                    # 完整的部门令格式 - 增强版
+                    r'(中华人民共和国.*?部令第\d+号)',
+                    r'(住房和城乡建设部令第\d+号)',
+                    r'(建设部令第\d+号)',
+                    r'(.*?部令第\d+号)',
+                    r'(.*?总局令第\d+号)',
+                    r'(.*?委员会令第\d+号)',
+                    # 从复杂描述中提取最新的文号
+                    r'根据.*?(第\d+号).*?修正',
+                    r'根据.*?令(第\d+号)',
+                    # 标准格式
+                    r'第(\d+)号令',
+                    r'令第(\d+)号',
+                    r'第(\d+)号',
+                    r'(\d{4}年第\d+号)',
+                    r'令.*?第?(\d+)号',
+                    # 其他格式
+                    r'文号[：:](.+?)\s',
+                    r'文件编号[：:](.+?)\s'
+                ]
+                
+                for pattern in number_patterns:
+                    matches = re.findall(pattern, content[:1500])
+                    if matches:
+                        doc_num = matches[0]
+                        # 如果已经是完整格式，直接使用
+                        if '令' in doc_num or '号' in doc_num:
+                            result['document_number'] = doc_num
+                        elif doc_num.isdigit():
+                            result['document_number'] = f"第{doc_num}号"
+                        else:
+                            result['document_number'] = doc_num
+                        self.logger.debug(f"提取到文号: {result['document_number']}")
                         break
             
-            # 3. 提取文号 - 增强版
-            number_patterns = [
-                # 完整的部门令格式
-                r'(.*?部令第\d+号)',
-                r'(.*?总局令第\d+号)',
-                r'(.*?委员会令第\d+号)',
-                r'(建设部令第\d+号)',
-                r'(住房和城乡建设部令第\d+号)',
-                # 标准格式
-                r'第(\d+)号令',
-                r'令第(\d+)号',
-                r'第(\d+)号',
-                r'(\d{4}年第\d+号)',
-                r'令.*?第?(\d+)号',
-                # 其他格式
-                r'文号[：:](.+?)\s',
-                r'文件编号[：:](.+?)\s'
-            ]
-            
-            for pattern in number_patterns:
-                matches = re.findall(pattern, content[:1000])
-                if matches:
-                    doc_num = matches[0]
-                    # 如果已经是完整格式，直接使用
-                    if '令' in doc_num or '号' in doc_num:
-                        result['document_number'] = doc_num
-                    elif doc_num.isdigit():
-                        result['document_number'] = f"第{doc_num}号"
-                    else:
-                        result['document_number'] = doc_num
-                    self.logger.debug(f"提取到文号: {result['document_number']}")
-                    break
-            
-            # 4. 提取发布机关/颁布机关 - 增强版
+            # 4. 提取发布机关/颁布机关 - 增强版，处理复杂修正情况
             authority_patterns = [
                 # 直接提及发布机关
                 r'发布机关[：:](.+?)(?:\s|发布日期|颁布日期|实施日期)',
                 r'颁布机关[：:](.+?)(?:\s|发布日期|颁布日期|实施日期)',
                 r'制定机关[：:](.+?)(?:\s|发布日期|颁布日期|实施日期)',
                 
+                # 从复杂的发布描述中提取原始和最新发布机关
+                r'（\d{4}年\d{1,2}月\d{1,2}日(中华人民共和国.*?部)令第\d+号发布',
+                r'根据\d{4}年\d{1,2}月\d{1,2}日(中华人民共和国.*?部)令第\d+号',
+                
                 # 从具体描述中提取 - 改进版
                 r'中华人民共和国(.*?部)(?:令|规章|办法)',
                 r'(住房和城乡建设部)(?:令|规章|办法)',
+                r'(建设部)(?:令|规章|办法)',
                 r'(交通运输部)(?:令|规章|办法)',
                 r'(工业和信息化部)(?:令|规章|办法)',
                 r'(国家市场监督管理总局)(?:令|规章|办法)',
@@ -1539,12 +1625,13 @@ class SearchEngineCrawler(BaseCrawler):
                 r'(国家质量监督检验检疫总局)',
                 r'(市场监督管理总局)',
                 r'(住房和城乡建设部)',
+                r'(建设部)',
                 r'(交通运输部)',
                 r'(工业和信息化部)'
             ]
             
             for pattern in authority_patterns:
-                matches = re.findall(pattern, content[:1500], re.IGNORECASE)
+                matches = re.findall(pattern, content[:2000], re.IGNORECASE)
                 if matches:
                     authority = matches[0].strip()
                     # 清理常见后缀和前缀
@@ -1555,6 +1642,11 @@ class SearchEngineCrawler(BaseCrawler):
                     # 提取核心部门名称
                     if '中华人民共和国' in authority:
                         authority = re.sub(r'.*中华人民共和国(.*)', r'\1', authority).strip()
+                    
+                    # 特殊处理：建设部 -> 住房和城乡建设部（历史变更）
+                    if authority == '建设部':
+                        authority = '住房和城乡建设部'
+                        result['historical_authority'] = '建设部'
                     
                     if len(authority) > 2:  # 避免提取到过短的文本
                         result['issuing_authority'] = authority
