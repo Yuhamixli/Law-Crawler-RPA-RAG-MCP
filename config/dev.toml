@@ -11,7 +11,7 @@ debug = true
 max_concurrent = 5  # 开发环境可以适当增加并发
 rate_limit = 10     # 开发环境放宽限制
 crawl_limit = 40    # 开发环境限制爬取数量，避免过多测试数据
-timeout = 30        # 请求超时时间
+timeout = 60        # 请求超时时间（增加到60秒）
 
 # 代理池配置 - 开发环境 (引用独立配置文件)
 [proxy_pool]
