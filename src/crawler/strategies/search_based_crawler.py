@@ -22,6 +22,7 @@ import sys
 sys.path.append('..')
 from ..base_crawler import BaseCrawler
 import random
+from urllib.parse import urljoin
 
 
 def normalize_date_format(date_str: str) -> str:
@@ -100,24 +101,23 @@ class SearchBasedCrawler(BaseCrawler):
         self._initialize_session()
     
     def setup_headers(self):
-        """设置请求头 - 增强版，模拟真实浏览器"""
+        """设置请求头 - 使用原始示例项目成功的headers配置"""
+        # 基于原始示例项目中成功的REQUEST_HEADER配置
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Referer': 'https://flk.npc.gov.cn/',
-            'Origin': 'https://flk.npc.gov.cn',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+            "authority": "flk.npc.gov.cn",
+            "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Microsoft Edge";v="99"',
+            "accept": "application/json, text/javascript, */*; q=0.01",
+            "x-requested-with": "XMLHttpRequest", 
+            "sec-ch-ua-mobile": "?0",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36 Edg/99.0.1150.39",
+            "sec-ch-ua-platform": '"macOS"',
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors", 
+            "sec-fetch-dest": "empty",
+            "referer": "https://flk.npc.gov.cn/fl.html",
+            "accept-language": "en-AU,en-GB;q=0.9,en;q=0.8,en-US;q=0.7,zh-CN;q=0.6,zh;q=0.5",
+            # 关键：使用示例项目中成功的cookie（模拟真实会话）
+            "cookie": "yfx_c_g_u_id_10006696=_ck22022520424713255117764923111; cna=NdafGk8tiAgCAd9IPxhfROag; yfx_f_l_v_t_10006696=f_t_1645792967326__r_t_1646401808964__v_t_1646401808964__r_c_5; Hm_lvt_54434aa6770b6d9fef104d146430b53b=1646407223,1646570042,1646666110,1647148584; acw_tc=75a1461516471485843844814eb808af266b8ede0e0502ec1c46ab1581; Hm_lpvt_54434aa6770b6d9fef104d146430b53b=1647148626",
         })
         
         # 设置Session级别的配置
@@ -174,7 +174,7 @@ class SearchBasedCrawler(BaseCrawler):
             return False
     
     def search_law_selenium(self, keyword: str) -> List[Dict[str, Any]]:
-        """使用Selenium搜索法规 - WAF绕过方案"""
+        """使用Selenium搜索法规 - 模拟首页搜索"""
         driver = None
         try:
             # 配置Chrome选项
@@ -190,75 +190,126 @@ class SearchBasedCrawler(BaseCrawler):
             driver = webdriver.Chrome(options=chrome_options)
             wait = WebDriverWait(driver, 10)
             
-            self.logger.debug(f"    使用Selenium搜索: {keyword}")
+            self.logger.debug(f"    Selenium访问首页进行搜索...")
             
-            # 访问搜索页面
-            driver.get("https://flk.npc.gov.cn/fl.html")
+            # 访问首页
+            driver.get("https://flk.npc.gov.cn/")
             
             # 等待页面加载
-            wait.until(EC.presence_of_element_located((By.ID, "fgbt")))
+            time.sleep(2)
+            
+            # 查找搜索输入框（根据HTML结构）
+            search_input = wait.until(
+                EC.presence_of_element_located((By.ID, "flfgTitle"))
+            )
             
             # 输入搜索关键词
-            search_input = driver.find_element(By.ID, "fgbt")
             search_input.clear()
             search_input.send_keys(keyword)
             
-            # 点击搜索按钮
-            search_button = driver.find_element(By.CSS_SELECTOR, ".search_btn")
+            self.logger.debug(f"    已输入关键词: {keyword}")
+            
+            # 点击搜索按钮（根据HTML，搜索按钮通过confirmFilter()函数触发）
+            search_button = wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "li[onclick='confirmFilter()']"))
+            )
             search_button.click()
             
-            # 等待搜索结果
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".search_result")))
+            self.logger.debug(f"    已点击搜索按钮")
+            
+            # 等待搜索结果加载
+            time.sleep(3)
+            
+            # 等待结果表格出现
+            results_table = wait.until(
+                EC.presence_of_element_located((By.ID, "flData"))
+            )
             
             # 解析搜索结果
             results = []
-            result_items = driver.find_elements(By.CSS_SELECTOR, ".search_result .result_item")
+            rows = results_table.find_elements(By.CSS_SELECTOR, "tr.list-b")
             
-            for item in result_items:
+            for row in rows:
                 try:
-                    title_element = item.find_element(By.CSS_SELECTOR, ".title a")
-                    title = title_element.text.strip()
-                    link = title_element.get_attribute("href")
+                    # 提取标题和链接
+                    title_element = row.find_element(By.CSS_SELECTOR, ".l-wen")
+                    title = title_element.get_attribute("title") or title_element.text.strip()
                     
-                    # 提取法规ID
+                    # 提取详情链接和ID
+                    onclick_attr = title_element.get_attribute("onclick")
+                    detail_url = None
                     law_id = ""
-                    if "id=" in link:
-                        law_id = link.split("id=")[1].split("&")[0]
+                    if onclick_attr and "showDetail" in onclick_attr:
+                        # 从onclick属性中提取URL
+                        import re
+                        match = re.search(r"showDetail\('([^']+)'\)", onclick_attr)
+                        if match:
+                            detail_url = urljoin("https://flk.npc.gov.cn/", match.group(1))
+                            # 从URL中提取法规ID（通常在问号后面）
+                            if "?" in detail_url:
+                                law_id = detail_url.split("?")[1]
                     
-                    # 获取其他信息
-                    info_elements = item.find_elements(By.CSS_SELECTOR, ".info span")
-                    publish_date = ""
+                    # 提取制定机关
+                    agency_elements = row.find_elements(By.CSS_SELECTOR, ".l-sx2 .l-wen1")
+                    agency = agency_elements[0].text.strip() if agency_elements else ""
+                    
+                    # 提取法律性质
+                    type_elements = row.find_elements(By.CSS_SELECTOR, ".l-sx3 .l-wen1")
+                    law_type = type_elements[0].text.strip() if len(type_elements) > 0 else ""
+                    
+                    # 提取时效性并转换为数字状态
+                    status_text = type_elements[1].text.strip() if len(type_elements) > 1 else ""
                     status = 1  # 默认有效
+                    if "已修改" in status_text:
+                        status = 5
+                    elif "已废止" in status_text:
+                        status = 9
+                    elif "尚未生效" in status_text:
+                        status = 3
                     
-                    for info_elem in info_elements:
-                        text = info_elem.text.strip()
-                        if "发布日期" in text:
-                            publish_date = text.replace("发布日期：", "")
-                        elif "失效" in text:
-                            status = 5
+                    # 提取公布日期并格式化
+                    date_elements = row.find_elements(By.CSS_SELECTOR, ".l-sx4 .l-wen1")
+                    publish_date = ""
+                    if date_elements:
+                        date_text = date_elements[0].text.strip()
+                        # 移除方括号：[2024-12-25] -> 2024-12-25
+                        publish_date = date_text.replace("[", "").replace("]", "")
                     
-                    result = {
-                        'id': law_id,
-                        'title': title,
-                        'link': link,
-                        'publish_date': publish_date,
-                        'status': status
-                    }
-                    results.append(result)
-                    
+                    if title and law_id:
+                        # 构建与HTTP API一致的返回格式
+                        results.append({
+                            'id': law_id,
+                            'title': title,
+                            'link': detail_url,
+                            'publish_date': publish_date,
+                            'status': status,
+                            'agency': agency,
+                            'type': law_type,
+                            'score': 1.0  # Selenium搜索的结果都认为是高匹配度
+                        })
+                        
                 except Exception as e:
-                    self.logger.warning(f"解析搜索结果项失败: {str(e)}")
+                    self.logger.debug(f"    解析行数据失败: {e}")
                     continue
             
             self.logger.debug(f"    Selenium搜索找到 {len(results)} 个结果")
             return results
             
+        except TimeoutException:
+            self.logger.debug(f"    Selenium搜索超时")
+            return []
+        except WebDriverException as e:
+            self.logger.debug(f"    Selenium WebDriver错误: {e}")
+            return []
         except Exception as e:
-            self.logger.error(f"Selenium搜索失败: {str(e)}")
+            self.logger.debug(f"    Selenium搜索失败: {e}")
             return []
         finally:
             if driver:
-                driver.quit()
+                try:
+                    driver.quit()
+                except:
+                    pass
     
     def search_law(self, keyword: str) -> List[Dict[str, Any]]:
         """搜索法规 - 智能版：优先API，WAF激活时自动切换Selenium"""
