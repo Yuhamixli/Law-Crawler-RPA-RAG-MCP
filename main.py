@@ -154,12 +154,27 @@ async def save_results(results: List[Dict[str, Any]], target_laws: List[str], ou
     os.makedirs(f"{output_dir}/raw/detailed", exist_ok=True)
     os.makedirs(f"{output_dir}/ledgers", exist_ok=True)
     
-    # 建立结果映射（按名称匹配）
+    # 建立结果映射（智能匹配逻辑）
     results_map = {}
     for result in results:
-        target_name = result.get('target_name', result.get('name'))
+        target_name = result.get('target_name')  # 目标搜索的法规名称
+        actual_name = result.get('name')         # 实际找到的法规名称
+        
+        # 1. 优先使用target_name进行精确匹配
         if target_name:
             results_map[target_name] = result
+        
+        # 2. 使用actual_name建立映射
+        if actual_name:
+            results_map[actual_name] = result
+            
+            # 3. 智能匹배：为带修订标记的法规建立双向映射
+            # 如果actual_name是基础名称，为可能的修订版本建立映射
+            for target_law in target_laws:
+                if (actual_name in target_law and 
+                    ('修订' in target_law or '修正' in target_law or '（' in target_law)):
+                    results_map[target_law] = result
+                    break
     
     excel_results = []
     detailed_results = []
@@ -200,12 +215,12 @@ async def save_results(results: List[Dict[str, Any]], target_laws: List[str], ou
                 "目标法规": target_law,
                 "搜索关键词": law_data.get('search_keyword', target_law),
                 "法规名称": law_data.get('name', ''),
-                "文号": law_data.get('number', ''),
+                "文号": law_data.get('number', '') or law_data.get('document_number', ''),  # 修复：支持多种字段名
                 "发布日期": normalize_date_format(law_data.get('publish_date', '')),
                 "实施日期": normalize_date_format(law_data.get('valid_from', '')),
                 "失效日期": normalize_date_format(law_data.get('valid_to', '')),
-                "发布机关": law_data.get('office', ''),
-                "法规级别": law_data.get('level', ''),
+                "发布机关": law_data.get('office', '') or law_data.get('issuing_authority', ''),  # 修复：支持多种字段名
+                "法规级别": law_data.get('level', '') or law_data.get('law_level', ''),  # 修复：支持多种字段名
                 "状态": law_data.get('status', ''),
                 "来源渠道": source_channel,  # 新增的来源渠道列
                 "来源链接": law_data.get('source_url', ''),
@@ -272,12 +287,12 @@ async def save_results(results: List[Dict[str, Any]], target_laws: List[str], ou
         worksheet = writer.sheets['法规采集结果']
         
         # 设置超链接（仅对成功采集的法规）
-        # 注意：来源链接列的位置从13变为14（因为添加了来源渠道列）
+        # 来源链接列是第13列，不要覆盖采集时间列（第14列）
         for idx, row in enumerate(df.iterrows(), start=2):
             url = row[1]['来源链接']
             if url and row[1]['采集状态'] == '成功':
-                worksheet.cell(row=idx, column=14).hyperlink = url
-                worksheet.cell(row=idx, column=14).value = "点击查看"
+                worksheet.cell(row=idx, column=13).hyperlink = url  # 修复：设置到来源链接列
+                worksheet.cell(row=idx, column=13).value = "点击查看"  # 修复：显示"点击查看"
     
     print(f"结果已保存:")
     print(f"  简化JSON: {json_file}")
