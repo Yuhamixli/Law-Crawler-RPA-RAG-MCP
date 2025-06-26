@@ -30,6 +30,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from ..base_crawler import BaseCrawler
 from ..utils.ip_pool import get_ip_pool, SmartIPPool
 from ..utils.enhanced_proxy_pool import get_enhanced_proxy_pool, EnhancedProxyPool
+from ..utils.anti_detection_enhanced import get_anti_detection, EnhancedAntiDetection, ResponseAnalysisResult, AntiCrawlerLevel
 from config.settings import get_settings
 
 
@@ -705,9 +706,13 @@ class SearchEngineCrawler(BaseCrawler):
         return keywords[:5]  # 返回前5个关键词
     
     async def _search_duckduckgo(self, query: str) -> List[Dict[str, Any]]:
-        """DuckDuckGo搜索 - 先直连，失败后用代理"""
-        # 添加随机延迟避免被识别为bot
-        await asyncio.sleep(random.uniform(0.1, 0.3))
+        """DuckDuckGo搜索 - 增强反爬检测版"""
+        # 获取反爬检测器
+        detector = get_anti_detection()
+        
+        # 自适应延迟
+        delay = detector.get_adaptive_delay("search")
+        await asyncio.sleep(delay)
         
         # DuckDuckGo HTML搜索参数
         params = {
@@ -721,23 +726,36 @@ class SearchEngineCrawler(BaseCrawler):
         # 第一次尝试：直连
         try:
             self.logger.debug("尝试DuckDuckGo直连搜索...")
+            start_time = time.time()
+            
             async with self.session.get(
                 'https://html.duckduckgo.com/html/',
                 params=params,
                 proxy=None,  # 直连
                 timeout=aiohttp.ClientTimeout(total=8)
             ) as response:
-                if response.status == 200:
-                    html = await response.text()
+                response_time = time.time() - start_time
+                html = await response.text()
+                
+                # 增强反爬检测
+                analysis_result, anti_level = await detector.analyze_response(
+                    response, html, response.url, response_time
+                )
+                
+                if analysis_result == ResponseAnalysisResult.NORMAL:
                     results = self._parse_duckduckgo_results(html)
                     if results:
                         self.logger.success(f"DuckDuckGo直连成功，找到{len(results)}个结果")
                         return results
                 else:
-                    self.logger.debug(f"DuckDuckGo直连失败: HTTP {response.status}")
+                    self.logger.warning(f"DuckDuckGo直连检测到反爬: {analysis_result.value}, 级别: {anti_level.value}")
                     
         except Exception as e:
             self.logger.debug(f"DuckDuckGo直连异常: {e}")
+        
+        # 检查是否需要切换代理
+        if detector.should_switch_proxy():
+            self.logger.info(f"反爬级别达到 {detector.current_anti_level.value}，强制使用代理")
         
         # 第二次尝试：使用代理
         try:
@@ -746,27 +764,45 @@ class SearchEngineCrawler(BaseCrawler):
             if proxy:
                 self.logger.debug(f"使用代理: {proxy}")
             
+            # 根据反爬级别调整超时时间
+            timeout = 15 if detector.current_anti_level in [AntiCrawlerLevel.HIGH, AntiCrawlerLevel.EXTREME] else 10
+            
+            start_time = time.time()
             async with self.session.get(
                 'https://html.duckduckgo.com/html/',
                 params=params,
                 proxy=proxy,
-                timeout=aiohttp.ClientTimeout(total=10)
+                timeout=aiohttp.ClientTimeout(total=timeout)
             ) as response:
-                if response.status == 200:
-                    html = await response.text()
+                response_time = time.time() - start_time
+                html = await response.text()
+                
+                # 增强反爬检测
+                analysis_result, anti_level = await detector.analyze_response(
+                    response, html, response.url, response_time
+                )
+                
+                if analysis_result == ResponseAnalysisResult.NORMAL:
                     results = self._parse_duckduckgo_results(html)
                     if results:
                         self.logger.success(f"DuckDuckGo代理搜索成功，找到{len(results)}个结果")
                         return results
-                elif response.status == 202:
-                    self.logger.warning(f"DuckDuckGo反爬限制: HTTP 202")
-                elif response.status == 403:
-                    self.logger.warning(f"DuckDuckGo封锁访问: HTTP 403")
+                elif analysis_result == ResponseAnalysisResult.RATE_LIMITED:
+                    self.logger.warning("DuckDuckGo频率限制，增加延迟后重试")
+                    await asyncio.sleep(detector.get_adaptive_delay("retry"))
+                elif analysis_result == ResponseAnalysisResult.IP_BANNED:
+                    self.logger.error("IP可能被封禁，需要更换代理池")
+                elif analysis_result == ResponseAnalysisResult.CAPTCHA:
+                    self.logger.warning("遇到验证码，暂时跳过")
                 else:
-                    self.logger.warning(f"DuckDuckGo代理搜索失败: HTTP {response.status}")
+                    self.logger.warning(f"DuckDuckGo代理搜索检测到反爬: {analysis_result.value}")
                     
         except Exception as e:
             self.logger.warning(f"DuckDuckGo代理搜索异常: {e}")
+        
+        # 打印检测报告（如果是调试模式）
+        if detector.metrics.total_requests % 10 == 0:  # 每10次请求打印一次
+            detector.print_detection_report()
         
         return []
     
@@ -1698,7 +1734,7 @@ class SearchEngineCrawler(BaseCrawler):
             try:
                 search_results = await asyncio.wait_for(
                     search_task, 
-                    timeout=self.timeout_config['single_law_timeout']
+                    timeout=min(self.timeout_config['single_law_timeout'] + 10, 60)  # 增加10秒缓冲，最大60秒
                 )
             except asyncio.TimeoutError:
                 elapsed = time.time() - start_time
@@ -1737,6 +1773,8 @@ class SearchEngineCrawler(BaseCrawler):
             
             try:
                 detail_task = self.get_law_detail_from_url(best_result['url'])
+                # 获取详细信息，考虑剩余时间，但保证最小时间
+                remaining_time = max(15, self.timeout_config['single_law_timeout'] - elapsed)  # 最少15秒
                 detail_info = await asyncio.wait_for(detail_task, timeout=remaining_time)
             except asyncio.TimeoutError:
                 elapsed = time.time() - start_time
