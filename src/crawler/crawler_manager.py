@@ -496,21 +496,24 @@ class CrawlerManager:
         # 策略1: 国家法律法规数据库批量爬取（优先级最高）
         search_based_results = {}
         try:
-            self.logger.info("🏛️ 阶段1: 国家法律法规数据库批量爬取（权威数据源）")
+            self.logger.info(f"🏛️ 阶段1: 国家法律法规数据库批量爬取（权威数据源）- 总数: {total_count}")
             search_crawler = self._get_search_crawler()
             
             search_tasks = []
-            for law_name in law_names:
+            for i, law_name in enumerate(law_names, 1):
+                self.logger.info(f"[{i}/{total_count}] 准备爬取: {law_name}")
                 search_tasks.append(search_crawler.crawl_law(law_name))
             
             search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
             
-            for law_name, result in zip(law_names, search_results):
+            for i, (law_name, result) in enumerate(zip(law_names, search_results), 1):
                 if isinstance(result, Exception):
-                    self.logger.warning(f"法规库异常: {law_name} - {result}")
+                    self.logger.warning(f"[{i}/{total_count}] 法规库异常: {law_name} - {result}")
                 elif result and result.get('success'):
                     search_based_results[law_name] = result
-                    self.logger.success(f"📚 法规库成功: {law_name}")
+                    self.logger.success(f"[{i}/{total_count}] 📚 法规库成功: {law_name}")
+                else:
+                    self.logger.warning(f"[{i}/{total_count}] 法规库失败: {law_name}")
             
             search_success_rate = len(search_based_results) / len(law_names) * 100
             self.logger.info(f"法规库阶段完成: {len(search_based_results)}/{len(law_names)} 成功 ({search_success_rate:.1f}%)")
@@ -528,17 +531,22 @@ class CrawlerManager:
                 search_engine_crawler = self._get_search_engine_crawler()
                 
                 search_tasks = []
-                for law_name in remaining_laws:
+                for i, law_name in enumerate(remaining_laws, 1):
+                    remaining_index = len(search_based_results) + i
+                    self.logger.info(f"[{remaining_index}/{total_count}] 搜索引擎准备: {law_name}")
                     search_tasks.append(search_engine_crawler.crawl_law(law_name))
                 
                 search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
                 
-                for law_name, result in zip(remaining_laws, search_results):
+                for i, (law_name, result) in enumerate(zip(remaining_laws, search_results), 1):
+                    remaining_index = len(search_based_results) + i
                     if isinstance(result, Exception):
-                        self.logger.warning(f"HTTP搜索引擎异常: {law_name} - {result}")
+                        self.logger.warning(f"[{remaining_index}/{total_count}] HTTP搜索引擎异常: {law_name} - {result}")
                     elif result and result.get('success'):
                         search_engine_results[law_name] = result
-                        self.logger.success(f"🎯 HTTP搜索引擎成功: {law_name}")
+                        self.logger.success(f"[{remaining_index}/{total_count}] 🎯 HTTP搜索引擎成功: {law_name}")
+                    else:
+                        self.logger.warning(f"[{remaining_index}/{total_count}] HTTP搜索引擎失败: {law_name}")
                 
                 search_engine_success_rate = len(search_engine_results) / len(remaining_laws) * 100 if remaining_laws else 0
                 self.logger.info(f"HTTP搜索引擎阶段完成: {len(search_engine_results)}/{len(remaining_laws)} 成功 ({search_engine_success_rate:.1f}%)")
