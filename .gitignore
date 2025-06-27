@@ -135,7 +135,8 @@ data/
 data/*
 !data/.gitkeep
 debug/
-
+test_logs/
+batch_test_logs/
 # IDE
 .vscode/
 .idea/
