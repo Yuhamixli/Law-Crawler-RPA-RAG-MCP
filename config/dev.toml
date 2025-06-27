@@ -16,7 +16,7 @@ timeout = 60        # 请求超时时间（增加到60秒）
 # 代理池配置 - 开发环境 (引用独立配置文件)
 [proxy_pool]
 config_file = "config/proxy_config.toml"  # 代理池配置文件路径
-enabled = true                             # 是否启用代理池
+enabled = false  # 禁用代理池，优先直连，避免Trojan代理解析问题
 debug_mode = true                         # 开发环境启用调试模式
 rotation_enabled = true                   # 启用代理轮换
 check_interval_minutes = 30              # 代理检查间隔
@@ -25,7 +25,7 @@ timeout_seconds = 10                     # 代理连接超时
 
 # IP池配置 - 启用旧的IP池作为备用
 [ip_pool]
-enabled = true              # 开启IP池，作为代理池的备用
+enabled = false  # 暂时禁用IP池，避免代理连接问题
 min_proxies = 3            # 最小代理数量
 max_proxies = 20           # 最大代理数量
 refresh_interval_hours = 1  # 刷新间隔(小时)
