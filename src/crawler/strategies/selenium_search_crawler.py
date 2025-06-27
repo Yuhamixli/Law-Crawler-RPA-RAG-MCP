@@ -14,6 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from loguru import logger
+from selenium.webdriver.common.keys import Keys
 
 from ..base_crawler import BaseCrawler
 from ..utils.webdriver_manager import get_search_driver
@@ -180,7 +181,7 @@ class SeleniumSearchCrawler(BaseCrawler):
             return []
     
     async def _search_bing_selenium(self, query: str) -> List[Dict[str, Any]]:
-        """Bing Selenium搜索"""
+        """Bing Selenium搜索 - 增强版元素定位"""
         driver = None
         try:
             # 获取WebDriver - 可能需要代理
@@ -191,44 +192,149 @@ class SeleniumSearchCrawler(BaseCrawler):
             
             # 访问Bing
             driver.get("https://www.bing.com")
-            await asyncio.sleep(random.uniform(1, 2))
+            await asyncio.sleep(random.uniform(2, 3))
             
-            # 输入查询
-            search_box = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "q"))
-            )
+            # 输入查询 - 增强元素定位
+            search_box = None
+            search_selectors = [
+                (By.NAME, "q"),
+                (By.ID, "sb_form_q"),
+                (By.CSS_SELECTOR, "input[name='q']"),
+                (By.CSS_SELECTOR, "#sb_form_q")
+            ]
+            
+            for selector_type, selector_value in search_selectors:
+                try:
+                    search_box = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((selector_type, selector_value))
+                    )
+                    break
+                except:
+                    continue
+            
+            if not search_box:
+                self.logger.warning("Bing搜索框未找到")
+                return []
+            
+            # 清空并输入查询
             search_box.clear()
+            await asyncio.sleep(0.5)
             search_box.send_keys(query)
+            await asyncio.sleep(1)
             
-            # 点击搜索
-            search_btn = driver.find_element(By.CSS_SELECTOR, "input[type='submit']")
-            search_btn.click()
+            # 提交搜索 - 使用多种方式
+            search_submitted = False
             
-            # 等待结果加载
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, "b_results"))
-            )
+            # 方式1: 按Enter键
+            try:
+                search_box.send_keys(Keys.RETURN)
+                search_submitted = True
+                self.logger.debug("使用Enter键提交搜索")
+            except Exception as e:
+                self.logger.debug(f"Enter键提交失败: {e}")
+            
+            # 方式2: 点击搜索按钮
+            if not search_submitted:
+                search_button_selectors = [
+                    (By.CSS_SELECTOR, "input[type='submit']"),
+                    (By.ID, "sb_form_go"),
+                    (By.CSS_SELECTOR, "#sb_form_go"),
+                    (By.CSS_SELECTOR, ".b_searchboxSubmit"),
+                    (By.CSS_SELECTOR, "[aria-label='搜索']"),
+                    (By.CSS_SELECTOR, "[title='搜索']")
+                ]
+                
+                for selector_type, selector_value in search_button_selectors:
+                    try:
+                        search_btn = WebDriverWait(driver, 3).until(
+                            EC.element_to_be_clickable((selector_type, selector_value))
+                        )
+                        driver.execute_script("arguments[0].click();", search_btn)
+                        search_submitted = True
+                        self.logger.debug(f"使用按钮提交搜索: {selector_value}")
+                        break
+                    except Exception as e:
+                        continue
+            
+            if not search_submitted:
+                self.logger.warning("无法提交Bing搜索")
+                return []
+            
+            # 等待结果加载 - 增强等待策略
+            result_selectors = [
+                (By.ID, "b_results"),
+                (By.CSS_SELECTOR, "#b_results"),
+                (By.CSS_SELECTOR, ".b_algo"),
+                (By.CSS_SELECTOR, "[data-bm]")
+            ]
+            
+            results_found = False
+            for selector_type, selector_value in result_selectors:
+                try:
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((selector_type, selector_value))
+                    )
+                    results_found = True
+                    break
+                except:
+                    continue
+            
+            if not results_found:
+                self.logger.warning("Bing搜索结果未加载")
+                return []
+            
             await asyncio.sleep(random.uniform(1, 2))
             
-            # 解析搜索结果
+            # 解析搜索结果 - 增强结果提取
             results = []
-            result_elements = driver.find_elements(By.CSS_SELECTOR, ".b_algo")
+            result_selectors = [".b_algo", "[data-bm]", ".b_title"]
+            
+            for result_selector in result_selectors:
+                try:
+                    result_elements = driver.find_elements(By.CSS_SELECTOR, result_selector)
+                    if result_elements:
+                        break
+                except:
+                    continue
+            else:
+                self.logger.warning("Bing搜索结果元素未找到")
+                return []
             
             for elem in result_elements[:8]:
                 try:
-                    # 提取标题和链接
-                    title_elem = elem.find_element(By.CSS_SELECTOR, "h2 a")
+                    # 提取标题和链接 - 多种选择器
+                    title_elem = None
+                    title_selectors = ["h2 a", ".b_title a", "h3 a", "a[href]"]
+                    
+                    for title_selector in title_selectors:
+                        try:
+                            title_elem = elem.find_element(By.CSS_SELECTOR, title_selector)
+                            break
+                        except:
+                            continue
+                    
+                    if not title_elem:
+                        continue
+                    
                     title = title_elem.text.strip()
                     url = title_elem.get_attribute("href")
                     
-                    # 提取摘要
-                    try:
-                        summary_elem = elem.find_element(By.CSS_SELECTOR, ".b_caption p")
-                        summary = summary_elem.text.strip()
-                    except NoSuchElementException:
-                        summary = ""
+                    if not title or not url:
+                        continue
                     
-                    if title and url and self._is_legal_relevant(title, summary):
+                    # 提取摘要 - 多种选择器
+                    summary = ""
+                    summary_selectors = [".b_caption p", ".b_caption", ".b_snippet", ".b_descript"]
+                    
+                    for summary_selector in summary_selectors:
+                        try:
+                            summary_elem = elem.find_element(By.CSS_SELECTOR, summary_selector)
+                            summary = summary_elem.text.strip()
+                            break
+                        except:
+                            continue
+                    
+                    if self._is_legal_relevant(title, summary):
                         results.append({
                             'title': title,
                             'url': url,
@@ -238,6 +344,7 @@ class SeleniumSearchCrawler(BaseCrawler):
                         })
                 
                 except Exception as e:
+                    self.logger.debug(f"解析Bing结果元素失败: {e}")
                     continue
             
             results.sort(key=lambda x: x['confidence'], reverse=True)
@@ -248,7 +355,7 @@ class SeleniumSearchCrawler(BaseCrawler):
             return []
     
     async def _search_sogou_selenium(self, query: str) -> List[Dict[str, Any]]:
-        """搜狗Selenium搜索"""
+        """搜狗Selenium搜索 - 增强版元素定位"""
         driver = None
         try:
             driver = await get_search_driver()
@@ -257,44 +364,148 @@ class SeleniumSearchCrawler(BaseCrawler):
             
             # 访问搜狗
             driver.get("https://www.sogou.com")
-            await asyncio.sleep(random.uniform(1, 2))
+            await asyncio.sleep(random.uniform(2, 3))
             
-            # 输入查询
-            search_box = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, "query"))
-            )
+            # 输入查询 - 增强元素定位
+            search_box = None
+            search_selectors = [
+                (By.ID, "query"),
+                (By.NAME, "query"),
+                (By.CSS_SELECTOR, "input[name='query']"),
+                (By.CSS_SELECTOR, "#query")
+            ]
+            
+            for selector_type, selector_value in search_selectors:
+                try:
+                    search_box = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((selector_type, selector_value))
+                    )
+                    break
+                except:
+                    continue
+            
+            if not search_box:
+                self.logger.warning("搜狗搜索框未找到")
+                return []
+            
+            # 清空并输入查询
             search_box.clear()
+            await asyncio.sleep(0.5)
             search_box.send_keys(query)
+            await asyncio.sleep(1)
             
-            # 点击搜索
-            search_btn = driver.find_element(By.ID, "stb")
-            search_btn.click()
+            # 提交搜索 - 使用多种方式
+            search_submitted = False
             
-            # 等待结果加载
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "results"))
-            )
+            # 方式1: 按Enter键
+            try:
+                search_box.send_keys(Keys.RETURN)
+                search_submitted = True
+                self.logger.debug("使用Enter键提交搜索")
+            except Exception as e:
+                self.logger.debug(f"Enter键提交失败: {e}")
+            
+            # 方式2: 点击搜索按钮
+            if not search_submitted:
+                search_button_selectors = [
+                    (By.ID, "stb"),
+                    (By.CSS_SELECTOR, "#stb"),
+                    (By.CSS_SELECTOR, "input[type='submit']"),
+                    (By.CSS_SELECTOR, ".btn-search"),
+                    (By.CSS_SELECTOR, "[value='搜索']")
+                ]
+                
+                for selector_type, selector_value in search_button_selectors:
+                    try:
+                        search_btn = WebDriverWait(driver, 3).until(
+                            EC.element_to_be_clickable((selector_type, selector_value))
+                        )
+                        driver.execute_script("arguments[0].click();", search_btn)
+                        search_submitted = True
+                        self.logger.debug(f"使用按钮提交搜索: {selector_value}")
+                        break
+                    except Exception as e:
+                        continue
+            
+            if not search_submitted:
+                self.logger.warning("无法提交搜狗搜索")
+                return []
+            
+            # 等待结果加载 - 增强等待策略
+            result_selectors = [
+                (By.CLASS_NAME, "results"),
+                (By.CSS_SELECTOR, ".results"),
+                (By.CSS_SELECTOR, ".result"),
+                (By.CSS_SELECTOR, "[data-md5]")
+            ]
+            
+            results_found = False
+            for selector_type, selector_value in result_selectors:
+                try:
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((selector_type, selector_value))
+                    )
+                    results_found = True
+                    break
+                except:
+                    continue
+            
+            if not results_found:
+                self.logger.warning("搜狗搜索结果未加载")
+                return []
+            
             await asyncio.sleep(random.uniform(1, 2))
             
-            # 解析搜索结果
+            # 解析搜索结果 - 增强结果提取
             results = []
-            result_elements = driver.find_elements(By.CSS_SELECTOR, ".result")
+            result_selectors = [".result", "[data-md5]", ".rb"]
+            
+            for result_selector in result_selectors:
+                try:
+                    result_elements = driver.find_elements(By.CSS_SELECTOR, result_selector)
+                    if result_elements:
+                        break
+                except:
+                    continue
+            else:
+                self.logger.warning("搜狗搜索结果元素未找到")
+                return []
             
             for elem in result_elements[:8]:
                 try:
-                    # 提取标题和链接
-                    title_elem = elem.find_element(By.CSS_SELECTOR, "h3 a")
+                    # 提取标题和链接 - 多种选择器
+                    title_elem = None
+                    title_selectors = ["h3 a", ".title a", "h2 a", "a[href]"]
+                    
+                    for title_selector in title_selectors:
+                        try:
+                            title_elem = elem.find_element(By.CSS_SELECTOR, title_selector)
+                            break
+                        except:
+                            continue
+                    
+                    if not title_elem:
+                        continue
+                    
                     title = title_elem.text.strip()
                     url = title_elem.get_attribute("href")
                     
-                    # 提取摘要
-                    try:
-                        summary_elem = elem.find_element(By.CSS_SELECTOR, ".str_info")
-                        summary = summary_elem.text.strip()
-                    except NoSuchElementException:
-                        summary = ""
+                    if not title or not url:
+                        continue
                     
-                    if title and url and self._is_legal_relevant(title, summary):
+                    # 提取摘要 - 多种选择器
+                    summary = ""
+                    summary_selectors = [".str_info", ".abstract", ".content", ".desc"]
+                    
+                    for summary_selector in summary_selectors:
+                        try:
+                            summary_elem = elem.find_element(By.CSS_SELECTOR, summary_selector)
+                            summary = summary_elem.text.strip()
+                            break
+                        except:
+                            continue
+                    
+                    if self._is_legal_relevant(title, summary):
                         results.append({
                             'title': title,
                             'url': url,
@@ -304,6 +515,7 @@ class SeleniumSearchCrawler(BaseCrawler):
                         })
                 
                 except Exception as e:
+                    self.logger.debug(f"解析搜狗结果元素失败: {e}")
                     continue
             
             results.sort(key=lambda x: x['confidence'], reverse=True)
