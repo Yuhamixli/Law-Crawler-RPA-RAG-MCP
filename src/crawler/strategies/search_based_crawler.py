@@ -23,6 +23,13 @@ sys.path.append('..')
 from ..base_crawler import BaseCrawler
 import random
 from urllib.parse import urljoin
+import asyncio
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from bs4 import BeautifulSoup
+from ..utils.enhanced_proxy_pool import get_enhanced_proxy_pool, EnhancedProxyPool
+from ..utils.ip_pool import get_ip_pool, SmartIPPool
+from config.settings import get_settings
 
 
 def normalize_date_format(date_str: str) -> str:
@@ -89,6 +96,15 @@ class SearchBasedCrawler(BaseCrawler):
         super().__init__("search_api")
         self.logger = logger
         self.session = requests.Session()
+        
+        # 代理池相关
+        self.enhanced_proxy_pool: Optional[EnhancedProxyPool] = None
+        self.ip_pool: Optional[SmartIPPool] = None
+        self.current_proxy = None
+        self.proxy_failures = 0
+        self.max_proxy_failures = 3
+        self._proxy_pools_initialized = False
+        
         self.setup_headers()
         self.base_url = "https://flk.npc.gov.cn"
         
@@ -174,7 +190,7 @@ class SearchBasedCrawler(BaseCrawler):
             return False
     
     def search_law_selenium(self, keyword: str) -> List[Dict[str, Any]]:
-        """使用Selenium搜索法规 - 模拟首页搜索"""
+        """使用Selenium搜索法规 - 模拟首页搜索，支持代理"""
         driver = None
         try:
             # 配置Chrome选项
@@ -185,6 +201,17 @@ class SearchBasedCrawler(BaseCrawler):
             chrome_options.add_argument('--disable-gpu')
             chrome_options.add_argument('--window-size=1920,1080')
             chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
+            
+            # 配置代理（如果有的话）
+            if self.current_proxy:
+                proxy_url = self.current_proxy
+                if proxy_url.startswith('http://'):
+                    proxy_url = proxy_url[7:]  # 移除http://前缀
+                elif proxy_url.startswith('https://'):
+                    proxy_url = proxy_url[8:]  # 移除https://前缀
+                
+                chrome_options.add_argument(f'--proxy-server={proxy_url}')
+                self.logger.debug(f"🌍 Selenium使用代理: {proxy_url}")
             
             # 启动浏览器
             driver = webdriver.Chrome(options=chrome_options)
@@ -311,12 +338,151 @@ class SearchBasedCrawler(BaseCrawler):
                 except:
                     pass
     
+    def _initialize_proxy_pools_sync(self):
+        """初始化代理池 - 完全禁用"""
+        # 完全禁用代理池初始化，使用直连模式
+        self.logger.info("🚀 使用直连模式，跳过代理池初始化")
+        return
+        
+        # # 原代理池初始化逻辑已禁用
+        # if self._proxy_pools_initialized:
+        #     return
+        # 
+        # self.logger.info("🔄 开始初始化代理池...")
+        # 
+        # try:
+        #     # 1. 优先使用enhanced_proxy_pool
+        #     if not self.enhanced_proxy_pool:
+        #         settings = get_settings()
+        #         if settings.proxy_pool.enabled:
+        #             loop = asyncio.new_event_loop()
+        #             asyncio.set_event_loop(loop)
+        #             try:
+        #                 from ..utils.enhanced_proxy_pool import get_enhanced_proxy_pool
+        #                 self.enhanced_proxy_pool = loop.run_until_complete(
+        #                     get_enhanced_proxy_pool(settings.proxy_pool.config_file)
+        #                 )
+        #                 self.logger.success("🔄 Enhanced代理池初始化成功")
+        #             except Exception as e:
+        #                 self.logger.warning(f"Enhanced代理池初始化失败: {e}")
+        #             finally:
+        #                 loop.close()
+        # 
+        # except Exception as e:
+        #     self.logger.warning(f"代理池初始化失败: {e}")
+        # 
+        # self._proxy_pools_initialized = True
+
+    def _get_proxy_for_request_sync(self):
+        """获取代理 - 完全禁用，强制直连"""
+        # 完全禁用代理，使用直连模式提高速度和稳定性
+        return None
+        
+        # # 原代理逻辑已禁用
+        # if self.enhanced_proxy_pool:
+        #     try:
+        #         proxy_info = self.enhanced_proxy_pool.get_proxy_sync(prefer_paid=True)
+        #         if proxy_info:
+        #             self.logger.debug(f"🌍 使用Enhanced代理: {proxy_info.name}")
+        #             return proxy_info.proxy_url
+        #     except Exception as e:
+        #         self.logger.debug(f"Enhanced代理获取失败: {e}")
+        # 
+        # if self.ip_pool:
+        #     try:
+        #         proxy = self.ip_pool.get_proxy_sync()
+        #         if proxy:
+        #             self.logger.debug(f"🌍 使用IP池代理: {proxy.ip}:{proxy.port}")
+        #             return proxy.proxy_url
+        #     except Exception as e:
+        #         self.logger.debug(f"IP池代理获取失败: {e}")
+        # 
+        # return None
+
+    def _configure_session_proxy(self, proxy_url: str = None):
+        """配置session的代理"""
+        if proxy_url:
+            # 解析代理URL
+            if proxy_url.startswith('http://') or proxy_url.startswith('https://'):
+                proxies = {
+                    'http': proxy_url,
+                    'https': proxy_url,
+                }
+            elif proxy_url.startswith('socks5://'):
+                proxies = {
+                    'http': proxy_url,
+                    'https': proxy_url,
+                }
+            else:
+                # 默认HTTP代理
+                proxies = {
+                    'http': f'http://{proxy_url}',
+                    'https': f'http://{proxy_url}',
+                }
+            
+            self.session.proxies.update(proxies)
+            self.current_proxy = proxy_url
+            self.logger.info(f"✅ Session代理已配置: {proxy_url}")
+        else:
+            # 清除代理，使用直连
+            if self.session.proxies:
+                self.session.proxies.clear()
+                self.current_proxy = None
+                self.logger.debug("🔄 使用直连模式，代理已清除")
+
+    def _rotate_proxy_on_waf_sync(self):
+        """WAF检测时轮换代理 - 同步版本"""
+        self.proxy_failures += 1
+        
+        if self.proxy_failures >= self.max_proxy_failures:
+            self.logger.warning(f"🔄 代理连续失败{self.proxy_failures}次，强制轮换")
+            
+            # 标记当前代理失败
+            if self.current_proxy and self.enhanced_proxy_pool:
+                try:
+                    # 使用线程池执行异步操作
+                    import concurrent.futures
+                    
+                    def mark_failed():
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            return loop.run_until_complete(
+                                self.enhanced_proxy_pool.mark_proxy_failed(self.current_proxy)
+                            )
+                        finally:
+                            loop.close()
+                    
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(mark_failed)
+                        future.result(timeout=5)
+                        
+                except Exception as e:
+                    self.logger.debug(f"标记代理失败时出错: {e}")
+            
+            # 获取新代理
+            new_proxy = self._get_proxy_for_request_sync()
+            self._configure_session_proxy(new_proxy)
+            
+            self.proxy_failures = 0  # 重置失败计数
+            
+            # 添加轮换延迟
+            delay = random.uniform(3, 8)
+            self.logger.info(f"⏱️ 代理轮换延迟: {delay:.1f}秒")
+            time.sleep(delay)
+
     def search_law(self, keyword: str) -> List[Dict[str, Any]]:
-        """搜索法规 - 智能版：优先API，WAF激活时自动切换Selenium"""
+        """搜索法规 - 智能版：优先API，WAF激活时自动切换Selenium，支持代理轮换"""
         
         # 如果WAF已激活，直接使用Selenium
         if self.waf_triggered:
             self.logger.debug(f"    WAF已激活，直接使用Selenium搜索")
+            # 确保Selenium也使用代理
+            if not self.current_proxy:
+                proxy_url = self._get_proxy_for_request_sync()
+                self._configure_session_proxy(proxy_url)
+                if proxy_url:
+                    self.logger.info(f"🌍 为Selenium获取代理: {proxy_url}")
             return self.search_law_selenium(keyword)
         
         # 尝试HTTP API搜索
@@ -329,6 +495,13 @@ class SearchBasedCrawler(BaseCrawler):
         else:
             # API失败，可能是WAF拦截，尝试Selenium备用
             self.logger.debug(f"    HTTP API失败，尝试Selenium备用搜索")
+            # 确保Selenium也使用代理
+            if not self.current_proxy:
+                proxy_url = self._get_proxy_for_request_sync()
+                self._configure_session_proxy(proxy_url)
+                if proxy_url:
+                    self.logger.info(f"🌍 为Selenium获取代理: {proxy_url}")
+            
             selenium_results = self.search_law_selenium(keyword)
             
             # 如果Selenium成功而API失败，说明可能是WAF问题
@@ -337,88 +510,75 @@ class SearchBasedCrawler(BaseCrawler):
             
             return selenium_results
     
-    def _search_law_http(self, keyword: str) -> List[Dict[str, Any]]:
-        """HTTP API搜索法规 - 增强WAF检测"""
-        search_strategies = [
-            ("title;vague", keyword),  # 标题模糊搜索
-            ("title;accurate;1,3", keyword),  # 标题精确搜索（法律+行政法规）
+    def _search_law_http(self, keywords, search_type="title;vague"):
+        """HTTP API搜索法规"""
+        strategies = [
+            "title;vague",
+            "title;accurate;1,3",
+            "title;accurate;2,4", 
+            "all;accurate;1,3"
         ]
         
-        for search_type, search_keyword in search_strategies:
-            # 检查是否需要WAF冷却等待
-            self._should_wait_for_waf()
+        if search_type not in strategies:
+            strategies = [search_type] + strategies
+        
+        for strategy in strategies:
+            self.logger.debug(f"    🔍 尝试API搜索策略: {strategy}")
             
-            params = [
-                ("type", search_type),
-                ("searchType", "title;vague" if "vague" in search_type else "title;accurate"),
-                ("sortTr", "f_bbrq_s;desc"),
-                ("gbrqStart", ""),
-                ("gbrqEnd", ""),
-                ("sxrqStart", ""),
-                ("sxrqEnd", ""),
-                ("sort", "true"),
-                ("page", "1"),
-                ("size", "20"),
-                ("fgbt", keyword),  # 搜索关键词
-                ("_", int(time.time() * 1000)),
-            ]
+            # 完全使用直连模式，禁用代理
+            self._configure_session_proxy(None)  # 强制清除代理
+            
+            # 极速优化延迟：0.1-0.5秒
+            delay = random.uniform(0.1, 0.5)
+            self.logger.debug(f"    ⏱️ 添加随机延迟: {delay:.1f}秒")
+            time.sleep(delay)
             
             try:
-                self.logger.debug(f"    尝试API搜索策略: {search_type}")
+                # 构建查询参数
+                params = {
+                    "type": "flfg",
+                    "searchType": strategy,
+                    "sortTr": "f_bbrq_s;desc",
+                    "gbrqStart": "",
+                    "gbrqEnd": "",
+                    "sxrqStart": "",
+                    "sxrqEnd": "",
+                    "sort": "true",
+                    "page": "1",
+                    "size": "20",
+                    "fgbt": keywords,
+                    "_": str(int(time.time() * 1000))
+                }
                 
-                # 添加随机延迟，避免触发WAF
-                if self.consecutive_waf_count > 0:
-                    delay = random.uniform(2, 5)
-                    self.logger.debug(f"    添加随机延迟: {delay:.1f}秒")
-                    time.sleep(delay)
+                url = f"{self.base_url}/api/"
                 
+                # 直连请求，超时优化
                 response = self.session.get(
-                    "https://flk.npc.gov.cn/api/",
+                    url, 
                     params=params,
-                    timeout=15
+                    timeout=(3, 8),  # 连接超时3秒，读取超时8秒
+                    verify=False
                 )
                 
-                # 详细的响应检查
-                self.logger.debug(f"    API响应状态码: {response.status_code}")
-                content_type = response.headers.get('Content-Type', '')
-                self.logger.debug(f"    API响应Content-Type: {content_type}")
-                
                 if response.status_code == 200:
-                    # 检查是否被WAF拦截
-                    waf_detected = self._check_waf_response(response)
-                    
-                    if waf_detected:
-                        self.logger.debug(f"    检测到WAF拦截 (策略: {search_type})")
-                        self._handle_waf_detection(True)
-                        continue  # 尝试下一个策略
-                    
-                    # 正常JSON响应
-                    if not response.text.strip():
-                        self.logger.debug(f"    API返回空内容 (策略: {search_type})")
-                        continue
-                        
                     try:
-                        result = response.json()
-                        if result.get('success') and result.get('result', {}).get('data'):
-                            results = result['result']['data']
-                            self.logger.debug(f"    API搜索成功: {len(results)} 个结果 (策略: {search_type})")
-                            self._handle_waf_detection(False)  # 成功，重置WAF状态
+                        data = response.json()
+                        if data.get("result") and data["result"].get("data"):
+                            results = data["result"]["data"]
+                            self.logger.success(f"    ✅ 直连API搜索成功 (策略: {strategy}): 找到 {len(results)} 个结果")
                             return results
                         else:
-                            self.logger.debug(f"    API搜索无结果 (策略: {search_type})")
-                    except json.JSONDecodeError as e:
-                        self.logger.debug(f"    JSON解析失败 (策略: {search_type}): {str(e)}")
-                        # 可能是WAF返回的HTML
-                        self._handle_waf_detection(True)
-                        continue
+                            self.logger.debug(f"    📋 API搜索无结果 (策略: {strategy})")
+                    except ValueError as e:
+                        self.logger.warning(f"    ⚠️ API响应JSON解析失败 (策略: {strategy}): {e}")
                 else:
-                    self.logger.debug(f"    API HTTP错误 (策略: {search_type}): {response.status_code}")
+                    self.logger.debug(f"    ❌ API请求失败 (策略: {strategy}): HTTP {response.status_code}")
                     
             except Exception as e:
-                self.logger.debug(f"    API请求异常 (策略: {search_type}): {str(e)}")
+                self.logger.debug(f"    ❌ API请求异常 (策略: {strategy}): {e}")
                 continue
         
-        self.logger.debug(f"    所有API搜索策略都失败")
+        self.logger.debug(f"    🚫 所有API搜索策略都失败")
         return []
     
     def _check_waf_response(self, response) -> bool:
@@ -452,20 +612,6 @@ class SearchBasedCrawler(BaseCrawler):
             if self.waf_triggered:
                 self.logger.info("✅ API恢复正常，WAF可能已解除")
                 self.waf_triggered = False
-    
-    def _should_wait_for_waf(self) -> bool:
-        """判断是否需要等待WAF冷却"""
-        if not self.waf_triggered:
-            return False
-        
-        # 如果WAF被触发，等待一定时间再尝试
-        time_since_last_success = time.time() - self.last_successful_time
-        if time_since_last_success < 60:  # 60秒冷却时间
-            wait_time = 60 - time_since_last_success
-            self.logger.info(f"⏱️ WAF冷却中，等待 {wait_time:.1f} 秒...")
-            time.sleep(wait_time)
-        
-        return True
     
     def get_law_detail(self, law_id: str) -> Optional[Dict[str, Any]]:
         """获取法规详情"""
