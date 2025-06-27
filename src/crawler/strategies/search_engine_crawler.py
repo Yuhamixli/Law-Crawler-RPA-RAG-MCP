@@ -166,6 +166,9 @@ class SeleniumSearchEngine:
     async def setup_driver(self) -> webdriver.Chrome:
         """设置Chrome驱动 - 优化版"""
         try:
+            # 导入本地ChromeDriver管理功能
+            from ..utils.webdriver_manager import get_local_chromedriver_path
+            
             options = Options()
             
             # 基础反检测配置
@@ -227,17 +230,19 @@ class SeleniumSearchEngine:
                     
                 self.logger.info(f"Selenium使用代理: {proxy_address}")
             
-            # 创建驱动 - 使用更快的方式
-            try:
-                # 尝试使用系统已安装的ChromeDriver
-                driver = webdriver.Chrome(options=options)
-            except Exception:
-                # 回退到自动下载
-                service = Service(ChromeDriverManager().install())
+            # 使用本地缓存的ChromeDriver
+            driver_path = get_local_chromedriver_path()
+            if driver_path:
+                service = Service(driver_path)
                 driver = webdriver.Chrome(service=service, options=options)
+                self.logger.info(f"使用本地缓存的ChromeDriver: {driver_path}")
+            else:
+                # 回退到默认方式
+                driver = webdriver.Chrome(options=options)
+                self.logger.info("使用系统PATH中的ChromeDriver")
             
             # 设置超时
-            driver.set_page_load_timeout(10)  # 页面加载超时10秒
+            driver.set_page_load_timeout(10)
             driver.implicitly_wait(5)  # 隐式等待5秒
             
             # 执行反检测脚本

@@ -27,16 +27,20 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from ..base_crawler import BaseCrawler
+from ..utils.webdriver_manager import get_local_chromedriver_path
 
 
 class OptimizedSeleniumCrawler(BaseCrawler):
-    """优化版Selenium政府网爬虫"""
+    """优化版Selenium政府网爬虫 - 会话复用模式"""
     
     def __init__(self):
         super().__init__("optimized_selenium")
         self.driver = None
         self.wait = None
-        self.session_active = False
+        self.session_start_time = None
+        self.max_session_time = 1800  # 30分钟最大会话时间
+        self.requests_count = 0
+        self.max_requests_per_session = 50  # 每个会话最大请求数
         self.processed_count = 0
         self.batch_size = 10  # 每个会话处理的法规数量
         
@@ -51,11 +55,13 @@ class OptimizedSeleniumCrawler(BaseCrawler):
         }
     
     def setup_driver_session(self):
-        """初始化浏览器会话 - 只在批量开始时调用一次"""
-        if self.session_active:
-            return
-            
-        start_time = time.time()
+        """
+        建立浏览器会话
+        关键：一次启动，多次使用，避免频繁重启浏览器
+        """
+        if self.driver:
+            return  # 会话已存在
+        
         try:
             chrome_options = Options()
             
@@ -82,25 +88,27 @@ class OptimizedSeleniumCrawler(BaseCrawler):
             chrome_options.add_argument('--max_old_space_size=4096')
             chrome_options.add_argument('--memory-pressure-off')
             
-            try:
-                service = Service(ChromeDriverManager().install())
-                logger.info("使用自动下载的ChromeDriver")
-            except Exception as e:
-                logger.warning(f"ChromeDriver自动下载失败: {e}")
-                service = Service()
-                logger.info("尝试使用系统PATH中的ChromeDriver")
+            # 使用本地缓存的ChromeDriver
+            driver_path = get_local_chromedriver_path()
+            if driver_path:
+                service = Service(driver_path)
+                self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                logger.info(f"使用本地缓存的ChromeDriver: {driver_path}")
+            else:
+                # 回退到默认方式
+                self.driver = webdriver.Chrome(options=chrome_options)
+                logger.info("使用系统PATH中的ChromeDriver")
             
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
             self.wait = WebDriverWait(self.driver, 10)  # 智能等待最大10秒
             
             # 设置页面加载超时
             self.driver.set_page_load_timeout(15)
             self.driver.implicitly_wait(3)
             
-            self.session_active = True
+            self.session_start_time = time.time()
             self.stats['browser_starts'] += 1
             
-            setup_time = time.time() - start_time
+            setup_time = time.time() - self.session_start_time
             logger.success(f"浏览器会话初始化成功 (耗时: {setup_time:.2f}秒)")
             
         except Exception as e:
@@ -118,7 +126,6 @@ class OptimizedSeleniumCrawler(BaseCrawler):
             finally:
                 self.driver = None
                 self.wait = None
-                self.session_active = False
     
     async def crawl_laws_batch(self, law_names: List[str]) -> List[Dict[str, Any]]:
         """批量爬取法规 - 核心优化方法"""

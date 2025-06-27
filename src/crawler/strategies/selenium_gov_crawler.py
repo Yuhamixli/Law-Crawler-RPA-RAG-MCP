@@ -21,6 +21,7 @@ from bs4 import BeautifulSoup
 import re
 
 from ..base_crawler import BaseCrawler
+from ..utils.webdriver_manager import get_local_chromedriver_path
 
 
 def normalize_date_format(date_str: str) -> str:
@@ -142,18 +143,18 @@ class SeleniumGovCrawler(BaseCrawler):
             }
             chrome_options.add_experimental_option("prefs", prefs)
             
-            # 尝试自动下载ChromeDriver，如果失败则使用系统路径
-            try:
-                service = Service(ChromeDriverManager().install())
-                self.logger.info("使用自动下载的ChromeDriver")
-            except Exception as download_error:
-                self.logger.warning(f"ChromeDriver自动下载失败: {download_error}")
-                # 尝试使用系统PATH中的chromedriver
-                service = Service()  # 使用默认路径
-                self.logger.info("尝试使用系统PATH中的ChromeDriver")
+            # 使用本地缓存的ChromeDriver
+            driver_path = get_local_chromedriver_path()
+            if driver_path:
+                service = Service(driver_path)
+                self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                self.logger.info(f"使用本地缓存的ChromeDriver: {driver_path}")
+            else:
+                # 回退到默认方式
+                self.driver = webdriver.Chrome(options=chrome_options)
+                self.logger.info("使用系统PATH中的ChromeDriver")
             
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
-            self.driver.implicitly_wait(5)  # 减少隐式等待时间
+            self.driver.implicitly_wait(5)
             
             # 设置页面加载超时
             self.driver.set_page_load_timeout(20)  # 20秒页面加载超时
