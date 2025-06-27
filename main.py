@@ -307,7 +307,7 @@ async def save_results(results: List[Dict[str, Any]], target_laws: List[str], ou
             channel = result.get('来源渠道', '未知')
             source_stats[channel] = source_stats.get(channel, 0) + 1
         
-        print(f"\n📊 数据来源统计:")
+        print(f"\n[STATS] 数据来源统计:")
         for channel, count in source_stats.items():
             print(f"  - {channel}: {count} 条")
 
@@ -364,7 +364,7 @@ async def search_single_law(law_name: str, verbose: bool = False, strategy: int 
     result = await crawler_manager.crawl_law(law_name, strategy=strategy)
     
     if result:
-        print(f"✅ 搜索成功！")
+        print(f"[SUCCESS] 搜索成功！")
         print(f"   来源: {result.get('source', 'unknown')}")
         print(f"   名称: {result.get('name', '未知')}")
         print(f"   文号: {result.get('number', '无')}")
@@ -384,13 +384,82 @@ async def search_single_law(law_name: str, verbose: bool = False, strategy: int 
         print(f"\n💾 结果已保存到data目录")
         
     else:
-        print(f"❌ 搜索失败")
+        print(f"[FAILED] 搜索失败")
         print(f"   在所有数据源中都未找到 '{law_name}'")
         print(f"   建议检查法规名称是否正确，或尝试简化搜索关键词")
 
 
+async def _run_batch_processing(batches: List[Dict], strategy: int, target_laws: List[str]) -> tuple:
+    """执行分批处理逻辑"""
+    all_results = []
+    total_start_time = time.time()
+    
+    for batch_info in batches:
+        batch_num = batch_info["batch_num"]
+        batch_laws = batch_info["laws"]
+        batch_size = batch_info["size"]
+        
+        print(f"=== [BATCH {batch_num}] 开始处理第{batch_num}批 ===")
+        print(f"范围: 第{batch_info['start']}-{batch_info['end']}条法规 (共{batch_size}条)")
+        print(f"开始时间: {datetime.now().strftime('%H:%M:%S')}")
+        
+        batch_start_time = time.time()
+        
+        # 准备法规信息列表
+        law_list = [{'名称': law_name} for law_name in batch_laws]
+        
+        # 创建采集管理器
+        crawler_manager = CrawlerManager()
+        
+        try:
+            # 执行批次采集
+            batch_results = await crawler_manager.crawl_laws_batch(law_list, limit=len(batch_laws), strategy=strategy)
+            
+            batch_duration = time.time() - batch_start_time
+            avg_time = batch_duration / batch_size
+            
+            print(f"[BATCH {batch_num}] 批次完成!")
+            print(f"耗时: {batch_duration:.1f}秒")
+            print(f"平均: {avg_time:.2f}秒/法规")
+            print(f"结束时间: {datetime.now().strftime('%H:%M:%S')}")
+            print()
+            
+            # 添加到总结果
+            all_results.extend(batch_results or [])
+            
+        except Exception as e:
+            print(f"[BATCH {batch_num}] 批次处理失败: {e}")
+            
+        finally:
+            # 清理批次资源
+            try:
+                await crawler_manager.async_cleanup()
+            except Exception as e:
+                print(f"清理批次{batch_num}资源时发生错误: {e}")
+            
+            # 批次间等待（除了最后一批）
+            if batch_num < len(batches):
+                wait_time = 5  # 5秒间隔
+                print(f"等待{wait_time}秒后开始下一批...")
+                await asyncio.sleep(wait_time)
+    
+    total_time = time.time() - total_start_time
+    
+    # 显示分批处理总结
+    print("=" * 60)
+    print("分批处理完成 - 总结报告")
+    print("=" * 60)
+    print(f"总处理时间: {total_time:.1f}秒 ({total_time/60:.1f}分钟)")
+    print(f"总法规数: {len(target_laws)}条")
+    print(f"成功批次: {len(batches)}/{len(batches)}")
+    print(f"平均效率: {total_time/len(target_laws):.2f}秒/法规")
+    print()
+    
+    return all_results, total_time
+
+
 async def batch_crawl_optimized(limit: int = None, strategy: int = None):
-    """批量爬取模式 - 终极优化版本"""
+    """批量爬取模式 - 终极优化版本（支持自动分批）"""
     print("=== 批量采集模式 (终极优化版) ===")
     print(f"版本: {settings.version} | 调试模式: {'开启' if settings.debug else '关闭'}")
     
@@ -438,90 +507,121 @@ async def batch_crawl_optimized(limit: int = None, strategy: int = None):
         print("前5个法规:", target_laws[:5])
     print()
     
-    # 准备法规信息列表
-    law_list = [{'名称': law_name} for law_name in target_laws]
+    # 检查是否需要分批处理
+    batch_size = 50
+    total_laws = len(target_laws)
     
-    # 创建采集管理器
-    crawler_manager = CrawlerManager()
-    
-    try:
-        # 使用终极优化批量爬取
-        print("🚀 开始批量采集（终极优化模式）...")
-        start_time = time.time()
+    if total_laws > batch_size:
+        print(f"[BATCH MODE] 法规数量超过{batch_size}条，启用分批处理模式")
+        # 计算批次信息
+        num_batches = (total_laws + batch_size - 1) // batch_size
+        batches = []
+        for i in range(num_batches):
+            start_idx = i * batch_size
+            end_idx = min((i + 1) * batch_size, total_laws)
+            batches.append({
+                "batch_num": i + 1,
+                "start": start_idx + 1,
+                "end": end_idx,
+                "size": end_idx - start_idx,
+                "laws": target_laws[start_idx:end_idx]
+            })
         
-        results = await crawler_manager.crawl_laws_batch(law_list, limit=crawl_limit, strategy=strategy)
+        print(f"分批策略: {num_batches}批，每批最多{batch_size}条")
+        for batch in batches:
+            print(f"  第{batch['batch_num']}批: 第{batch['start']}-{batch['end']}条法规 (共{batch['size']}条)")
+        print()
         
-        total_time = time.time() - start_time
+        # 执行分批处理
+        results, total_time = await _run_batch_processing(batches, strategy, target_laws)
         
-        # 保存结果
-        if results or target_laws:
-            await save_results(results, target_laws)
-            
-            # 统计信息
-            success_count = len([r for r in results if r and r.get('success', False)])
-            total_count = len(target_laws)
-            failed_count = total_count - success_count
-            success_rate = success_count / total_count * 100 if total_count > 0 else 0
-            avg_time = total_time / total_count if total_count > 0 else 0
-            
-            print(f"\n=== 🎉 采集完成（终极优化版）===")
-            print(f"目标法规数: {total_count}")
-            print(f"成功采集: {success_count}")
-            print(f"未找到: {failed_count}")
-            print(f"成功率: {success_rate:.1f}%")
-            print(f"总耗时: {total_time:.1f}秒")
-            print(f"平均耗时: {avg_time:.2f}秒/法规")
-            
-            # 效率对比显示
-            original_estimated_time = total_count * 24  # 原版估计24秒/法规
-            efficiency_improvement = ((original_estimated_time - total_time) / original_estimated_time) * 100
-            print(f"🚀 效率提升: {efficiency_improvement:.1f}% (相比原版预估)")
-            
-            # 显示成功采集的法规按策略分类
-            if success_count > 0:
-                print(f"\n✅ 成功采集的法规（按策略分类）:")
-                
-                strategy_groups = {}
-                for result in results:
-                    if result and result.get('success'):
-                        strategy = result.get('crawler_strategy', 'unknown')
-                        if strategy not in strategy_groups:
-                            strategy_groups[strategy] = []
-                        strategy_groups[strategy].append(result)
-                
-                strategy_names = {
-                    'search_engine': '🎯 搜索引擎',
-                    'search_based': '📚 国家法律法规数据库',
-                    'optimized_selenium': '⚡ 优化版Selenium',
-                    'selenium_gov': '🔧 标准Selenium',
-                    'direct_url': '🔗 直接URL访问'
-                }
-                
-                for strategy, laws in strategy_groups.items():
-                    strategy_name = strategy_names.get(strategy, f"🔧 {strategy}")
-                    print(f"  {strategy_name} ({len(laws)}条):")
-                    for i, law in enumerate(laws, 1):
-                        print(f"    {i}. {law.get('name', law.get('target_name'))} ({law.get('level', '未知级别')})")
-            
-            # 显示未找到的法规
-            if failed_count > 0:
-                print(f"\n❌ 未找到的法规 ({failed_count}条):")
-                successful_names = {r.get('name', r.get('target_name')) for r in results if r and r.get('success')}
-                unfound_count = 0
-                for target_law in target_laws:
-                    if target_law not in successful_names:
-                        unfound_count += 1
-                        print(f"  - {target_law}")
-        else:
-            print("❌ 没有目标法规，也未采集到任何信息")
-    
-    finally:
-        # 清理资源
+    else:
+        print(f"[NORMAL MODE] 法规数量未超过{batch_size}条，使用常规处理模式")
+        # 准备法规信息列表
+        law_list = [{'名称': law_name} for law_name in target_laws]
+        
+        # 创建采集管理器
+        crawler_manager = CrawlerManager()
+        
         try:
-            await crawler_manager.async_cleanup()
-            print("🧹 资源清理完成")
-        except Exception as e:
-            print(f"清理资源时发生错误: {e}")
+            # 使用终极优化批量爬取
+            print("[BATCH] 开始批量采集（终极优化模式）...")
+            start_time = time.time()
+            
+            results = await crawler_manager.crawl_laws_batch(law_list, limit=crawl_limit, strategy=strategy)
+            
+            total_time = time.time() - start_time
+        
+        finally:
+            # 清理资源
+            try:
+                await crawler_manager.async_cleanup()
+            except Exception as e:
+                print(f"清理资源时发生错误: {e}")
+    
+    # 处理结果和统计（通用部分）
+    if results or target_laws:
+        await save_results(results, target_laws)
+        
+        # 统计信息
+        success_count = len([r for r in results if r and r.get('success', False)])
+        total_count = len(target_laws)
+        failed_count = total_count - success_count
+        success_rate = success_count / total_count * 100 if total_count > 0 else 0
+        avg_time = total_time / total_count if total_count > 0 else 0
+        
+        print(f"\n=== [COMPLETED] 采集完成（终极优化版）===")
+        print(f"目标法规数: {total_count}")
+        print(f"成功采集: {success_count}")
+        print(f"未找到: {failed_count}")
+        print(f"成功率: {success_rate:.1f}%")
+        print(f"总耗时: {total_time:.1f}秒")
+        print(f"平均耗时: {avg_time:.2f}秒/法规")
+        
+        # 效率对比显示
+        original_estimated_time = total_count * 24  # 原版估计24秒/法规
+        efficiency_improvement = ((original_estimated_time - total_time) / original_estimated_time) * 100
+        print(f"[OPTIMIZE] 效率提升: {efficiency_improvement:.1f}% (相比原版预估)")
+        
+        # 显示成功采集的法规按策略分类
+        if success_count > 0:
+            print(f"\n[SUCCESS LIST] 成功采集的法规（按策略分类）:")
+            
+            strategy_groups = {}
+            for result in results:
+                if result and result.get('success'):
+                    strategy = result.get('crawler_strategy', 'unknown')
+                    if strategy not in strategy_groups:
+                        strategy_groups[strategy] = []
+                    strategy_groups[strategy].append(result)
+            
+            strategy_names = {
+                'search_engine': '[SE] 搜索引擎',
+                'search_based': '[DB] 国家法律法规数据库',
+                'optimized_selenium': '[OPT] 优化版Selenium',
+                'selenium_gov': '[STD] 标准Selenium',
+                'direct_url': '[URL] 直接URL访问'
+            }
+            
+            for strategy, laws in strategy_groups.items():
+                strategy_name = strategy_names.get(strategy, f"[UNK] {strategy}")
+                print(f"  {strategy_name} ({len(laws)}条):")
+                for i, law in enumerate(laws, 1):
+                    print(f"    {i}. {law.get('name', law.get('target_name'))} ({law.get('level', '未知级别')})")
+        
+        # 显示未找到的法规
+        if failed_count > 0:
+            print(f"\n[FAILED] 未找到的法规 ({failed_count}条):")
+            successful_names = {r.get('name', r.get('target_name')) for r in results if r and r.get('success')}
+            unfound_count = 0
+            for target_law in target_laws:
+                if target_law not in successful_names:
+                    unfound_count += 1
+                    print(f"  - {target_law}")
+    else:
+        print("[ERROR] 没有目标法规，也未采集到任何信息")
+    
+    print("[CLEANUP] 批量采集完成")
 
 
 async def batch_crawl(limit: int = None, strategy: int = None):
@@ -588,9 +688,9 @@ async def batch_crawl(limit: int = None, strategy: int = None):
             # 确保包含目标法规名称
             result['target_name'] = law_name
             results.append(result)
-            print(f"  ✅ 成功 - 来源: {result.get('source', 'unknown')}")
+            print(f"  [OK] 成功 - 来源: {result.get('source', 'unknown')}")
         else:
-            print(f"  ❌ 未找到")
+            print(f"  [FAIL] 未找到")
     
     # 保存结果
     if results or target_laws: # 即使没有结果也要保存
@@ -610,7 +710,7 @@ async def batch_crawl(limit: int = None, strategy: int = None):
         
         # 显示成功采集的法规按数据源分类
         if success_count > 0:
-            print(f"\n✅ 成功采集的法规（按数据源分类）:")
+            print(f"\n[SUCCESS] 成功采集的法规（按数据源分类）:")
             
             # 按数据源分组
             source_groups = {}
@@ -629,13 +729,13 @@ async def batch_crawl(limit: int = None, strategy: int = None):
                     source_name = "中国政府网"
                 else:
                     source_name = source
-                print(f"  📚 {source_name} ({len(laws)}条):")
+                print(f"  [DB] {source_name} ({len(laws)}条):")
                 for i, law in enumerate(laws, 1):
                     print(f"    {i}. {law.get('name', law.get('target_name'))} ({law.get('level', '未知级别')})")
         
         # 显示未找到的法规
         if failed_count > 0:
-            print(f"\n❌ 未找到的法规:")
+            print(f"\n[FAILED] 未找到的法规:")
             results_map = {law['target_name']: law for law in results}
             unfound_count = 0
             for target_law in target_laws:
@@ -643,7 +743,7 @@ async def batch_crawl(limit: int = None, strategy: int = None):
                     unfound_count += 1
                     print(f"  - {target_law}")
     else:
-        print("❌ 没有目标法规，也未采集到任何信息")
+        print("[ERROR] 没有目标法规，也未采集到任何信息")
     
     # 清理资源
     try:
