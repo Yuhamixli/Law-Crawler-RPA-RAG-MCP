@@ -317,33 +317,76 @@ class EnhancedProxyChecker:
 
 
 class EnhancedProxyPool:
-    """增强版代理池"""
+    """增强版代理池 - 支持多地区IP轮换对抗WAF"""
     
     def __init__(self, config_path: str = "config/proxy_config.toml"):
         self.config_path = config_path
-        self.logger = logger
+        self.config = {}
+        self.state_file = "proxy_state.json"
         
         # 代理存储
         self.paid_proxies: List[EnhancedProxyInfo] = []
         self.free_proxies: List[EnhancedProxyInfo] = []
-        self.current_proxy_index = 0
+        self.all_proxies: List[EnhancedProxyInfo] = []
         
-        # 组件
-        self.config_loader = ProxyConfigLoader()
-        self.proxy_checker = EnhancedProxyChecker()
+        # 轮换策略 - 从持久化状态加载
+        self.current_paid_index = 0
+        self.current_free_index = 0
+        self.force_rotation_after_uses = 10  # 强制轮换频率
+        self.uses_since_rotation = 0
+        self.last_used_proxy = None
+        self.rotation_count = 0
         
-        # 配置
-        self.config = {}
-        self.rotation_enabled = True
-        self.check_interval = 30  # 分钟
+        # 加载持久化状态
+        self._load_state()
+        
+        # WAF对抗策略
+        self.waf_detection_keywords = [
+            "Access Denied", "403 Forbidden", "blocked", "security", 
+            "captcha", "验证码", "安全验证", "访问被拒绝"
+        ]
+        self.proxy_cooldown = {}  # 代理冷却时间
+        self.cooldown_duration = 300  # 5分钟冷却
+        
+        # 健康检查
+        self.checker = EnhancedProxyChecker()
         self.last_check_time = None
+        self.check_interval = timedelta(minutes=30)
         
-        # 线程锁
         self._lock = threading.Lock()
+        logger.info("增强版代理池初始化完成")
+        
+    def _load_state(self):
+        """加载持久化状态"""
+        try:
+            if Path(self.state_file).exists():
+                with open(self.state_file, 'r', encoding='utf-8') as f:
+                    state = json.load(f)
+                    self.current_paid_index = state.get('current_paid_index', 0)
+                    self.current_free_index = state.get('current_free_index', 0)
+                    self.rotation_count = state.get('rotation_count', 0)
+                    logger.debug(f"加载代理状态: paid_index={self.current_paid_index}, rotation_count={self.rotation_count}")
+        except Exception as e:
+            logger.warning(f"加载代理状态失败: {e}")
+            
+    def _save_state(self):
+        """保存持久化状态"""
+        try:
+            state = {
+                'current_paid_index': self.current_paid_index,
+                'current_free_index': self.current_free_index,
+                'rotation_count': self.rotation_count,
+                'last_updated': datetime.now().isoformat()
+            }
+            with open(self.state_file, 'w', encoding='utf-8') as f:
+                json.dump(state, f, indent=2, ensure_ascii=False)
+            logger.debug(f"保存代理状态: {state}")
+        except Exception as e:
+            logger.warning(f"保存代理状态失败: {e}")
     
     async def initialize(self):
         """初始化代理池"""
-        self.logger.info("初始化增强版代理池...")
+        logger.info("初始化增强版代理池...")
         
         # 加载配置
         await self.load_config()
@@ -354,11 +397,11 @@ class EnhancedProxyPool:
         # 检查代理可用性
         await self.check_all_proxies()
         
-        self.logger.info(f"代理池初始化完成: 付费代理 {len(self.paid_proxies)}, 免费代理 {len(self.free_proxies)}")
+        logger.info(f"代理池初始化完成: 付费代理 {len(self.paid_proxies)}, 免费代理 {len(self.free_proxies)}")
     
     async def load_config(self):
         """加载配置文件"""
-        self.config = self.config_loader.load_from_toml(self.config_path)
+        self.config = ProxyConfigLoader.load_from_toml(self.config_path)
         
         pool_config = self.config.get('proxy_pool', {})
         self.rotation_enabled = pool_config.get('rotation_enabled', True)
@@ -366,9 +409,9 @@ class EnhancedProxyPool:
     
     async def load_paid_proxies(self):
         """加载付费代理"""
-        paid_proxies = self.config_loader.parse_paid_proxies(self.config)
+        paid_proxies = ProxyConfigLoader.parse_paid_proxies(self.config)
         self.paid_proxies = paid_proxies
-        self.logger.info(f"加载付费代理 {len(paid_proxies)} 个")
+        logger.info(f"加载付费代理 {len(paid_proxies)} 个")
     
     async def check_all_proxies(self):
         """检查所有代理可用性"""
@@ -376,8 +419,8 @@ class EnhancedProxyPool:
         if not all_proxies:
             return
         
-        self.logger.info("开始检查代理可用性...")
-        valid_proxies = await self.proxy_checker.batch_check_proxies(all_proxies)
+        logger.info("开始检查代理可用性...")
+        valid_proxies = await self.checker.batch_check_proxies(all_proxies)
         
         # 更新代理列表
         self.paid_proxies = [p for p in self.paid_proxies if p.is_alive]
@@ -385,20 +428,41 @@ class EnhancedProxyPool:
         
         self.last_check_time = datetime.now()
     
-    async def get_proxy(self, prefer_paid: bool = True) -> Optional[EnhancedProxyInfo]:
-        """获取可用代理"""
+    async def get_proxy(self, prefer_paid: bool = True, force_rotation: bool = False) -> Optional[EnhancedProxyInfo]:
+        """
+        获取代理 - 增强IP轮换策略
+        
+        Args:
+            prefer_paid: 优先使用付费代理
+            force_rotation: 强制轮换到下一个代理
+        """
         with self._lock:
-            # 检查是否需要刷新
+            # 检查是否需要刷新代理
             if self._should_refresh():
-                asyncio.create_task(self.check_all_proxies())
+                await self.check_all_proxies()
             
-            # 按优先级获取代理
+            # 强制轮换检查
+            if (force_rotation or 
+                self.uses_since_rotation >= self.force_rotation_after_uses):
+                logger.info("🔄 触发强制IP轮换")
+                self.uses_since_rotation = 0
+                return await self._get_next_rotation_proxy(prefer_paid)
+            
+            # 正常获取代理（优先使用可用的付费代理）
             if prefer_paid and self.paid_proxies:
-                return self._select_proxy_from_list(self.paid_proxies)
-            elif self.free_proxies:
-                return self._select_proxy_from_list(self.free_proxies)
-            elif self.paid_proxies:
-                return self._select_proxy_from_list(self.paid_proxies)
+                proxy = await self._get_best_paid_proxy()
+                if proxy:
+                    self.uses_since_rotation += 1
+                    self.last_used_proxy = proxy
+                    return proxy
+            
+            # 备选：使用免费代理
+            if self.free_proxies:
+                proxy = self._select_proxy_from_list(self.free_proxies)
+                if proxy:
+                    self.uses_since_rotation += 1
+                    self.last_used_proxy = proxy
+                    return proxy
             
             return None
     
@@ -432,12 +496,12 @@ class EnhancedProxyPool:
     async def mark_proxy_failed(self, proxy: EnhancedProxyInfo):
         """标记代理失败"""
         proxy.mark_failure()
-        self.logger.debug(f"标记代理失败: {proxy.name}")
+        logger.debug(f"标记代理失败: {proxy.name}")
     
     async def mark_proxy_success(self, proxy: EnhancedProxyInfo, response_time: float = None):
         """标记代理成功"""
         proxy.mark_success(response_time)
-        self.logger.debug(f"标记代理成功: {proxy.name}")
+        logger.debug(f"标记代理成功: {proxy.name}")
     
     def get_stats(self) -> Dict[str, Any]:
         """获取代理池统计信息"""
@@ -463,11 +527,131 @@ class EnhancedProxyPool:
         """打印代理池统计信息"""
         stats = self.get_stats()
         
-        self.logger.info("=== 代理池统计 ===")
-        self.logger.info(f"总代理数: {stats['total_proxies']}")
-        self.logger.info(f"付费代理: {stats['paid_proxies']['alive']}/{stats['paid_proxies']['total']} (成功率: {stats['paid_proxies']['success_rate']:.1%})")
-        self.logger.info(f"免费代理: {stats['free_proxies']['alive']}/{stats['free_proxies']['total']} (成功率: {stats['free_proxies']['success_rate']:.1%})")
-        self.logger.info(f"上次检查: {stats['last_check']}")
+        logger.info("=== 代理池统计 ===")
+        logger.info(f"总代理数: {stats['total_proxies']}")
+        logger.info(f"付费代理: {stats['paid_proxies']['alive']}/{stats['paid_proxies']['total']} (成功率: {stats['paid_proxies']['success_rate']:.1%})")
+        logger.info(f"免费代理: {stats['free_proxies']['alive']}/{stats['free_proxies']['total']} (成功率: {stats['free_proxies']['success_rate']:.1%})")
+        logger.info(f"上次检查: {stats['last_check']}")
+
+    async def _get_next_rotation_proxy(self, prefer_paid: bool = True) -> Optional[EnhancedProxyInfo]:
+        """获取下一个轮换代理"""
+        if prefer_paid and self.paid_proxies:
+            # 轮换到下一个付费代理
+            available_proxies = [p for p in self.paid_proxies 
+                               if p.is_alive and not self._is_in_cooldown(p)]
+            
+            if available_proxies:
+                # 使用轮换索引选择代理，避免重复
+                self.current_paid_index = (self.current_paid_index + 1) % len(available_proxies)
+                proxy = available_proxies[self.current_paid_index]
+                
+                # 如果选中的代理与上次使用的相同，再试一次
+                if proxy == self.last_used_proxy and len(available_proxies) > 1:
+                    self.current_paid_index = (self.current_paid_index + 1) % len(available_proxies)
+                    proxy = available_proxies[self.current_paid_index]
+                
+                # 更新轮换计数并保存状态
+                self.rotation_count += 1
+                self._save_state()
+                
+                logger.info(f"🌏 切换到 {proxy.name} [{proxy.address}] (第{self.rotation_count}次轮换)")
+                return proxy
+        
+        # 备选：轮换免费代理
+        if self.free_proxies:
+            available_proxies = [p for p in self.free_proxies 
+                               if p.is_alive and not self._is_in_cooldown(p)]
+            if available_proxies:
+                self.current_free_index = (self.current_free_index + 1) % len(available_proxies)
+                self._save_state()
+                return available_proxies[self.current_free_index]
+        
+        return None
+
+    async def _get_best_paid_proxy(self) -> Optional[EnhancedProxyInfo]:
+        """获取最佳付费代理"""
+        available_proxies = [p for p in self.paid_proxies 
+                           if p.is_alive and not self._is_in_cooldown(p)]
+        
+        if not available_proxies:
+            return None
+        
+        # 优先选择成功率高、响应时间短的代理
+        available_proxies.sort(key=lambda p: (
+            -p.success_rate,  # 成功率高优先
+            p.response_time,  # 响应时间短优先
+            -p.priority       # 优先级高优先
+        ))
+        
+        return available_proxies[0]
+
+    def _select_by_region_priority(self, proxies: List[EnhancedProxyInfo]) -> EnhancedProxyInfo:
+        """按地区优先级选择代理"""
+        # 地区优先级（针对中国网站访问）
+        region_priority = {
+            '香港': 1, '台湾': 2, '日本': 3, 
+            '马来西亚': 4, '加拿大': 5
+        }
+        
+        # 按地区优先级排序
+        sorted_proxies = sorted(proxies, key=lambda p: (
+            region_priority.get(self._extract_region(p.name), 99),
+            -p.success_rate,
+            p.response_time
+        ))
+        
+        return sorted_proxies[0]
+
+    def _extract_region(self, proxy_name: str) -> str:
+        """从代理名称提取地区"""
+        for region in ['香港', '台湾', '日本', '马来西亚', '加拿大']:
+            if region in proxy_name:
+                return region
+        return '未知'
+
+    def _is_in_cooldown(self, proxy: EnhancedProxyInfo) -> bool:
+        """检查代理是否在冷却期"""
+        cooldown_key = f"{proxy.address}:{proxy.port}"
+        if cooldown_key in self.proxy_cooldown:
+            cooldown_until = self.proxy_cooldown[cooldown_key]
+            if datetime.now() < cooldown_until:
+                return True
+            else:
+                # 冷却期结束，移除记录
+                del self.proxy_cooldown[cooldown_key]
+        return False
+
+    async def handle_waf_detection(self, proxy: EnhancedProxyInfo, response_text: str = ""):
+        """
+        处理WAF检测
+        
+        Args:
+            proxy: 被检测到的代理
+            response_text: 响应内容，用于检测WAF特征
+        """
+        # 检测WAF特征
+        is_waf = any(keyword.lower() in response_text.lower() 
+                    for keyword in self.waf_detection_keywords)
+        
+        if is_waf:
+            logger.warning(f"🛡️ 检测到WAF阻断: {proxy.name} [{proxy.address}]")
+            
+            # 立即将该代理加入冷却期
+            cooldown_key = f"{proxy.address}:{proxy.port}"
+            self.proxy_cooldown[cooldown_key] = datetime.now() + timedelta(seconds=self.cooldown_duration)
+            
+            # 标记代理失败
+            await self.mark_proxy_failed(proxy)
+            
+            # 强制轮换到下一个代理
+            self.uses_since_rotation = self.force_rotation_after_uses
+            
+            logger.info(f"⏰ {proxy.name} 已冷却 {self.cooldown_duration//60} 分钟")
+
+    async def get_proxy_for_waf_bypass(self) -> Optional[EnhancedProxyInfo]:
+        """获取专门用于绕过WAF的代理"""
+        # 强制轮换，避免使用最近的代理
+        return await self.get_proxy(prefer_paid=True, force_rotation=True)
 
 
 # 全局代理池实例
