@@ -2,11 +2,16 @@
 # -*- coding: utf-8 -*-
 """
 WebDriver管理器 - 预热和复用Chrome WebDriver实例
+支持本地ChromeDriver缓存，避免重复下载
 """
 
 import asyncio
 import random
 import time
+import os
+import shutil
+import platform
+from pathlib import Path
 from typing import Optional, Dict
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -14,6 +19,57 @@ from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import WebDriverException
 from webdriver_manager.chrome import ChromeDriverManager
 from loguru import logger
+
+
+def get_local_chromedriver_path() -> Optional[str]:
+    """获取本地ChromeDriver路径，如果不存在则下载并缓存"""
+    # 创建项目本地的drivers目录
+    project_root = Path(__file__).parent.parent.parent.parent
+    drivers_dir = project_root / "drivers"
+    drivers_dir.mkdir(exist_ok=True)
+    
+    # 根据操作系统确定ChromeDriver文件名
+    system = platform.system().lower()
+    if system == "windows":
+        driver_name = "chromedriver.exe"
+    else:
+        driver_name = "chromedriver"
+    
+    local_driver_path = drivers_dir / driver_name
+    
+    # 如果本地已存在，先检查是否可用
+    if local_driver_path.exists():
+        try:
+            # 简单检查文件是否可执行
+            if os.access(str(local_driver_path), os.X_OK) or system == "windows":
+                logger.info(f"使用本地缓存的ChromeDriver: {local_driver_path}")
+                return str(local_driver_path)
+        except Exception as e:
+            logger.warning(f"本地ChromeDriver检查失败: {e}")
+    
+    # 下载ChromeDriver并缓存到本地
+    try:
+        logger.info("正在下载ChromeDriver...")
+        downloaded_path = ChromeDriverManager().install()
+        
+        # 复制到项目本地目录
+        shutil.copy2(downloaded_path, str(local_driver_path))
+        
+        # 在非Windows系统上设置执行权限
+        if system != "windows":
+            os.chmod(str(local_driver_path), 0o755)
+        
+        logger.success(f"ChromeDriver已缓存到本地: {local_driver_path}")
+        return str(local_driver_path)
+        
+    except Exception as e:
+        logger.error(f"下载并缓存ChromeDriver失败: {e}")
+        # 回退到直接使用自动下载的路径
+        try:
+            return ChromeDriverManager().install()
+        except Exception as fallback_error:
+            logger.error(f"回退下载也失败: {fallback_error}")
+            return None
 
 
 class WebDriverManager:
@@ -35,7 +91,14 @@ class WebDriverManager:
             self._max_idle_time = 300  # 5分钟闲置时间后关闭
             self._cleanup_interval = 60  # 每分钟检查一次清理
             self._last_cleanup = time.time()
+            self._driver_path = None  # 缓存ChromeDriver路径
             self._initialized = True
+    
+    def _get_driver_path(self) -> Optional[str]:
+        """获取ChromeDriver路径，使用缓存机制"""
+        if not self._driver_path:
+            self._driver_path = get_local_chromedriver_path()
+        return self._driver_path
     
     async def get_driver(self, driver_type: str = "default", **options) -> Optional[webdriver.Chrome]:
         """获取WebDriver实例，支持复用"""
@@ -123,16 +186,18 @@ class WebDriverManager:
                 elif key == 'window_size' and value:
                     chrome_options.add_argument(f'--window-size={value}')
             
-            # 创建驱动
-            try:
-                # 尝试使用系统PATH中的ChromeDriver
-                driver = webdriver.Chrome(options=chrome_options)
-                self.logger.debug("使用系统ChromeDriver")
-            except Exception:
-                # 回退到自动下载
-                service = Service(ChromeDriverManager().install())
+            # 获取ChromeDriver路径
+            driver_path = self._get_driver_path()
+            
+            if driver_path:
+                # 使用本地缓存的ChromeDriver
+                service = Service(driver_path)
                 driver = webdriver.Chrome(service=service, options=chrome_options)
-                self.logger.debug("使用自动下载的ChromeDriver")
+                self.logger.info(f"使用本地ChromeDriver: {driver_path}")
+            else:
+                # 最后的回退方案：尝试系统PATH
+                driver = webdriver.Chrome(options=chrome_options)
+                self.logger.info("使用系统PATH中的ChromeDriver")
             
             # 设置超时
             driver.set_page_load_timeout(15)
