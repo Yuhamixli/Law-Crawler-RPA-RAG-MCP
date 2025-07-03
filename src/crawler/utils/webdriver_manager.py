@@ -132,9 +132,16 @@ class WebDriverManager:
         return None
     
     async def _create_driver(self, **options) -> Optional[webdriver.Chrome]:
-        """创建新的Chrome WebDriver"""
+        """创建新的Chrome WebDriver - 性能优化版"""
         try:
             chrome_options = Options()
+            
+            # 创建独立的用户数据目录，避免冲突
+            import tempfile
+            import uuid
+            temp_dir = tempfile.gettempdir()
+            user_data_dir = os.path.join(temp_dir, f"chrome_user_data_{uuid.uuid4().hex[:8]}")
+            chrome_options.add_argument(f'--user-data-dir={user_data_dir}')
             
             # 基础反检测配置
             chrome_options.add_argument('--no-sandbox')
@@ -143,7 +150,7 @@ class WebDriverManager:
             chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
             
-            # 性能优化配置
+            # 性能优化配置 - 极速模式
             chrome_options.add_argument('--headless')  # 无头模式
             chrome_options.add_argument('--disable-gpu')
             chrome_options.add_argument('--disable-web-security')
@@ -153,6 +160,18 @@ class WebDriverManager:
             chrome_options.add_argument('--disable-images')
             chrome_options.add_argument('--no-first-run')
             chrome_options.add_argument('--disable-default-apps')
+            chrome_options.add_argument('--disable-background-timer-throttling')
+            chrome_options.add_argument('--disable-background-networking')
+            chrome_options.add_argument('--disable-client-side-phishing-detection')
+            chrome_options.add_argument('--disable-sync')
+            chrome_options.add_argument('--no-default-browser-check')
+            chrome_options.add_argument('--disable-logging')
+            chrome_options.add_argument('--disable-background-media-download')
+            
+            # 快速启动配置
+            chrome_options.add_argument('--aggressive-cache-discard')
+            chrome_options.add_argument('--memory-pressure-off')
+            chrome_options.add_argument('--max_old_space_size=4096')
             
             # 随机窗口大小
             width = random.randint(1200, 1920)
@@ -173,7 +192,9 @@ class WebDriverManager:
                 "profile.managed_default_content_settings.images": 2,
                 "profile.default_content_setting_values.notifications": 2,
                 "profile.default_content_setting_values.media_stream": 2,
-                "profile.managed_default_content_settings.media_stream": 2
+                "profile.managed_default_content_settings.media_stream": 2,
+                "profile.default_content_settings.popups": 0,
+                "profile.default_content_setting_values.geolocation": 2
             }
             chrome_options.add_experimental_option("prefs", prefs)
             
@@ -199,9 +220,9 @@ class WebDriverManager:
                 driver = webdriver.Chrome(options=chrome_options)
                 self.logger.info("使用系统PATH中的ChromeDriver")
             
-            # 设置超时
-            driver.set_page_load_timeout(15)
-            driver.implicitly_wait(8)
+            # 设置更短的超时时间
+            driver.set_page_load_timeout(10)  # 从15秒减少到10秒
+            driver.implicitly_wait(5)  # 从8秒减少到5秒
             
             # 执行反检测脚本
             driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
@@ -262,10 +283,18 @@ class WebDriverManager:
             await self._close_driver(driver_type)
         self.logger.info("所有WebDriver已关闭")
     
-    async def get_search_driver(self, proxy: Optional[str] = None) -> Optional[webdriver.Chrome]:
+    async def get_search_driver(self, proxy: Optional[str] = None, force_new: bool = False) -> Optional[webdriver.Chrome]:
         """获取用于搜索的WebDriver"""
-        driver_type = f"search_{hash(proxy) if proxy else 'direct'}"
-        return await self.get_driver(driver_type, proxy=proxy)
+        # 批量模式下优先复用，避免频繁创建销毁
+        if not force_new:
+            driver_type = f"search_{hash(proxy) if proxy else 'direct'}"
+            return await self.get_driver(driver_type, proxy=proxy)
+        else:
+            # 只有明确要求时才创建新实例
+            driver = await self._create_driver(proxy=proxy)
+            if driver:
+                return driver
+            return None
     
     async def get_gov_driver(self, proxy: Optional[str] = None) -> Optional[webdriver.Chrome]:
         """获取用于政府网的WebDriver"""
@@ -285,10 +314,10 @@ async def get_webdriver_manager() -> WebDriverManager:
     return _webdriver_manager
 
 
-async def get_search_driver(proxy: Optional[str] = None) -> Optional[webdriver.Chrome]:
+async def get_search_driver(proxy: Optional[str] = None, force_new: bool = False) -> Optional[webdriver.Chrome]:
     """快速获取搜索WebDriver"""
     manager = await get_webdriver_manager()
-    return await manager.get_search_driver(proxy)
+    return await manager.get_search_driver(proxy, force_new=force_new)
 
 
 async def get_gov_driver(proxy: Optional[str] = None) -> Optional[webdriver.Chrome]:
