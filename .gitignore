@@ -161,6 +161,7 @@ test_*.py
 # Generated files
 *.json
 *.xlsx
+*.xls
 *.csv
 !requirements*.txt
 !package*.json
