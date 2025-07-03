@@ -206,6 +206,9 @@ class OptimizedSeleniumCrawler(BaseCrawler):
             search_results = self._parse_search_results_fast(page_source, law_name)
             
             if not search_results:
+                # 如果启用了调试模式，保存调试信息
+                if getattr(self, 'debug_enabled', False):
+                    self._save_debug_screenshot(law_name, "no_result")
                 return self._create_failed_result(law_name, "未找到搜索结果")
             
             # 4. 获取详情页面信息
@@ -215,6 +218,9 @@ class OptimizedSeleniumCrawler(BaseCrawler):
             self.stats['detail_time'] += detail_time
             
             if not detail_info:
+                # 如果启用了调试模式，保存调试信息
+                if getattr(self, 'debug_enabled', False):
+                    self._save_debug_screenshot(law_name, "detail_failed")
                 return self._create_failed_result(law_name, "详情页面获取失败")
             
             # 5. 整合结果
@@ -446,4 +452,39 @@ class OptimizedSeleniumCrawler(BaseCrawler):
             return True
         except Exception as e:
             logger.error(f"下载文件失败: {e}")
-            return False 
+            return False
+
+    # ========== 从 selenium_gov_crawler 迁移的调试功能 ==========
+    
+    def _save_debug_screenshot(self, keyword: str, suffix: str = "debug"):
+        """保存调试截图和页面源码"""
+        if not self.driver:
+            return
+            
+        try:
+            import os
+            os.makedirs("debug", exist_ok=True)
+            
+            # 保存页面源码
+            safe_keyword = keyword.replace(' ', '_').replace('/', '_').replace('\\', '_')
+            debug_file = f"debug/optimized_selenium_{safe_keyword}_{suffix}.html"
+            with open(debug_file, 'w', encoding='utf-8') as f:
+                f.write(self.driver.page_source)
+            
+            # 保存页面截图
+            screenshot_path = f"debug/optimized_selenium_{safe_keyword}_{suffix}.png"
+            self.driver.save_screenshot(screenshot_path)
+            
+            logger.info(f"调试文件已保存: {debug_file}, {screenshot_path}")
+            
+        except Exception as e:
+            logger.warning(f"保存调试文件失败: {e}")
+    
+    def enable_debug_mode(self, enabled: bool = True):
+        """启用或禁用调试模式"""
+        self.debug_enabled = getattr(self, 'debug_enabled', False)
+        self.debug_enabled = enabled
+        if enabled:
+            logger.info("调试模式已启用 - 将保存页面截图和源码")
+        else:
+            logger.info("调试模式已禁用") 
