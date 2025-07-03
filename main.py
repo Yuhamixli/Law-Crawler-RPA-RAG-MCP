@@ -373,7 +373,7 @@ async def search_single_law(law_name: str, verbose: bool = False, strategy: int 
         print(f"   来源链接: {result.get('source_url', '无')}")
         
         if verbose:
-            print(f"\n📋 详细信息:")
+            print(f"\n详细信息:")
             for key, value in result.items():
                 if key not in ['raw_data']:  # 跳过过长的原始数据
                     print(f"   {key}: {value}")
@@ -381,7 +381,7 @@ async def search_single_law(law_name: str, verbose: bool = False, strategy: int 
         # 保存单个结果
         result['target_name'] = law_name
         await save_results([result], [law_name])
-        print(f"\n💾 结果已保存到data目录")
+        print(f"\n结果已保存到data目录")
         
     else:
         print(f"[FAILED] 搜索失败")
