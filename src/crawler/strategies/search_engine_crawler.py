@@ -212,7 +212,7 @@ class SeleniumSearchEngine:
             options.add_experimental_option("prefs", prefs)
             
             # 代理配置 - 使用新的代理池
-            proxy_url = await self.anti_detection.get_proxy()
+            proxy_url = self.anti_detection.get_proxy()  # 修复：移除错误的await
             if proxy_url:
                 # 解析代理URL
                 if proxy_url.startswith('http://'):
@@ -1669,20 +1669,52 @@ class SearchEngineCrawler(BaseCrawler):
             self.logger.error(f"提取法规详情失败: {e}")
             return {}
     
-    async def crawl_law(self, law_name: str, law_number: str = None) -> Optional[Dict[str, Any]]:
-        """爬取单个法规 - 带超时控制和反反爬机制"""
+    async def crawl_law(self, law_name: str, law_number: str = None, strict_mode: bool = False, force_selenium: bool = False) -> Optional[Dict[str, Any]]:
+        """爬取单个法规 - 带超时控制和反反爬机制
+        
+        Args:
+            law_name: 法规名称
+            law_number: 法规编号（可选）
+            strict_mode: 严格模式，True时仅使用HTTP搜索，禁用自动切换
+            force_selenium: 强制使用Selenium搜索（策略3专用）
+        """
         start_time = time.time()
-        self.logger.info(f"搜索引擎爬取: {law_name}")
+        
+        if strict_mode:
+            self.logger.info(f"搜索引擎严格模式爬取: {law_name} (仅HTTP搜索)")
+        elif force_selenium:
+            self.logger.info(f"搜索引擎Selenium模式爬取: {law_name} (仅Selenium搜索)")
+        else:
+            self.logger.info(f"搜索引擎智能模式爬取: {law_name}")
         
         try:
+            # 根据模式选择搜索方法
+            if force_selenium:
+                # 策略3：强制使用Selenium搜索，但简化处理避免超时
+                if not hasattr(self, 'selenium_engine') or not self.selenium_engine:
+                    self.selenium_engine = SeleniumSearchEngine(self.anti_detection)
+                search_task = self.selenium_engine.search_with_selenium(law_name, engine="baidu")
+            elif strict_mode:
+                # 策略2：严格模式，仅HTTP搜索
+                search_task = self.search_law_via_engines(law_name)
+            else:
+                # 智能模式：HTTP + 可能的Selenium补充
+                search_task = self.search_law_via_engines(law_name)
+            
             # 1. 搜索获取候选结果 (带超时控制)
-            search_task = self.search_law_via_engines(law_name)
             
             try:
-                search_results = await asyncio.wait_for(
-                    search_task, 
-                    timeout=min(self.timeout_config['single_law_timeout'] + 10, 60)  # 增加10秒缓冲，最大60秒
-                )
+                if force_selenium:
+                    # Selenium搜索直接返回结果，设置较短超时避免卡住
+                    search_results = await asyncio.wait_for(search_task, timeout=20)
+                    # 转换Selenium结果格式为统一格式
+                    if search_results:
+                        search_results = self._filter_and_rank_results(search_results, law_name)
+                else:
+                    search_results = await asyncio.wait_for(
+                        search_task, 
+                        timeout=min(self.timeout_config['single_law_timeout'] + 10, 60)  # 增加10秒缓冲，最大60秒
+                    )
             except asyncio.TimeoutError:
                 elapsed = time.time() - start_time
                 self.logger.warning(f"搜索引擎爬取超时 ({elapsed:.1f}s > {self.timeout_config['single_law_timeout']}s): {law_name}")
