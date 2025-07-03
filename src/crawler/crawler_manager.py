@@ -20,9 +20,7 @@ from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from src.crawler.strategies.search_based_crawler import SearchBasedCrawler
-from src.crawler.strategies.selenium_gov_crawler import SeleniumGovCrawler
 from src.crawler.strategies.search_engine_crawler import SearchEngineCrawler
-from src.crawler.strategies.selenium_search_crawler import SeleniumSearchCrawler
 from src.crawler.strategies.direct_url_crawler import DirectUrlCrawler
 from src.crawler.strategies.optimized_selenium_crawler import OptimizedSeleniumCrawler
 
@@ -174,10 +172,8 @@ class CrawlerManager:
         self.logger = logger
         # 延迟初始化爬虫，实现浏览器复用
         self._search_crawler = None
-        self._selenium_crawler = None
         self._optimized_selenium_crawler = None
         self._search_engine_crawler = None
-        self._selenium_search_crawler = None
         self._direct_url_crawler = None
         self.cache = CacheManager()
         self.semaphore = asyncio.Semaphore(settings.crawler.max_concurrent)
@@ -188,13 +184,7 @@ class CrawlerManager:
             self._search_crawler = SearchBasedCrawler()
         return self._search_crawler
     
-    def _get_selenium_crawler(self):
-        """获取Selenium爬虫实例（复用浏览器）"""
-        if self._selenium_crawler is None:
-            self._selenium_crawler = SeleniumGovCrawler()
-            # 预先初始化浏览器
-            self._selenium_crawler.setup_driver()
-        return self._selenium_crawler
+
     
     def _get_search_engine_crawler(self):
         """获取搜索引擎爬虫实例"""
@@ -202,11 +192,7 @@ class CrawlerManager:
             self._search_engine_crawler = SearchEngineCrawler()
         return self._search_engine_crawler
     
-    def _get_selenium_search_crawler(self):
-        """获取Selenium搜索引擎爬虫实例"""
-        if self._selenium_search_crawler is None:
-            self._selenium_search_crawler = SeleniumSearchCrawler(settings)
-        return self._selenium_search_crawler
+
     
     def _get_direct_url_crawler(self):
         """获取直接URL爬虫实例"""
@@ -264,18 +250,16 @@ class CrawlerManager:
             return await self._crawl_with_multi_strategy(law_name, law_number)
     
     async def _crawl_with_single_strategy(self, law_name: str, law_number: str, strategy: int) -> Dict[str, Any]:
-        """使用指定的单一策略爬取"""
+        """使用指定的单一策略爬取 - 严格模式，不自动切换"""
         try:
-            # 导入配置检查
-            from config.settings import settings
-            enable_selenium_search = getattr(settings.crawler, 'enable_selenium_search', True)
-            enable_optimized_selenium = getattr(settings.crawler, 'enable_optimized_selenium', True)
+            # 指定策略时启用严格模式，禁止自动切换
+            self.logger.info(f"🎯 指定策略模式：严格执行策略 {strategy}，禁止自动切换")
             
             if strategy == 1:
-                # 策略1: 国家法律法规数据库
-                self.logger.info("使用策略1: 国家法律法规数据库（权威数据源）")
+                # 策略1: 国家法律法规数据库 - 严格模式
+                self.logger.info("使用策略1: 国家法律法规数据库（严格模式，仅HTTP API）")
                 search_crawler = self._get_search_crawler()
-                result = await search_crawler.crawl_law(law_name, law_number)
+                result = await search_crawler.crawl_law(law_name, law_number, strict_mode=True)
                 
                 if result and result.get('success'):
                     self.logger.success(f"国家法律法规数据库成功: {law_name}")
@@ -283,10 +267,11 @@ class CrawlerManager:
                     return result
                     
             elif strategy == 2:
-                # 策略2: HTTP搜索引擎
-                self.logger.info("使用策略2: HTTP搜索引擎（快速直连）")
+                # 策略2: HTTP搜索引擎 - 严格模式
+                self.logger.info("使用策略2: HTTP搜索引擎（严格模式，仅HTTP请求）")
                 search_engine_crawler = self._get_search_engine_crawler()
-                result = await search_engine_crawler.crawl_law(law_name, law_number)
+                # 为搜索引擎爬虫传递严格模式参数
+                result = await search_engine_crawler.crawl_law(law_name, law_number, strict_mode=True)
                 
                 if result and result.get('success'):
                     self.logger.success(f"HTTP搜索引擎成功: {law_name}")
@@ -294,38 +279,31 @@ class CrawlerManager:
                     return result
                     
             elif strategy == 3:
-                # 策略3: Selenium搜索引擎 - 检查是否启用
-                if not enable_selenium_search:
-                    self.logger.warning(f"Selenium搜索引擎策略已禁用，跳过: {law_name}")
-                    return self._create_failed_result(law_name, "Selenium搜索引擎策略已禁用")
-                    
-                self.logger.info("使用策略3: Selenium搜索引擎（浏览器搜索）")
-                selenium_search_crawler = self._get_selenium_search_crawler()
-                result = await selenium_search_crawler.crawl(law_name, law_number=law_number)
+                # 策略3: Selenium搜索引擎 - 严格模式
+                self.logger.info("使用策略3: 搜索引擎爬虫（严格模式，仅Selenium搜索）")
+                search_engine_crawler = self._get_search_engine_crawler()
+                # 策略3专门使用Selenium模式
+                result = await search_engine_crawler.crawl_law(law_name, law_number, force_selenium=True)
                 
                 if result and result.get('success'):
-                    self.logger.success(f"Selenium搜索引擎成功: {law_name}")
-                    result['crawler_strategy'] = 'selenium_search'
+                    self.logger.success(f"搜索引擎爬虫成功: {law_name}")
+                    result['crawler_strategy'] = 'search_engine_selenium'
                     return result
                     
             elif strategy == 4:
-                # 策略4: Selenium政府网 - 检查是否启用
-                if not enable_optimized_selenium:
-                    self.logger.warning(f"Selenium政府网策略已禁用，跳过: {law_name}")
-                    return self._create_failed_result(law_name, "Selenium政府网策略已禁用")
-                    
-                self.logger.info("使用策略4: Selenium政府网爬虫")
-                selenium_crawler = self._get_selenium_crawler()
-                result = await selenium_crawler.crawl_law(law_name, law_number)
+                # 策略4: 优化版Selenium政府网爬虫 - 严格模式
+                self.logger.info("使用策略4: 优化版Selenium政府网爬虫（严格模式）")
+                optimized_selenium_crawler = self._get_optimized_selenium_crawler()
+                result = await optimized_selenium_crawler.crawl_law(law_name, law_number)
                 
                 if result and result.get('success'):
-                    self.logger.success(f"Selenium政府网爬虫成功: {law_name}")
-                    result['crawler_strategy'] = 'selenium_gov'
+                    self.logger.success(f"优化版Selenium政府网爬虫成功: {law_name}")
+                    result['crawler_strategy'] = 'optimized_selenium'
                     return result
                     
             elif strategy == 5:
-                # 策略5: 直接URL访问
-                self.logger.info("使用策略5: 直接URL访问爬虫")
+                # 策略5: 直接URL访问 - 严格模式
+                self.logger.info("使用策略5: 直接URL访问爬虫（严格模式）")
                 direct_url_crawler = self._get_direct_url_crawler()
                 result = await direct_url_crawler.crawl_law(law_name, law_number)
                 
@@ -344,10 +322,6 @@ class CrawlerManager:
 
     async def _crawl_with_multi_strategy(self, law_name: str, law_number: str) -> Dict[str, Any]:
         """使用默认多层策略爬取"""
-        # 导入配置检查
-        from config.settings import settings
-        enable_selenium_search = getattr(settings.crawler, 'enable_selenium_search', True)
-        enable_optimized_selenium = getattr(settings.crawler, 'enable_optimized_selenium', True)
         
         # 策略1: 国家法律法规数据库爬虫（优先级最高）
         # 优势：数据权威，结构化好，官方数据源
@@ -381,41 +355,36 @@ class CrawlerManager:
         except Exception as e:
             self.logger.warning(f"HTTP搜索引擎失败: {e}")
         
-        # 策略3: Selenium搜索引擎爬虫（浏览器搜索引擎）- 检查是否启用
-        if enable_selenium_search:
-            try:
-                self.logger.info("尝试策略3: Selenium搜索引擎（浏览器搜索）")
-                selenium_search_crawler = self._get_selenium_search_crawler()
-                result = await selenium_search_crawler.crawl(law_name, law_number=law_number)
-                
-                if result and result.get('success'):
-                    self.logger.success(f"Selenium搜索引擎成功: {law_name}")
-                    result['crawler_strategy'] = 'selenium_search'
-                    return result
-                else:
-                    self.logger.warning(f"Selenium搜索引擎无结果: {law_name}")
-            except Exception as e:
-                self.logger.warning(f"Selenium搜索引擎失败: {e}")
-        else:
-            self.logger.info("⚡ 跳过Selenium搜索引擎策略 - 已禁用以提高性能")
+        # 策略3: Selenium搜索引擎功能（已整合到搜索引擎爬虫中）
+        try:
+            self.logger.info("尝试策略3: 搜索引擎爬虫（包含Selenium搜索功能）")
+            # 注意：这里复用策略2的爬虫，但可以设置不同的搜索模式
+            search_engine_crawler = self._get_search_engine_crawler()
+            result = await search_engine_crawler.crawl_law(law_name, law_number)
+            
+            if result and result.get('success'):
+                self.logger.success(f"搜索引擎爬虫（Selenium模式）成功: {law_name}")
+                result['crawler_strategy'] = 'search_engine_selenium'
+                return result
+            else:
+                self.logger.warning(f"搜索引擎爬虫（Selenium模式）无结果: {law_name}")
+        except Exception as e:
+            self.logger.warning(f"搜索引擎爬虫（Selenium模式）失败: {e}")
         
-        # 策略4: Selenium政府网爬虫 - 检查是否启用
-        if enable_optimized_selenium:
-            try:
-                self.logger.info("尝试策略4: Selenium政府网爬虫")
-                selenium_crawler = self._get_selenium_crawler()
-                result = await selenium_crawler.crawl_law(law_name, law_number)
-                
-                if result and result.get('success'):
-                    self.logger.success(f"Selenium政府网爬虫成功: {law_name}")
-                    result['crawler_strategy'] = 'selenium_gov'
-                    return result
-                else:
-                    self.logger.warning(f"Selenium政府网爬虫无结果: {law_name}")
-            except Exception as e:
-                self.logger.warning(f"Selenium政府网爬虫失败: {e}")
-        else:
-            self.logger.info("⚡ 跳过Selenium政府网策略 - 已禁用以提高性能")
+        # 策略4: 优化版Selenium政府网爬虫
+        try:
+            self.logger.info("尝试策略4: 优化版Selenium政府网爬虫")
+            optimized_selenium_crawler = self._get_optimized_selenium_crawler()
+            result = await optimized_selenium_crawler.crawl_law(law_name, law_number)
+            
+            if result and result.get('success'):
+                self.logger.success(f"优化版Selenium政府网爬虫成功: {law_name}")
+                result['crawler_strategy'] = 'optimized_selenium'
+                return result
+            else:
+                self.logger.warning(f"优化版Selenium政府网爬虫无结果: {law_name}")
+        except Exception as e:
+            self.logger.warning(f"优化版Selenium政府网爬虫失败: {e}")
         
         # 策略5: 直接URL访问爬虫（最后保障）
         # 优势：直接访问已知的政府网链接，绕过搜索限制
@@ -500,8 +469,8 @@ class CrawlerManager:
         avg_time_per_law = total_time / total_count if total_count > 0 else 0
         
         self.logger.success(f"🎉 单一策略批量爬取完成！")
-        self.logger.info(f"📊 策略: {strategy} - {strategy_names.get(strategy, '未知')}")
-        self.logger.info(f"📊 总数: {total_count}, 成功: {success_count}, 成功率: {success_rate:.1f}%")
+        self.logger.info(f"策略统计: {strategy} - {strategy_names.get(strategy, '未知')}")
+        self.logger.info(f"处理结果: 总数: {total_count}, 成功: {success_count}, 成功率: {success_rate:.1f}%")
         self.logger.info(f"⏱️ 总用时: {total_time:.1f}秒, 平均: {avg_time_per_law:.2f}秒/法规")
         
         return results
@@ -582,49 +551,42 @@ class CrawlerManager:
         selenium_search_results = {}
         selenium_results = {}
         
-        # 检查是否启用Selenium策略
-        enable_selenium_search = getattr(settings.crawler, 'enable_selenium_search', True)
-        enable_optimized_selenium = getattr(settings.crawler, 'enable_optimized_selenium', True)
-        
-        # 强制禁用Selenium策略以避免Chrome崩溃
-        enable_selenium_search = False
-        enable_optimized_selenium = False
+
         
         remaining_laws_2 = [name for name in law_names if name not in search_based_results and name not in search_engine_results]
         
-        if remaining_laws_2 and enable_selenium_search:
+        # 阶段3: 搜索引擎爬虫Selenium模式（已整合功能）
+        if remaining_laws_2:
             try:
-                self.logger.info(f"🌐 阶段3: Selenium搜索引擎批量爬取 ({len(remaining_laws_2)}个剩余)")
-                selenium_search_crawler = self._get_selenium_search_crawler()
+                self.logger.info(f"阶段3: 搜索引擎爬虫Selenium模式批量爬取 ({len(remaining_laws_2)}个剩余)")
+                # 复用搜索引擎爬虫，但使用不同的搜索策略
+                search_engine_crawler = self._get_search_engine_crawler()
                 
                 search_tasks = []
                 for law_name in remaining_laws_2:
-                    search_tasks.append(selenium_search_crawler.crawl(law_name))
+                    search_tasks.append(search_engine_crawler.crawl_law(law_name))
                 
                 search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
                 
                 for law_name, result in zip(remaining_laws_2, search_results):
                     if isinstance(result, Exception):
-                        self.logger.warning(f"Selenium搜索引擎异常: {law_name} - {result}")
+                        self.logger.warning(f"搜索引擎爬虫Selenium模式异常: {law_name} - {result}")
                     elif result and result.get('success'):
                         selenium_search_results[law_name] = result
-                        self.logger.success(f"🔍 Selenium搜索引擎成功: {law_name}")
+                        self.logger.success(f"搜索引擎爬虫Selenium模式成功: {law_name}")
                 
                 selenium_search_success_rate = len(selenium_search_results) / len(remaining_laws_2) * 100 if remaining_laws_2 else 0
-                self.logger.info(f"Selenium搜索引擎阶段完成: {len(selenium_search_results)}/{len(remaining_laws_2)} 成功 ({selenium_search_success_rate:.1f}%)")
+                self.logger.info(f"搜索引擎爬虫Selenium模式阶段完成: {len(selenium_search_results)}/{len(remaining_laws_2)} 成功 ({selenium_search_success_rate:.1f}%)")
                 
             except Exception as e:
-                self.logger.error(f"Selenium搜索引擎批量爬取失败: {e}")
-        else:
-            if remaining_laws_2 and not enable_selenium_search:
-                self.logger.info(f"[SKIP] 跳过Selenium搜索引擎策略 - 已禁用以提高性能")
+                self.logger.error(f"搜索引擎爬虫Selenium模式批量爬取失败: {e}")
         
         # 策略4: 优化版Selenium政府网批量爬取（最难的法规）
         final_remaining_laws = [name for name in law_names if name not in search_based_results and name not in search_engine_results and name not in selenium_search_results]
         
-        if final_remaining_laws and enable_optimized_selenium:
+        if final_remaining_laws:
             try:
-                self.logger.info(f"🔧 阶段4: 优化版Selenium政府网批量爬取 ({len(final_remaining_laws)}个困难法规)")
+                self.logger.info(f"阶段4: 优化版Selenium政府网批量爬取 ({len(final_remaining_laws)}个困难法规)")
                 optimized_selenium_crawler = self._get_optimized_selenium_crawler()
                 
                 # 使用优化版Selenium的批量处理方法
@@ -634,16 +596,13 @@ class CrawlerManager:
                     if result and result.get('success'):
                         law_name = result.get('target_name', result.get('name', ''))
                         selenium_results[law_name] = result
-                        self.logger.success(f"⚡ 优化Selenium成功: {law_name}")
+                        self.logger.success(f"优化Selenium成功: {law_name}")
                 
                 selenium_success_rate = len(selenium_results) / len(final_remaining_laws) * 100 if final_remaining_laws else 0
                 self.logger.info(f"Selenium政府网阶段完成: {len(selenium_results)}/{len(final_remaining_laws)} 成功 ({selenium_success_rate:.1f}%)")
                 
             except Exception as e:
                 self.logger.error(f"优化Selenium批量爬取失败: {e}")
-        else:
-            if final_remaining_laws and not enable_optimized_selenium:
-                self.logger.info(f"[SKIP] 跳过优化版Selenium策略 - 已禁用以提高性能")
 
         # 合并所有结果
         results = []
@@ -679,19 +638,15 @@ class CrawlerManager:
         success_rate = (success_count / total_count) * 100
         avg_time_per_law = total_time / total_count
         
-        self.logger.success(f"[COMPLETED] 批量爬取完成！")
-        self.logger.info(f"[STATS] 总数: {total_count}, 成功: {success_count}, 成功率: {success_rate:.1f}%")
-        self.logger.info(f"[TIME] 总用时: {total_time:.1f}秒, 平均: {avg_time_per_law:.2f}秒/法规")
-        self.logger.info(f"[STRATEGY] 策略分布: 搜索引擎({len(search_engine_results)}), 法规库({len(search_based_results)}), Selenium({len(selenium_results)})")
+        self.logger.success(f"批量爬取完成！")
+        self.logger.info(f"总用时统计: {total_time:.1f}秒, 平均: {avg_time_per_law:.2f}秒/法规")
+        self.logger.info(f"策略分布: 搜索引擎({len(search_engine_results)}), 法规库({len(search_based_results)}), Selenium({len(selenium_results)})")
         
         return results
     
     async def async_cleanup(self):
         """异步清理资源"""
         try:
-            if self._selenium_crawler:
-                self._selenium_crawler.close_driver()
-                self.logger.info("Selenium浏览器已关闭")
             if self._optimized_selenium_crawler:
                 self._optimized_selenium_crawler.close_session()
                 self.logger.info("优化版Selenium浏览器已关闭")
@@ -707,9 +662,6 @@ class CrawlerManager:
     def cleanup(self):
         """清理资源"""
         try:
-            if self._selenium_crawler:
-                self._selenium_crawler.close_driver()
-                self.logger.info("Selenium浏览器已关闭")
             if self._optimized_selenium_crawler:
                 self._optimized_selenium_crawler.close_session()
                 self.logger.info("优化版Selenium浏览器已关闭")
