@@ -258,61 +258,112 @@ class SearchBasedCrawler(BaseCrawler):
             
             for row in rows:
                 try:
-                    # 提取标题和链接
-                    title_element = row.find_element(By.CSS_SELECTOR, ".l-wen")
-                    title = title_element.get_attribute("title") or title_element.text.strip()
-                    
-                    # 提取详情链接和ID
-                    onclick_attr = title_element.get_attribute("onclick")
-                    detail_url = None
+                    # 尝试多种选择器来提取标题和链接
+                    title_element = None
+                    title = ""
                     law_id = ""
-                    if onclick_attr and "showDetail" in onclick_attr:
-                        # 从onclick属性中提取URL
-                        import re
-                        match = re.search(r"showDetail\('([^']+)'\)", onclick_attr)
-                        if match:
-                            detail_url = urljoin("https://flk.npc.gov.cn/", match.group(1))
-                            # 从URL中提取法规ID（通常在问号后面）
-                            if "?" in detail_url:
-                                law_id = detail_url.split("?")[1]
+                    detail_url = None
                     
-                    # 提取制定机关
-                    agency_elements = row.find_elements(By.CSS_SELECTOR, ".l-sx2 .l-wen1")
-                    agency = agency_elements[0].text.strip() if agency_elements else ""
+                    # 尝试不同的选择器
+                    title_selectors = [
+                        ".l-wen",           # 原选择器
+                        "a[onclick*='showDetail']",  # 包含showDetail的链接
+                        "td:first-child a", # 第一列的链接
+                        "a",                # 任何链接
+                        ".title a",         # 标题链接
+                        "td a"              # 表格中的链接
+                    ]
                     
-                    # 提取法律性质
-                    type_elements = row.find_elements(By.CSS_SELECTOR, ".l-sx3 .l-wen1")
-                    law_type = type_elements[0].text.strip() if len(type_elements) > 0 else ""
+                    for selector in title_selectors:
+                        try:
+                            title_elements = row.find_elements(By.CSS_SELECTOR, selector)
+                            if title_elements:
+                                title_element = title_elements[0]
+                                title = title_element.get_attribute("title") or title_element.text.strip()
+                                
+                                # 提取详情链接和ID
+                                onclick_attr = title_element.get_attribute("onclick")
+                                if onclick_attr and "showDetail" in onclick_attr:
+                                    import re
+                                    match = re.search(r"showDetail\('([^']+)'\)", onclick_attr)
+                                    if match:
+                                        detail_url = urljoin("https://flk.npc.gov.cn/", match.group(1))
+                                        # 从URL中提取法规ID
+                                        if "id=" in detail_url:
+                                            # 提取纯净的ID值，避免包含"id="前缀
+                                            law_id = detail_url.split("id=")[1].split("&")[0]
+                                
+                                if title and len(title) > 3:  # 确保标题有意义
+                                    break
+                        except:
+                            continue
                     
-                    # 提取时效性并转换为数字状态
-                    status_text = type_elements[1].text.strip() if len(type_elements) > 1 else ""
+                    # 如果没有找到标题，跳过这一行
+                    if not title or len(title) < 3:
+                        continue
+                    
+                    # 提取其他信息（使用更通用的选择器）
+                    agency = ""
+                    law_type = ""
                     status = 1  # 默认有效
-                    if "已修改" in status_text:
-                        status = 5
-                    elif "已废止" in status_text:
-                        status = 9
-                    elif "尚未生效" in status_text:
-                        status = 3
-                    
-                    # 提取公布日期并格式化
-                    date_elements = row.find_elements(By.CSS_SELECTOR, ".l-sx4 .l-wen1")
                     publish_date = ""
-                    if date_elements:
-                        date_text = date_elements[0].text.strip()
-                        # 移除方括号：[2024-12-25] -> 2024-12-25
-                        publish_date = date_text.replace("[", "").replace("]", "")
                     
-                    if title and law_id:
-                        # 构建与HTTP API一致的返回格式
+                    try:
+                        # 提取所有td元素，按位置解析
+                        cells = row.find_elements(By.CSS_SELECTOR, "td")
+                        if len(cells) >= 4:
+                            # 通常格式：标题 | 制定机关 | 法律性质/状态 | 公布日期
+                            if len(cells) > 1:
+                                agency = cells[1].text.strip()
+                            if len(cells) > 2:
+                                type_status_text = cells[2].text.strip()
+                                # 分离法律性质和状态
+                                if "\n" in type_status_text:
+                                    parts = type_status_text.split("\n")
+                                    law_type = parts[0].strip()
+                                    status_text = parts[1].strip() if len(parts) > 1 else ""
+                                else:
+                                    law_type = type_status_text
+                                    status_text = ""
+                                
+                                # 解析状态
+                                if "已修改" in status_text:
+                                    status = 5
+                                elif "已废止" in status_text:
+                                    status = 9
+                                elif "尚未生效" in status_text:
+                                    status = 3
+                            
+                            if len(cells) > 3:
+                                date_text = cells[3].text.strip()
+                                # 移除方括号
+                                publish_date = date_text.replace("[", "").replace("]", "")
+                    except Exception as e:
+                        self.logger.debug(f"    提取其他信息失败: {e}")
+                    
+                    # 如果仍然没有law_id，尝试从href属性获取
+                    if not law_id and title_element:
+                        href = title_element.get_attribute("href")
+                        if href and "id=" in href:
+                            # 提取纯净的ID值，避免包含"id="
+                            law_id = href.split("id=")[1].split("&")[0]
+                    
+                    # 确保有基本信息才添加结果
+                    if title and len(title) > 3:
+                        # 如果没有law_id，使用标题的hash作为临时ID
+                        if not law_id:
+                            import hashlib
+                            law_id = hashlib.md5(title.encode()).hexdigest()[:16]
+                        
                         results.append({
                             'id': law_id,
                             'title': title,
-                            'link': detail_url,
+                            'link': detail_url or f"https://flk.npc.gov.cn/search?title={title}",
                             'publish_date': publish_date,
                             'status': status,
                             'agency': agency,
                             'type': law_type,
-                            'score': 1.0  # Selenium搜索的结果都认为是高匹配度
+                            'score': 1.0
                         })
                         
                 except Exception as e:
@@ -340,8 +391,7 @@ class SearchBasedCrawler(BaseCrawler):
     
     def _initialize_proxy_pools_sync(self):
         """初始化代理池 - 完全禁用"""
-        # 完全禁用代理池初始化，使用直连模式
-        self.logger.info("🚀 使用直连模式，跳过代理池初始化")
+        self.logger.info("使用直连模式，跳过代理池初始化")
         return
         
         # # 原代理池初始化逻辑已禁用
@@ -422,7 +472,7 @@ class SearchBasedCrawler(BaseCrawler):
             
             self.session.proxies.update(proxies)
             self.current_proxy = proxy_url
-            self.logger.info(f"✅ Session代理已配置: {proxy_url}")
+            self.logger.info(f"Session代理已配置: {proxy_url}")
         else:
             # 清除代理，使用直连
             if self.session.proxies:
@@ -471,8 +521,26 @@ class SearchBasedCrawler(BaseCrawler):
             self.logger.info(f"⏱️ 代理轮换延迟: {delay:.1f}秒")
             time.sleep(delay)
 
-    def search_law(self, keyword: str) -> List[Dict[str, Any]]:
-        """搜索法规 - 智能版：优先API，WAF激活时自动切换Selenium，支持代理轮换"""
+    def search_law(self, keyword: str, strict_mode: bool = False) -> List[Dict[str, Any]]:
+        """搜索法规 - 支持严格模式
+        
+        Args:
+            keyword: 搜索关键词
+            strict_mode: 严格模式，True时只使用HTTP API，不自动切换Selenium
+        """
+        
+        # 严格模式：只使用HTTP API，不自动切换
+        if strict_mode:
+            self.logger.info("严格模式：仅使用HTTP API搜索，不自动切换Selenium")
+            results = self._search_law_http(keyword)
+            if results:
+                self._handle_waf_detection(False)  # 成功，重置WAF状态
+                self.logger.info(f"HTTP API搜索成功: 找到 {len(results)} 个结果")
+            else:
+                self.logger.warning(f"HTTP API搜索无结果: {keyword}")
+            return results
+        
+        # 智能模式：优先API，低匹配时自动切换Selenium，支持代理轮换
         
         # 如果WAF已激活，直接使用Selenium
         if self.waf_triggered:
@@ -488,27 +556,53 @@ class SearchBasedCrawler(BaseCrawler):
         # 尝试HTTP API搜索
         results = self._search_law_http(keyword)
         
-        # 检查结果并处理WAF状态
+        # 检查结果质量 - 新增逻辑
         if results:
-            self._handle_waf_detection(False)  # 成功，重置WAF状态
-            return results
-        else:
-            # API失败，可能是WAF拦截，尝试Selenium备用
-            self.logger.debug(f"    HTTP API失败，尝试Selenium备用搜索")
-            # 确保Selenium也使用代理
-            if not self.current_proxy:
-                proxy_url = self._get_proxy_for_request_sync()
-                self._configure_session_proxy(proxy_url)
-                if proxy_url:
-                    self.logger.info(f"🌍 为Selenium获取代理: {proxy_url}")
+            # 快速检查是否有高质量匹配
+            has_good_match = False
+            for result in results:
+                title = result.get('title', '')
+                # 简单的相关性检查
+                if any(word in title for word in keyword.split()) or keyword in title:
+                    has_good_match = True
+                    break
             
-            selenium_results = self.search_law_selenium(keyword)
+            if has_good_match:
+                self._handle_waf_detection(False)  # 成功，重置WAF状态
+                return results
+            else:
+                # API有结果但质量低，尝试Selenium作为补充
+                self.logger.debug(f"    HTTP API结果质量低，尝试Selenium补充搜索")
+                selenium_results = self._try_selenium_search(keyword)
+                
+                # 如果Selenium找到了更好的结果，使用Selenium结果
+                if selenium_results:
+                    self.logger.info(f"    🎯 Selenium找到更相关的结果，使用Selenium结果")
+                    return selenium_results
+                else:
+                    # Selenium也没找到，返回API结果
+                    return results
+        else:
+            # API完全失败，尝试Selenium备用
+            self.logger.debug(f"    HTTP API失败，尝试Selenium备用搜索")
+            selenium_results = self._try_selenium_search(keyword)
             
             # 如果Selenium成功而API失败，说明可能是WAF问题
             if selenium_results:
                 self._handle_waf_detection(True)  # 标记可能的WAF拦截
             
             return selenium_results
+    
+    def _try_selenium_search(self, keyword: str) -> List[Dict[str, Any]]:
+        """尝试Selenium搜索的辅助方法"""
+        # 确保Selenium也使用代理
+        if not self.current_proxy:
+            proxy_url = self._get_proxy_for_request_sync()
+            self._configure_session_proxy(proxy_url)
+            if proxy_url:
+                self.logger.info(f"🌍 为Selenium获取代理: {proxy_url}")
+        
+        return self.search_law_selenium(keyword)
     
     def _search_law_http(self, keywords, search_type="title;vague"):
         """HTTP API搜索法规"""
@@ -523,7 +617,7 @@ class SearchBasedCrawler(BaseCrawler):
             strategies = [search_type] + strategies
         
         for strategy in strategies:
-            self.logger.debug(f"    🔍 尝试API搜索策略: {strategy}")
+            self.logger.debug(f"    尝试API搜索策略: {strategy}")
             
             # 完全使用直连模式，禁用代理
             self._configure_session_proxy(None)  # 强制清除代理
@@ -534,9 +628,10 @@ class SearchBasedCrawler(BaseCrawler):
             time.sleep(delay)
             
             try:
-                # 构建查询参数
+                # 构建查询参数 - 支持地方性法规
+                # 尝试不限制type参数，或者包含地方性法规
                 params = {
-                    "type": "flfg",
+                    "type": "",  # 移除type限制，搜索所有类型
                     "searchType": strategy,
                     "sortTr": "f_bbrq_s;desc",
                     "gbrqStart": "",
@@ -571,8 +666,22 @@ class SearchBasedCrawler(BaseCrawler):
                             self.logger.debug(f"    📋 API搜索无结果 (策略: {strategy})")
                     except ValueError as e:
                         self.logger.warning(f"    ⚠️ API响应JSON解析失败 (策略: {strategy}): {e}")
+                        # 添加详细调试信息
+                        self.logger.debug(f"    响应内容前200字符: {response.text[:200]}")
+                        content_type = response.headers.get('Content-Type', '未知')
+                        self.logger.debug(f"    响应Content-Type: {content_type}")
+                        
+                        # 检查是否是WAF拦截
+                        if self._check_waf_response(response):
+                            self.logger.debug(f"    检测到WAF拦截，响应为HTML页面")
+                            self._handle_waf_detection(True)
+                        else:
+                            self.logger.debug(f"    非WAF拦截，API可能返回了非JSON格式")
                 else:
                     self.logger.debug(f"    ❌ API请求失败 (策略: {strategy}): HTTP {response.status_code}")
+                    if response.status_code >= 400:
+                        # 可能是被限制了
+                        self._handle_waf_detection(True)
                     
             except Exception as e:
                 self.logger.debug(f"    ❌ API请求异常 (策略: {strategy}): {e}")
@@ -604,7 +713,7 @@ class SearchBasedCrawler(BaseCrawler):
             self.consecutive_waf_count += 1
             if self.consecutive_waf_count >= 2:  # 连续2次被拦截才认为WAF激活
                 self.waf_triggered = True
-                self.logger.warning(f"🚫 WAF已激活，连续拦截{self.consecutive_waf_count}次，切换到Selenium模式")
+                self.logger.warning(f"WAF已激活，连续拦截{self.consecutive_waf_count}次，切换到Selenium模式")
         else:
             # 成功请求，重置计数器
             self.consecutive_waf_count = 0
@@ -753,7 +862,7 @@ class SearchBasedCrawler(BaseCrawler):
             self.logger.debug(f"      {candidate['title']}: {candidate['score']:.3f} ({candidate['status_text']})")
         
         # 设置匹配阈值
-        threshold = 0.75
+        threshold = 0.60  # 降低阈值以提高匹配率
         
         # 筛选出达到阈值的候选项
         qualified_candidates = [c for c in candidates if c['score'] >= threshold]
@@ -778,52 +887,72 @@ class SearchBasedCrawler(BaseCrawler):
             return best_candidate['law']
     
     def generate_search_keywords(self, law_name: str) -> List[str]:
-        """生成搜索关键词"""
+        """生成搜索关键词 - 简化版，避免过度分词"""
         keywords = []
         
-        # 1. 完整名称
+        # 1. 完整名称（最高优先级）
         keywords.append(law_name)
         
         # 2. 移除"中华人民共和国"前缀
         if law_name.startswith("中华人民共和国"):
-            keywords.append(law_name.replace("中华人民共和国", ""))
+            without_china = law_name.replace("中华人民共和国", "").strip()
+            if without_china and len(without_china) >= 6:  # 确保剩余部分有意义
+                keywords.append(without_china)
         
-        # 3. 提取主干名称（移除括号内容）
+        # 3. 提取主干名称（移除括号内容，如修订年份）
         main_name = re.sub(r'[（(].*?[）)]', '', law_name)
-        if main_name != law_name and main_name.strip():
+        if main_name != law_name and main_name.strip() and len(main_name.strip()) >= 6:
             keywords.append(main_name.strip())
         
-        # 4. 提取核心词汇
-        if "法" in law_name:
-            # 提取"法"前面的部分
-            parts = law_name.split("法")
-            if parts[0]:
-                core_name = parts[0] + "法"
-                if core_name not in keywords:
-                    keywords.append(core_name)
+        # 4. 核心关键词提取（只针对明确的专业领域）
+        specialized_terms = {
+            "消防": ["消防条例", "消防办法", "消防管理"],
+            "安全生产": ["安全生产条例", "安全条例"],
+            "建设工程": ["工程质量条例", "建筑管理条例"],
+            "环境保护": ["环境保护法", "环保条例"],
+            "公平竞争": ["竞争审查条例", "反垄断"]
+        }
         
-        # 5. 对于办法、条例等，尝试不同的搜索策略
-        if any(word in law_name for word in ["办法", "条例", "规定", "细则"]):
-            # 提取关键词组合
-            for suffix in ["办法", "条例", "规定", "细则"]:
+        for term, related in specialized_terms.items():
+            if term in law_name:
+                for rel in related:
+                    if any(word in law_name for word in rel.split()):
+                        keywords.append(rel)
+                        break  # 只添加第一个匹配的相关词
+        
+        # 5. 智能缩短（只对超长法规名称）
+        if len(law_name) > 20:
+            # 对于超长名称，尝试提取核心部分
+            for suffix in ["条例", "办法", "规定", "法"]:
                 if suffix in law_name:
-                    # 找到第一个关键词
+                    # 找到后缀位置，提取前面的核心部分
                     parts = law_name.split(suffix)
                     if parts[0]:
-                        # 尝试不同长度的关键词
                         base = parts[0].strip()
-                        # 移除修订年份
+                        # 移除年份信息
                         base = re.sub(r'[（(].*?[）)]', '', base).strip()
-                        if base and len(base) >= 4:  # 至少4个字符
-                            keywords.append(base + suffix)
-                            # 尝试更短的关键词
-                            if len(base) > 6:
-                                keywords.append(base[-6:] + suffix)
+                        
+                        # 只在基础部分超过10个字符时才进行缩短
+                        if len(base) > 10:
+                            # 保留后半部分（更可能是核心词汇）
+                            if len(base) > 15:
+                                core_part = base[-8:] + suffix  # 取最后8个字符
+                                if len(core_part) >= 6:
+                                    keywords.append(core_part)
+                    break  # 只处理第一个找到的后缀
         
-        # 去重并过滤空字符串
-        keywords = list(dict.fromkeys([k for k in keywords if k.strip()]))  # 保持顺序的去重
+        # 去重并过滤，确保关键词有意义
+        seen = set()
+        result = []
+        for k in keywords:
+            k = k.strip()
+            # 过滤条件：非空、长度至少4个字符、不重复
+            if k and len(k) >= 4 and k not in seen:
+                seen.add(k)
+                result.append(k)
         
-        return keywords
+        # 限制关键词数量，避免无效搜索
+        return result[:5]  # 最多5个关键词
     
     def extract_document_number(self, detail: dict) -> str:
         """提取文号"""
@@ -859,8 +988,13 @@ class SearchBasedCrawler(BaseCrawler):
             self.logger.error(f"提取文号时出错: {e}")
             return ""
     
-    def crawl_law_by_search(self, law_name: str) -> Optional[Dict[str, Any]]:
-        """通过搜索采集单个法规"""
+    def crawl_law_by_search(self, law_name: str, strict_mode: bool = False) -> Optional[Dict[str, Any]]:
+        """通过搜索采集单个法规
+        
+        Args:
+            law_name: 法规名称
+            strict_mode: 严格模式，True时只使用HTTP API，不自动切换Selenium
+        """
         self.logger.info(f"搜索法规: {law_name}")
         
         # 生成搜索关键词
@@ -870,7 +1004,7 @@ class SearchBasedCrawler(BaseCrawler):
         for keyword in keywords:
             self.logger.debug(f"  尝试关键词: {keyword}")
             
-            search_results = self.search_law(keyword)
+            search_results = self.search_law(keyword, strict_mode=strict_mode)
             
             if search_results:
                 self.logger.debug(f"    找到 {len(search_results)} 个结果")
@@ -967,12 +1101,18 @@ class SearchBasedCrawler(BaseCrawler):
         self.logger.error(f"  ❌ 所有关键词都未找到匹配")
         return None
     
-    async def crawl_law(self, law_name: str, law_number: str = None) -> Optional[Dict]:
-        """爬取单个法律（实现CrawlerManager需要的接口）"""
+    async def crawl_law(self, law_name: str, law_number: str = None, strict_mode: bool = True) -> Optional[Dict]:
+        """爬取单个法律（实现CrawlerManager需要的接口）
+        
+        Args:
+            law_name: 法规名称
+            law_number: 法规编号（可选）
+            strict_mode: 严格模式，默认True，只使用HTTP API，不自动切换Selenium
+        """
         try:
-            self.logger.info(f"人大网爬取: {law_name}")
+            self.logger.info(f"人大网爬取: {law_name} (严格模式: {strict_mode})")
             
-            result = self.crawl_law_by_search(law_name)
+            result = self.crawl_law_by_search(law_name, strict_mode=strict_mode)
             
             if result:
                 # 转换为标准格式
