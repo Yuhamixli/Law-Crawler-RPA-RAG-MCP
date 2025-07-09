@@ -15,6 +15,12 @@ timeout = 30        # 🚀 减少超时时间：从60秒减至30秒
 enable_selenium_search = false  # 🚀 禁用Selenium搜索引擎 - 完全失效
 enable_optimized_selenium = false  # 🚀 禁用优化版Selenium - 效率太低
 
+# 🤝 友好爬虫策略配置
+friendly_crawling = true      # 启用友好爬虫策略
+request_interval = 1.0        # 请求间隔1秒，避免对服务器造成压力
+respect_robots_txt = true     # 遵守robots.txt
+max_requests_per_minute = 60  # 每分钟最大60个请求
+
 # 代理池配置 - 开发环境 (引用独立配置文件)
 [proxy_pool]
 config_file = "config/proxy_config.toml"  # 代理池配置文件路径

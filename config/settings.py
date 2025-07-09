@@ -21,6 +21,13 @@ class CrawlerSettings(BaseSettings):
     max_concurrent: int = Field(3, description="最大并发数")
     rate_limit: int = Field(5, description="每分钟最大请求数")
     crawl_limit: int = Field(0, description="本次爬取数量限制，0表示不限制")
+    
+    # 友好爬虫策略配置
+    friendly_crawling: bool = Field(True, description="启用友好爬虫策略")
+    request_interval: float = Field(1.0, description="请求间隔（秒）- 友好爬虫策略")
+    respect_robots_txt: bool = Field(True, description="遵守robots.txt")
+    max_requests_per_minute: int = Field(60, description="每分钟最大请求数")
+    
     user_agents: List[str] = Field(
         default=[
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

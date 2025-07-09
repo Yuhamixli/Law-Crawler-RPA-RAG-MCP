@@ -117,29 +117,33 @@ class SearchBasedCrawler(BaseCrawler):
         self._initialize_session()
     
     def setup_headers(self):
-        """设置请求头 - 使用原始示例项目成功的headers配置"""
-        # 基于原始示例项目中成功的REQUEST_HEADER配置
+        """设置请求头 - 友好爬虫策略，使用测试验证的成功配置"""
+        # 基于反爬测试成功的配置，确保正确访问API
         self.session.headers.update({
             "authority": "flk.npc.gov.cn",
             "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Microsoft Edge";v="99"',
             "accept": "application/json, text/javascript, */*; q=0.01",
-            "x-requested-with": "XMLHttpRequest", 
+            "x-requested-with": "XMLHttpRequest",  # 关键：标识为Ajax请求
             "sec-ch-ua-mobile": "?0",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36 Edg/99.0.1150.39",
-            "sec-ch-ua-platform": '"macOS"',
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+            "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-site": "same-origin",
             "sec-fetch-mode": "cors", 
             "sec-fetch-dest": "empty",
-            "referer": "https://flk.npc.gov.cn/fl.html",
-            "accept-language": "en-AU,en-GB;q=0.9,en;q=0.8,en-US;q=0.7,zh-CN;q=0.6,zh;q=0.5",
-            # 关键：使用示例项目中成功的cookie（模拟真实会话）
-            "cookie": "yfx_c_g_u_id_10006696=_ck22022520424713255117764923111; cna=NdafGk8tiAgCAd9IPxhfROag; yfx_f_l_v_t_10006696=f_t_1645792967326__r_t_1646401808964__v_t_1646401808964__r_c_5; Hm_lvt_54434aa6770b6d9fef104d146430b53b=1646407223,1646570042,1646666110,1647148584; acw_tc=75a1461516471485843844814eb808af266b8ede0e0502ec1c46ab1581; Hm_lpvt_54434aa6770b6d9fef104d146430b53b=1647148626",
+            "origin": "https://flk.npc.gov.cn",  # 关键：必须包含origin头部
+            "referer": "https://flk.npc.gov.cn/search",  # 关键：正确的referer
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "accept-encoding": "gzip, deflate, br",
+            "connection": "keep-alive",
         })
         
         # 设置Session级别的配置
         self.session.verify = True
         self.session.allow_redirects = True
         self.session.max_redirects = 5
+        
+        # 友好爬虫策略日志
+        self.logger.info("🤝 启用友好爬虫策略：1秒请求间隔，避免对服务器造成压力")
     
     def _initialize_session(self):
         """初始化session，访问首页获取cookies"""
@@ -622,9 +626,9 @@ class SearchBasedCrawler(BaseCrawler):
             # 完全使用直连模式，禁用代理
             self._configure_session_proxy(None)  # 强制清除代理
             
-            # 极速优化延迟：0.1-0.5秒
-            delay = random.uniform(0.1, 0.5)
-            self.logger.debug(f"    ⏱️ 添加随机延迟: {delay:.1f}秒")
+            # 友好爬虫策略：1秒间隔避免对服务器造成压力
+            delay = 1.0
+            self.logger.debug(f"    ⏱️ 友好爬虫延迟: {delay}秒")
             time.sleep(delay)
             
             try:
@@ -725,6 +729,10 @@ class SearchBasedCrawler(BaseCrawler):
     def get_law_detail(self, law_id: str) -> Optional[Dict[str, Any]]:
         """获取法规详情"""
         try:
+            # 友好爬虫策略：请求前等待1秒
+            self.logger.debug(f"    📄 获取法规详情: {law_id}")
+            time.sleep(1)
+            
             response = self.session.post(
                 "https://flk.npc.gov.cn/api/detail",
                 data={"id": law_id},
@@ -1096,7 +1104,8 @@ class SearchBasedCrawler(BaseCrawler):
             else:
                 self.logger.warning(f"    ❌ 搜索无结果")
             
-            time.sleep(1)  # 避免请求过快
+            # 友好爬虫策略：关键词间等待1秒
+            time.sleep(1)
         
         self.logger.error(f"  ❌ 所有关键词都未找到匹配")
         return None
