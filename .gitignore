@@ -134,9 +134,16 @@ logs/
 data/
 data/*
 !data/.gitkeep
-debug/
-test_logs/
-batch_test_logs/
+
+# Test files and debugging
+tests/debug/
+tests/logs/
+tests/*/output/
+tests/*/*.log
+tests/*/*.json
+tests/*/*.xlsx
+tests/*/*.png
+tests/*/*.html
 # IDE
 .vscode/
 .idea/
