@@ -44,6 +44,17 @@ Law-Crawler-RPA-RAG-MCP/
 │   ├── ledgers/           # 生成的台账文件
 │   └── index/            # 索引文件
 ├── config/               # 配置文件
+├── docs/                 # 项目文档
+│   ├── milestones/       # 阶段性工作总结
+│   ├── technical/        # 技术文档
+│   ├── design/           # 设计文档
+│   └── guides/           # 使用指南
+├── tests/                # 测试文件
+│   ├── strategy1/        # Strategy1测试
+│   ├── efficiency/       # 效率测试
+│   ├── utils/            # 工具测试
+│   ├── debug/            # 调试输出
+│   └── logs/             # 测试日志
 └── Background info/      # 背景资料和法规清单
 ```
 
@@ -75,6 +86,20 @@ Law-Crawler-RPA-RAG-MCP/
 - **错误处理**: 完善的异常处理和重试机制
 - **实时性能监控**: 详细的效率统计和策略分布
 - **代理池集成**: 支持enhanced_proxy_pool和ip_pool双重代理
+
+## 📚 项目文档
+
+项目提供完整的文档体系，包括：
+
+### 🎯 阶段性总结
+- **位置**: `docs/milestones/`
+- **内容**: 项目重要阶段的工作总结和技术改进报告
+- **最新**: [项目结构清理总结](docs/milestones/2025-07-09_项目结构清理总结.md) (2025-07-09)
+
+### 📖 文档索引
+- **主文档**: [docs/README.md](docs/README.md) - 完整文档目录说明
+- **总结索引**: [docs/milestones/MILESTONE_INDEX.md](docs/milestones/MILESTONE_INDEX.md) - 所有阶段性总结
+- **测试指南**: [tests/README.md](tests/README.md) - 测试文件结构说明
 
 ## 快速开始
 
