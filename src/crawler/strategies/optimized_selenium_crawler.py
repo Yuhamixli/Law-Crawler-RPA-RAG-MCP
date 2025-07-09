@@ -463,16 +463,16 @@ class OptimizedSeleniumCrawler(BaseCrawler):
             
         try:
             import os
-            os.makedirs("debug", exist_ok=True)
+            os.makedirs("tests/debug", exist_ok=True)
             
             # 保存页面源码
             safe_keyword = keyword.replace(' ', '_').replace('/', '_').replace('\\', '_')
-            debug_file = f"debug/optimized_selenium_{safe_keyword}_{suffix}.html"
+            debug_file = f"tests/debug/optimized_selenium_{safe_keyword}_{suffix}.html"
             with open(debug_file, 'w', encoding='utf-8') as f:
                 f.write(self.driver.page_source)
             
             # 保存页面截图
-            screenshot_path = f"debug/optimized_selenium_{safe_keyword}_{suffix}.png"
+            screenshot_path = f"tests/debug/optimized_selenium_{safe_keyword}_{suffix}.png"
             self.driver.save_screenshot(screenshot_path)
             
             logger.info(f"调试文件已保存: {debug_file}, {screenshot_path}")
