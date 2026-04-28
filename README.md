@@ -175,16 +175,19 @@ python -m compileall main.py src tests/unit
 
 ## 路线图
 
+长期目标见 [docs/ROADMAP.md](docs/ROADMAP.md)，自动更新设计见 [docs/AUTOMATION.md](docs/AUTOMATION.md)。
+
 - 数据采集：更多国家级和地方政府公开数据源、PDF 解析、增量更新。
 - 数据治理：法规版本关系、修订历史、失效状态、引用关系。
 - 检索增强：分层切片、向量索引、BM25 与向量混合检索。
 - RAG 应用：可溯源问答、条款级引用、答案置信度。
 - MCP 服务：将采集、检索、台账导出封装为智能体可调用工具。
-- 产品体验：Web 控制台、采集任务队列、结果复核工作台。
+- 产品体验：CLI、MCP、Web 控制台、采集任务队列、结果复核工作台。
 
 ## 适合贡献的方向
 
 - 新数据源策略：地方人大、地方政府、国务院公报等公开站点。
+- 已知法规 URL：向 [config/known_urls.toml](config/known_urls.toml) 添加可公开访问的权威链接。
 - 解析器：PDF、HTML 正文、法规条款结构化。
 - 测试样本：最小化、可公开复现的法规页面样本。
 - RAG 管道：切片、索引、召回评估和引用校验。

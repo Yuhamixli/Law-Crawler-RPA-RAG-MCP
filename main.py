@@ -21,6 +21,15 @@ from typing import List, Dict, Any
 from config.settings import settings
 from src.crawler.crawler_manager import CrawlerManager
 from src.report.crawl_result_exporter import save_crawl_results
+from src.service.catalog_service import CatalogService
+
+
+def format_verbose_value(value: Any, max_length: int = 500) -> str:
+    """Format verbose CLI values without flooding the terminal."""
+    text = str(value)
+    if len(text) <= max_length:
+        return text
+    return f"{text[:max_length]}... [已截断，共{len(text)}字符]"
 
 def load_target_laws_from_excel(excel_path: str) -> List[str]:
     """从Excel文件加载目标法规列表"""
@@ -109,7 +118,7 @@ async def search_single_law(law_name: str, verbose: bool = False, strategy: int 
     print("开始搜索...")
     result = await crawler_manager.crawl_law(law_name, strategy=strategy)
     
-    if result:
+    if result and result.get('success', False):
         print(f"[SUCCESS] 搜索成功！")
         print(f"   来源: {result.get('source', 'unknown')}")
         print(f"   名称: {result.get('name', '未知')}")
@@ -122,7 +131,7 @@ async def search_single_law(law_name: str, verbose: bool = False, strategy: int 
             print(f"\n详细信息:")
             for key, value in result.items():
                 if key not in ['raw_data']:  # 跳过过长的原始数据
-                    print(f"   {key}: {value}")
+                    print(f"   {key}: {format_verbose_value(value)}")
         
         # 保存单个结果
         result['target_name'] = law_name
@@ -133,6 +142,8 @@ async def search_single_law(law_name: str, verbose: bool = False, strategy: int 
         print(f"[FAILED] 搜索失败")
         print(f"   在所有数据源中都未找到 '{law_name}'")
         print(f"   建议检查法规名称是否正确，或尝试简化搜索关键词")
+        failed_results = [result] if result else []
+        await save_results(failed_results, [law_name])
 
 
 async def _run_batch_processing(batches: List[Dict], strategy: int, target_laws: List[str]) -> tuple:
@@ -510,6 +521,8 @@ def parse_args():
   python main.py --legacy                  # 使用原版批量爬取
   python main.py --law "电子招标投标办法"    # 单独搜索指定法规
   python main.py --law "中华人民共和国民法典" -v  # 详细模式
+  python main.py --list-known-urls         # 查看直接URL种子列表
+  python main.py --validate-known-urls     # 校验直接URL种子配置
   
 策略选择示例:
   python main.py --strategy 1              # 仅使用国家法律法规数据库
@@ -556,6 +569,18 @@ def parse_args():
         5 - 直接URL访问（最后保障）
         不指定则使用默认多层策略'''
     )
+
+    parser.add_argument(
+        '--list-known-urls',
+        action='store_true',
+        help='列出直接URL策略使用的公开种子链接'
+    )
+
+    parser.add_argument(
+        '--validate-known-urls',
+        action='store_true',
+        help='校验直接URL种子配置'
+    )
     
     return parser.parse_args()
 
@@ -563,8 +588,26 @@ def parse_args():
 async def main():
     """主函数 - 根据参数选择运行模式"""
     args = parse_args()
-    
-    if args.law:
+
+    catalog_service = CatalogService()
+
+    if args.list_known_urls:
+        records = catalog_service.list_known_urls()
+        print(f"已知直接URL种子: {len(records)} 条")
+        for index, record in enumerate(records, 1):
+            aliases = f" | 别名: {', '.join(record.aliases)}" if record.aliases else ""
+            print(f"{index}. {record.name} ({record.source}){aliases}")
+            print(f"   {record.url}")
+    elif args.validate_known_urls:
+        result = catalog_service.validate_known_urls()
+        print(f"已校验直接URL种子: {result.total} 条")
+        if result.ok:
+            print("[OK] 配置有效")
+        else:
+            print(f"[FAILED] 发现 {len(result.issues)} 个问题")
+            for issue in result.issues:
+                print(f"  - {issue.name}: {issue.issue}")
+    elif args.law:
         # 单法规搜索模式
         await search_single_law(args.law, args.verbose, args.strategy)
     else:

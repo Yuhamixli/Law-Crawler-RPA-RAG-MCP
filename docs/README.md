@@ -8,7 +8,10 @@
 docs/
 ├── README.md                    # 本说明文件
 ├── ARCHITECTURE.md              # 系统架构说明
+├── AUTOMATION.md                # 自动更新策略
+├── MCP_CLI_DESIGN.md            # CLI 与 MCP 使用入口设计
 ├── PROJECT_REVIEW.md            # 面向开源增长的项目评估
+├── ROADMAP.md                   # 长期路线图
 ├── milestones/                  # 阶段性工作总结
 │   ├── MILESTONE_INDEX.md       # 里程碑索引
 │   └── 2025-07-09_项目结构清理总结.md  # 项目清理总结
@@ -23,6 +26,9 @@ docs/
 
 - [Architecture](ARCHITECTURE.md)：系统分层、运行流程和扩展点。
 - [Project Review](PROJECT_REVIEW.md)：项目优势、已修复短板和后续建议。
+- [Roadmap](ROADMAP.md)：开源中国法律法规数据库的长期路线。
+- [Automation](AUTOMATION.md)：定期更新和发布策略。
+- [CLI and MCP Design](MCP_CLI_DESIGN.md)：面向用户、开发者和智能体的入口设计。
 
 ### 阶段性总结 (milestones/)
 记录项目重要阶段的工作总结，包括：
@@ -72,6 +78,9 @@ docs/
 ### 最新更新
 - [项目架构说明](ARCHITECTURE.md)
 - [项目评估与高星建议](PROJECT_REVIEW.md)
+- [长期路线图](ROADMAP.md)
+- [自动更新策略](AUTOMATION.md)
+- [CLI 与 MCP 设计](MCP_CLI_DESIGN.md)
 - [项目结构清理总结](milestones/2025-07-09_项目结构清理总结.md) - 2025-07-09
 
 ### 重要文档

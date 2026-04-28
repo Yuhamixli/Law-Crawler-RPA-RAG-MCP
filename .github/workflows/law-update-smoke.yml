@@ -1,0 +1,49 @@
+name: Law Update Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      law_name:
+        description: "Law name to crawl"
+        required: false
+        default: "固定资产投资项目节能审查办法"
+      strategy:
+        description: "Crawler strategy number"
+        required: false
+        default: "5"
+  schedule:
+    - cron: "18 2 * * 1"
+
+jobs:
+  smoke-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run crawl smoke
+        env:
+          LAW_NAME: ${{ github.event.inputs.law_name || '固定资产投资项目节能审查办法' }}
+          STRATEGY: ${{ github.event.inputs.strategy || '5' }}
+        run: python main.py --law "$LAW_NAME" --strategy "$STRATEGY"
+
+      - name: Upload generated artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: law-crawl-output
+          path: |
+            data/raw/json/*.json
+            data/raw/detailed/*.json
+            data/ledgers/*.xlsx
+          if-no-files-found: error
+

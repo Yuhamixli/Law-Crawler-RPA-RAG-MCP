@@ -133,7 +133,12 @@ logs/
 *.log
 data/
 data/*
+*.db
+*.sqlite
+*.sqlite3
 !data/.gitkeep
+drivers/
+!drivers/.gitkeep
 
 # Test files and debugging
 tests/debug/

@@ -760,7 +760,7 @@ class SearchEngineCrawler(BaseCrawler):
                 
                 async with session.get(url, params=params) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.json(content_type=None)
                         results = []
                         
                         # 解析即时答案
@@ -2066,4 +2066,4 @@ class SearchEngineCrawler(BaseCrawler):
 
 def create_search_engine_crawler():
     """创建搜索引擎爬虫实例"""
-    return SearchEngineCrawler() 
+    return SearchEngineCrawler()

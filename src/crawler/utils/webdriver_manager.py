@@ -21,6 +21,26 @@ from webdriver_manager.chrome import ChromeDriverManager
 from loguru import logger
 
 
+def find_chrome_binary() -> Optional[str]:
+    """Find a local Chrome/Chromium executable."""
+    candidates = [
+        os.environ.get("CHROME_BINARY"),
+        shutil.which("google-chrome"),
+        shutil.which("google-chrome-stable"),
+        shutil.which("chromium"),
+        shutil.which("chromium-browser"),
+        shutil.which("chrome"),
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return str(candidate)
+    return None
+
+
 def get_local_chromedriver_path() -> Optional[str]:
     """获取本地ChromeDriver路径，如果不存在则下载并缓存"""
     # 创建项目本地的drivers目录
@@ -330,4 +350,4 @@ async def cleanup_webdrivers():
     """清理所有WebDriver"""
     global _webdriver_manager
     if _webdriver_manager:
-        await _webdriver_manager.close_all_drivers() 
+        await _webdriver_manager.close_all_drivers()

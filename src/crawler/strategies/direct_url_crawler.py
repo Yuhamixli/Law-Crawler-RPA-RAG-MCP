@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from typing import Dict, Any, Optional, List
 from ..base_crawler import BaseCrawler
+from ..known_urls import KnownLawUrl, load_known_law_urls
 
 
 class DirectUrlCrawler(BaseCrawler):
@@ -29,11 +30,11 @@ class DirectUrlCrawler(BaseCrawler):
             'Connection': 'keep-alive',
         })
         
-        # 已知的法规URL映射
+        self.known_url_records = load_known_law_urls()
         self.known_urls = {
-            '建筑工程设计招标投标管理办法': 'https://www.gov.cn/gongbao/content/2017/content_5230272.htm',
-            '房屋建筑和市政基础设施工程施工招标投标管理办法': 'https://www.gov.cn/zhengce/2022-01/25/content_5712036.htm',
-            '固定资产投资项目节能审查办法': 'https://www.gov.cn/zhengce/2023-04/06/content_5750368.htm',
+            match_name: record.url
+            for record in self.known_url_records
+            for match_name in record.match_names
         }
     
     async def crawl_law(self, law_name: str, law_number: str = None) -> Optional[Dict[str, Any]]:
@@ -42,15 +43,16 @@ class DirectUrlCrawler(BaseCrawler):
             self.logger.info(f"直接URL爬取: {law_name}")
             
             # 查找匹配的URL
-            matched_url = self._find_matching_url(law_name)
-            if not matched_url:
+            matched_record = self._find_matching_record(law_name)
+            if not matched_record:
                 self.logger.warning(f"未找到匹配的已知URL: {law_name}")
                 return None
             
             # 直接访问URL获取内容
-            law_info = self._get_law_from_url(matched_url, law_name)
+            law_info = self._get_law_from_url(matched_record.url, law_name)
             if law_info:
                 law_info['crawler_strategy'] = 'direct_url'
+                law_info['source'] = f"{matched_record.source}-直接访问"
                 self.logger.success(f"直接URL访问成功: {law_name}")
                 return law_info
             else:
@@ -63,24 +65,32 @@ class DirectUrlCrawler(BaseCrawler):
     
     def _find_matching_url(self, law_name: str) -> Optional[str]:
         """查找匹配的URL"""
+        record = self._find_matching_record(law_name)
+        return record.url if record else None
+
+    def _find_matching_record(self, law_name: str) -> Optional[KnownLawUrl]:
+        """查找匹配的已知URL记录"""
         # 精确匹配
-        if law_name in self.known_urls:
-            return self.known_urls[law_name]
+        for record in self.known_url_records:
+            if law_name in record.match_names:
+                return record
         
         # 模糊匹配
         clean_name = re.sub(r'[（(].*?[）)]', '', law_name).strip()
-        for known_name, url in self.known_urls.items():
-            if clean_name in known_name or known_name in clean_name:
-                self.logger.info(f"模糊匹配成功: '{law_name}' -> '{known_name}'")
-                return url
+        for record in self.known_url_records:
+            for known_name in record.match_names:
+                if clean_name in known_name or known_name in clean_name:
+                    self.logger.info(f"模糊匹配成功: '{law_name}' -> '{known_name}'")
+                    return record
         
         # 关键词匹配
         keywords = self._extract_keywords(law_name)
-        for known_name, url in self.known_urls.items():
-            match_count = sum(1 for keyword in keywords if keyword in known_name)
-            if match_count >= 2:  # 至少匹配2个关键词
-                self.logger.info(f"关键词匹配成功: '{law_name}' -> '{known_name}' (匹配{match_count}个关键词)")
-                return url
+        for record in self.known_url_records:
+            for known_name in record.match_names:
+                match_count = sum(1 for keyword in keywords if keyword in known_name)
+                if match_count >= 2:  # 至少匹配2个关键词
+                    self.logger.info(f"关键词匹配成功: '{law_name}' -> '{known_name}' (匹配{match_count}个关键词)")
+                    return record
         
         return None
     
@@ -254,4 +264,4 @@ class DirectUrlCrawler(BaseCrawler):
 
 def create_direct_url_crawler():
     """创建直接URL爬虫实例"""
-    return DirectUrlCrawler() 
+    return DirectUrlCrawler()

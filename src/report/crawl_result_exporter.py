@@ -147,6 +147,8 @@ def get_source_channel(law_data: dict[str, Any]) -> str:
         return "中国政府网(www.gov.cn)"
     if source == "gov_web":
         return "中国政府网"
+    if source in ["中国政府网-直接访问", "直接URL访问"]:
+        return "中国政府网-直接访问"
     if source in ["搜索引擎(政府网)", "DuckDuckGo", "Bing"]:
         return "搜索引擎(政府网)"
 
@@ -188,6 +190,9 @@ def _build_results_map(
     results_map = {}
 
     for result in results:
+        if result.get("success") is False:
+            continue
+
         target_name = result.get("target_name")
         actual_name = result.get("name")
 

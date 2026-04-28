@@ -1,0 +1,19 @@
+# Seed URLs for direct crawling.
+# Keep this list small, public, and reviewable. Community contributions can add
+# authoritative public URLs without changing Python code.
+
+[[laws]]
+name = "建筑工程设计招标投标管理办法"
+url = "https://www.gov.cn/gongbao/content/2017/content_5230272.htm"
+source = "中国政府网"
+
+[[laws]]
+name = "房屋建筑和市政基础设施工程施工招标投标管理办法"
+url = "https://www.gov.cn/zhengce/2022-01/25/content_5712036.htm"
+source = "中国政府网"
+aliases = ["房建市政工程施工招标投标管理办法"]
+
+[[laws]]
+name = "固定资产投资项目节能审查办法"
+url = "https://www.gov.cn/zhengce/2023-04/06/content_5750368.htm"
+source = "中国政府网"

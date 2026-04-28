@@ -27,7 +27,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from ..base_crawler import BaseCrawler
-from ..utils.webdriver_manager import get_local_chromedriver_path
+from ..utils.webdriver_manager import find_chrome_binary, get_local_chromedriver_path
 
 
 class OptimizedSeleniumCrawler(BaseCrawler):
@@ -64,6 +64,10 @@ class OptimizedSeleniumCrawler(BaseCrawler):
         
         try:
             chrome_options = Options()
+            chrome_binary = find_chrome_binary()
+            if not chrome_binary:
+                raise RuntimeError("未检测到Chrome/Chromium浏览器，已跳过Selenium策略")
+            chrome_options.binary_location = chrome_binary
             
             # 极速模式设置
             chrome_options.add_argument('--no-sandbox')
@@ -487,4 +491,4 @@ class OptimizedSeleniumCrawler(BaseCrawler):
         if enabled:
             logger.info("调试模式已启用 - 将保存页面截图和源码")
         else:
-            logger.info("调试模式已禁用") 
+            logger.info("调试模式已禁用")

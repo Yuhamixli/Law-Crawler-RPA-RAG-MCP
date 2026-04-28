@@ -21,6 +21,8 @@ class CrawlerSettings(BaseSettings):
     max_concurrent: int = Field(3, description="最大并发数")
     rate_limit: int = Field(5, description="每分钟最大请求数")
     crawl_limit: int = Field(0, description="本次爬取数量限制，0表示不限制")
+    enable_selenium_search: bool = Field(True, description="默认多策略模式中启用Selenium搜索")
+    enable_optimized_selenium: bool = Field(True, description="默认多策略模式中启用优化版Selenium")
     
     # 友好爬虫策略配置
     friendly_crawling: bool = Field(True, description="启用友好爬虫策略")
@@ -146,55 +148,51 @@ class Settings(BaseSettings):
             toml_data = toml.load(config_file)
             print(f"从 {toml_path} 加载配置")
             
-            # 展平嵌套配置，Pydantic会自动处理
-            flat_config = {}
+            config = {}
             
             # 处理爬虫配置
             if 'crawler' in toml_data:
-                for key, value in toml_data['crawler'].items():
-                    flat_config[f'crawler__{key}'] = value
+                config['crawler'] = toml_data['crawler']
             
             # 处理数据库配置
             if 'database' in toml_data:
-                for key, value in toml_data['database'].items():
-                    flat_config[f'database__{key}'] = value
+                config['database'] = toml_data['database']
             
             # 处理日志配置
             if 'log' in toml_data:
-                for key, value in toml_data['log'].items():
-                    flat_config[f'log__{key}'] = value
+                config['log'] = toml_data['log']
             
             # 处理数据源配置
             if 'data_sources' in toml_data:
                 ds = toml_data['data_sources']
+                data_sources = {}
                 if 'national' in ds:
                     for key, value in ds['national'].items():
-                        flat_config[f'data_sources__national_{key}'] = value
+                        data_sources[f'national_{key}'] = value
                 if 'gov_legal' in ds:
                     for key, value in ds['gov_legal'].items():
-                        flat_config[f'data_sources__gov_legal_{key}'] = value
+                        data_sources[f'gov_legal_{key}'] = value
+                config['data_sources'] = data_sources
             
             # 处理代理池配置
             if 'proxy_pool' in toml_data:
-                for key, value in toml_data['proxy_pool'].items():
-                    flat_config[f'proxy_pool__{key}'] = value
+                config['proxy_pool'] = toml_data['proxy_pool']
             
             # 处理IP池配置
             if 'ip_pool' in toml_data:
-                for key, value in toml_data['ip_pool'].items():
-                    flat_config[f'ip_pool__{key}'] = value
+                config['ip_pool'] = toml_data['ip_pool']
             
             # 处理顶级配置
             for key in ['project_name', 'version', 'debug']:
                 if key in toml_data:
-                    flat_config[key] = toml_data[key]
+                    config[key] = toml_data[key]
             
             # 处理default节（兼容旧配置）
             if 'default' in toml_data:
                 for key, value in toml_data['default'].items():
-                    flat_config[key] = value
+                    config[key] = value
             
-            return cls(**flat_config)
+            return cls(**config)
             
         except Exception as e:
             print(f"加载配置文件失败: {e}，使用默认配置")
@@ -222,4 +220,4 @@ def get_settings() -> Settings:
 
 
 # 导出配置实例
-settings = get_settings() 
+settings = get_settings()

@@ -36,6 +36,21 @@ class CrawlResultExporterTest(unittest.TestCase):
         self.assertEqual(excel_rows[0]["采集状态"], "未找到")
         self.assertEqual(detailed_rows[0]["采集状态"], "未找到")
 
+    def test_failed_result_is_not_exported_as_success(self):
+        results = [
+            {
+                "success": False,
+                "target_name": "中华人民共和国民法典",
+                "name": "中华人民共和国民法典",
+                "source": "failed",
+            }
+        ]
+
+        excel_rows, detailed_rows = build_result_tables(results, ["中华人民共和国民法典"])
+
+        self.assertEqual(excel_rows[0]["采集状态"], "未找到")
+        self.assertEqual(detailed_rows[0]["采集状态"], "未找到")
+
     def test_calculate_source_stats_counts_success_only(self):
         source_stats = calculate_source_stats(
             [
@@ -47,7 +62,21 @@ class CrawlResultExporterTest(unittest.TestCase):
 
         self.assertEqual(source_stats, {"国家法律法规数据库": 2})
 
+    def test_direct_url_source_channel(self):
+        results = [
+            {
+                "success": True,
+                "target_name": "固定资产投资项目节能审查办法",
+                "name": "固定资产投资项目节能审查办法",
+                "source": "中国政府网-直接访问",
+                "source_url": "https://www.gov.cn/zhengce/2023-04/06/content_5750368.htm",
+            }
+        ]
+
+        excel_rows, _ = build_result_tables(results, ["固定资产投资项目节能审查办法"])
+
+        self.assertEqual(excel_rows[0]["来源渠道"], "中国政府网-直接访问")
+
 
 if __name__ == "__main__":
     unittest.main()
-
