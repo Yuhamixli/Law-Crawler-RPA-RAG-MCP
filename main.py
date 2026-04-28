@@ -11,7 +11,6 @@
 """
 
 import asyncio
-import json
 import os
 import pandas as pd
 import argparse
@@ -21,108 +20,7 @@ from typing import List, Dict, Any
 
 from config.settings import settings
 from src.crawler.crawler_manager import CrawlerManager
-
-def normalize_date_format(date_str: str) -> str:
-    """
-    将各种日期格式统一转换为 yyyy-mm-dd 格式
-    支持的输入格式：
-    - 2013年2月4日 -> 2013-02-04
-    - 2013-2-4 -> 2013-02-04
-    - 2013.2.4 -> 2013-02-04
-    - 2025-05-29 00:00:00 -> 2025-05-29
-    """
-    if not date_str or date_str.strip() == '':
-        return ''
-    
-    import re
-    from datetime import datetime
-    
-    date_str = str(date_str).strip()
-    
-    # 转换全角字符为半角（修复全角日期问题）
-    full_to_half = {
-        '０': '0', '１': '1', '２': '2', '３': '3', '４': '4',
-        '５': '5', '６': '6', '７': '7', '８': '8', '９': '9',
-        '－': '-', '—': '-', '–': '-'
-    }
-    for full, half in full_to_half.items():
-        date_str = date_str.replace(full, half)
-    
-    try:
-        # 格式1: 2013年2月4日
-        match = re.match(r'(\d{4})年(\d{1,2})月(\d{1,2})日', date_str)
-        if match:
-            year, month, day = match.groups()
-            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
-        
-        # 格式2: 2013-2-4 或 2013/2/4 或 2013.2.4
-        match = re.match(r'(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})', date_str)
-        if match:
-            year, month, day = match.groups()
-            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
-        
-        # 格式3: 2025-05-29 00:00:00 (带时间)
-        match = re.match(r'(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}:\d{2}', date_str)
-        if match:
-            return match.group(1)
-        
-        # 格式4: 已经是 yyyy-mm-dd 格式
-        match = re.match(r'\d{4}-\d{2}-\d{2}$', date_str)
-        if match:
-            return date_str
-        
-        # 格式5: 尝试使用datetime解析
-        for fmt in ['%Y-%m-%d', '%Y/%m/%d', '%Y.%m.%d', '%Y年%m月%d日']:
-            try:
-                dt = datetime.strptime(date_str, fmt)
-                return dt.strftime('%Y-%m-%d')
-            except:
-                continue
-        
-        # 如果都无法解析，返回原始字符串
-        print(f"无法解析日期格式: {date_str}")
-        return date_str
-        
-    except Exception as e:
-        print(f"日期格式化失败: {date_str}, 错误: {e}")
-        return date_str
-
-
-def normalize_datetime_format(datetime_str: str) -> str:
-    """统一时间格式为YYYY-MM-DD HH:MM:SS，避免Excel识别为超链接"""
-    if not datetime_str or datetime_str.strip() == "":
-        return ""
-    
-    import re
-    datetime_str = datetime_str.strip()
-    
-    # 如果是ISO格式，转换为标准格式
-    if 'T' in datetime_str:
-        try:
-            # 解析ISO格式：2025-06-23T16:25:10.215903
-            dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
-            return dt.strftime("%Y-%m-%d %H:%M:%S")
-        except:
-            pass
-    
-    # 如果已经是标准格式，直接返回
-    if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', datetime_str):
-        return datetime_str
-    
-    # 尝试其他格式
-    try:
-        # 尝试解析常见格式
-        for fmt in ["%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S", "%Y-%m-%d", "%Y/%m/%d"]:
-            try:
-                dt = datetime.strptime(datetime_str, fmt)
-                return dt.strftime("%Y-%m-%d %H:%M:%S")
-            except:
-                continue
-    except:
-        pass
-    
-    # 如果都失败了，返回当前时间格式
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+from src.report.crawl_result_exporter import save_crawl_results
 
 def load_target_laws_from_excel(excel_path: str) -> List[str]:
     """从Excel文件加载目标法规列表"""
@@ -147,168 +45,16 @@ def load_target_laws_from_excel(excel_path: str) -> List[str]:
 
 async def save_results(results: List[Dict[str, Any]], target_laws: List[str], output_dir: str = "data"):
     """保存采集结果到各种格式的文件"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # 确保输出目录存在
-    os.makedirs(f"{output_dir}/raw/json", exist_ok=True)
-    os.makedirs(f"{output_dir}/raw/detailed", exist_ok=True)
-    os.makedirs(f"{output_dir}/ledgers", exist_ok=True)
-    
-    # 建立结果映射（智能匹配逻辑）
-    results_map = {}
-    for result in results:
-        target_name = result.get('target_name')  # 目标搜索的法规名称
-        actual_name = result.get('name')         # 实际找到的法规名称
-        
-        # 1. 优先使用target_name进行精确匹配
-        if target_name:
-            results_map[target_name] = result
-        
-        # 2. 使用actual_name建立映射
-        if actual_name:
-            results_map[actual_name] = result
-            
-            # 3. 智能匹배：为带修订标记的法规建立双向映射
-            # 如果actual_name是基础名称，为可能的修订版本建立映射
-            for target_law in target_laws:
-                if (actual_name in target_law and 
-                    ('修订' in target_law or '修正' in target_law or '（' in target_law)):
-                    results_map[target_law] = result
-                    break
-    
-    excel_results = []
-    detailed_results = []
-    
-    # 处理每个目标法规
-    for i, target_law in enumerate(target_laws):
-        if target_law in results_map:
-            law_data = results_map[target_law]
-            
-            # 确定来源渠道 - 修复版
-            source = law_data.get('source', 'unknown')
-            source_url = law_data.get('source_url', '')
-            source_channel = ""
-            
-            # 优先通过source字段判断
-            if source == "search_api":
-                source_channel = "国家法律法规数据库"
-            elif source == "selenium_gov_web":
-                source_channel = "中国政府网(www.gov.cn)"
-            elif source == "gov_web":
-                source_channel = "中国政府网"
-            elif source in ["搜索引擎(政府网)", "DuckDuckGo", "Bing"]:
-                source_channel = "搜索引擎(政府网)"
-            else:
-                # 通过URL判断来源
-                if "flk.npc.gov.cn" in source_url:
-                    source_channel = "国家法律法规数据库"
-                elif "gov.cn" in source_url:
-                    source_channel = "搜索引擎(政府网)"
-                elif source_url:
-                    source_channel = "其他政府网站"
-                else:
-                    source_channel = "未知来源"
-            
-            # Excel表格数据（简化版）
-            excel_data = {
-                "序号": i + 1,
-                "目标法规": target_law,
-                "搜索关键词": law_data.get('search_keyword', target_law),
-                "法规名称": law_data.get('name', ''),
-                "文号": law_data.get('number', '') or law_data.get('document_number', ''),  # 修复：支持多种字段名
-                "发布日期": normalize_date_format(law_data.get('publish_date', '')),
-                "实施日期": normalize_date_format(law_data.get('valid_from', '')),
-                "失效日期": normalize_date_format(law_data.get('valid_to', '')),
-                "发布机关": law_data.get('office', '') or law_data.get('issuing_authority', ''),  # 修复：支持多种字段名
-                "法规级别": law_data.get('level', '') or law_data.get('law_level', ''),  # 修复：支持多种字段名
-                "状态": law_data.get('status', ''),
-                "来源渠道": source_channel,  # 新增的来源渠道列
-                "来源链接": law_data.get('source_url', ''),
-                "采集时间": normalize_datetime_format(law_data.get('crawl_time', datetime.now().isoformat())),
-                "采集状态": "成功"
-            }
-            
-            # 详细数据（包含所有扩展信息）
-            detailed_data = {
-                "序号": i + 1,
-                "采集状态": "成功",
-                "来源渠道": source_channel,  # 新增的来源渠道列
-                **law_data  # 包含所有原始采集数据
-            }
-        else:
-            # 未找到匹配的法规，保留占位
-            excel_data = {
-                "序号": i + 1,
-                "目标法规": target_law,
-                "搜索关键词": "",
-                "法规名称": "",
-                "文号": "",
-                "发布日期": "",
-                "实施日期": "",
-                "失效日期": "",
-                "发布机关": "",
-                "法规级别": "",
-                "状态": "",
-                "来源渠道": "",  # 新增的来源渠道列
-                "来源链接": "",
-                "采集时间": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "采集状态": "未找到"
-            }
-            
-            detailed_data = {
-                "序号": i + 1,
-                "target_name": target_law,
-                "采集状态": "未找到",
-                "来源渠道": "",  # 新增的来源渠道列
-                "采集时间": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            
-        excel_results.append(excel_data)
-        detailed_results.append(detailed_data)
-    
-    # 保存简化版JSON（与Excel一致）
-    json_file = f"{output_dir}/raw/json/search_crawl_{timestamp}.json"
-    with open(json_file, "w", encoding="utf-8") as f:
-        json.dump(excel_results, f, ensure_ascii=False, indent=2)
-    
-    # 保存详细版JSON（包含完整API响应和扩展数据）
-    detailed_json_file = f"{output_dir}/raw/detailed/search_crawl_detailed_{timestamp}.json"
-    with open(detailed_json_file, "w", encoding="utf-8") as f:
-        json.dump(detailed_results, f, ensure_ascii=False, indent=2)
-    
-    # 生成Excel
-    excel_file = f"{output_dir}/ledgers/search_crawl_{timestamp}.xlsx"
-    
-    df = pd.DataFrame(excel_results)
-    
-    with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-        df.to_excel(writer, sheet_name='法规采集结果', index=False)
-        
-        worksheet = writer.sheets['法规采集结果']
-        
-        # 设置超链接（仅对成功采集的法规）
-        # 来源链接列是第13列，不要覆盖采集时间列（第14列）
-        for idx, row in enumerate(df.iterrows(), start=2):
-            url = row[1]['来源链接']
-            if url and row[1]['采集状态'] == '成功':
-                worksheet.cell(row=idx, column=13).hyperlink = url  # 修复：设置到来源链接列
-                worksheet.cell(row=idx, column=13).value = "点击查看"  # 修复：显示"点击查看"
-    
+    summary = save_crawl_results(results, target_laws, output_dir)
+
     print(f"结果已保存:")
-    print(f"  简化JSON: {json_file}")
-    print(f"  详细JSON: {detailed_json_file} (包含完整API响应)")
-    print(f"  Excel: {excel_file}")
-    
-    # 统计来源渠道信息
-    successful_results = [item for item in excel_results if item.get('采集状态') == '成功']
-    if successful_results:
-        source_stats = {}
-        for result in successful_results:
-            channel = result.get('来源渠道', '未知')
-            source_stats[channel] = source_stats.get(channel, 0) + 1
-        
+    print(f"  简化JSON: {summary.json_file}")
+    print(f"  详细JSON: {summary.detailed_json_file} (包含完整API响应)")
+    print(f"  Excel: {summary.excel_file}")
+
+    if summary.source_stats:
         print(f"\n[STATS] 数据来源统计:")
-        for channel, count in source_stats.items():
+        for channel, count in summary.source_stats.items():
             print(f"  - {channel}: {count} 条")
 
 
@@ -851,6 +597,6 @@ if __name__ == "__main__":
         try:
             from src.crawler.utils.webdriver_manager import cleanup_webdrivers
             asyncio.run(cleanup_webdrivers())
-            print("🧹 WebDriver清理完成")
+            print("WebDriver清理完成")
         except Exception as e:
-            print(f"清理WebDriver时发生错误: {e}") 
+            print(f"清理WebDriver时发生错误: {e}")

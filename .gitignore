@@ -161,10 +161,6 @@ Thumbs.db
 *.bak
 *.backup
 
-# Test files
-test_*.py
-*_test.py
-
 # Generated files
 *.json
 *.xlsx
@@ -172,6 +168,7 @@ test_*.py
 *.csv
 !requirements*.txt
 !package*.json
+!examples/*.json
 
 # Excel temporary files
 ~$*.xls
@@ -179,4 +176,4 @@ test_*.py
 
 # Project specific
 Background info/law list.xls
-clean_*.py 
+clean_*.py

@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest an improvement or new data source.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or research workflow would this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the desired behavior.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Public data source
+      description: If this is a crawler request, link the public source.
+  - type: textarea
+    id: compliance
+    attributes:
+      label: Access and compliance notes
+      description: Mention robots.txt, rate limits, public access constraints, or terms of use if known.
+
